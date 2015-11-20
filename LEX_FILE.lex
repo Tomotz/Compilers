@@ -82,10 +82,10 @@ current token */
 /*************************************************************************
 
 ********/
-    private Token symbol(int type)               {return new Token(type, 
+    private Symbol symbol(int type)               {return new Symbol(type, 
 
 yyline, yycolumn);}
-    private Token symbol(int type, Object value) {return new Token(type, 
+    private Symbol symbol(int type, Object value) {return new Symbol(type, 
 
 yyline, yycolumn, value);}
 %}
@@ -97,12 +97,11 @@ LineTerminator	= \r|\n|\r\n
 InputCharacter	= [^\r\n]
 StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
 WhiteSpace		= {LineTerminator} | [ \t\f]
-INTEGER			= 0* | [1-9][0-9]*
+INTEGER			= 0 | -? [1-9][0-9]*
 IDENTIFIER		= [a-z][A-Za-z_0-9]*
-illegalInt       = 0+[1-9]+
 CLASS_ID		= [A-Z][A-Za-z_0-9]* 
 COMMENT			= "/*" ~"*/" | "//" {InputCharacter}* {LineTerminator}?
-QUOTE			= \" {StringCharacter}* \"
+QUOTE			= \" {StringCharacter}* \" 
 /******************************/
 /* DOLAR DOLAR - DON'T TOUCH! */
 /******************************/
@@ -164,8 +163,7 @@ QUOTE			= \" {StringCharacter}* \"
 "true"				{ printLineNumber(); System.out.print("TRUE"); return symbol(sym.TRUE);}
 "void"				{ printLineNumber(); System.out.print("VOID"); return symbol(sym.VOID);}
 "while"				{ printLineNumber(); System.out.print("WHILE"); return symbol(sym.WHILE);}
-"/*" 				{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }
-"*/"				{ throw new RuntimeException("Error: closed comment without an opening at line "+Integer.toString(yyline+1)); }
+"/*" | "*/"			{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }
 
 
 {INTEGER}			{
@@ -173,7 +171,7 @@ QUOTE			= \" {StringCharacter}* \"
 						System.out.print("INTEGER(");
 						System.out.print(yytext());
 						System.out.print(")");
-						return symbol(sym.INTEGER, new Integer(yytext()));
+						return symbol(sym.INT, new Integer(yytext()));
 					}   
 {IDENTIFIER}		{
 						printLineNumber();
@@ -200,22 +198,6 @@ QUOTE			= \" {StringCharacter}* \"
 						System.out.print(")");
 						return symbol(sym.QUOTE, new String(yytext()));
 					} 
-					
 {COMMENT}			{ /* skip */ }
-
-
-.|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1)); }
-
-{illegalInt}        { throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1));  }
-
-
-<<EOF>>             {
-						printLineNumber();
-						System.out.print("EOF");
-						return symbol(sym.EOF, new String(yytext()));
-					}
-
-
+.|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1));  }
 }
-
-
