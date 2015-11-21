@@ -33,7 +33,7 @@ scan with {:
 	return t; 
 :};
 
-terminal 			PLUS, MINUS, MULT, DIV, LPAREN, RPAREN, SEMI, ASSIGN,
+terminal 			PLUS, MINUS, MULT, DIVIDE, LPAREN, RPAREN, SEMI, ASSIGN,
 					GT, LT, GE, LE, LAND, LOR;
 terminal Integer 	NUMBER; //TODO - i dont know how ints work 
 terminal String 	CLASS_ID, ID;
@@ -41,7 +41,7 @@ terminal 			UMINUS;
 terminal 			INT, DOT, WHILE,  STATIC, MULTIPLY, INTEGER,
 					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
-					BOOLEAN, ELSE, THIS, NEQUAL, DIVIDE, STRING, LCBR, EXTENDS, 
+					BOOLEAN, ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
 					RP, QUOTE, NEW, BREAK, CLASS;
 
 non terminal Expr 		expr;
@@ -49,12 +49,18 @@ non terminal Stmt 		stmt;
 non terminal StmtList 	stmt_list;
 non terminal 			program, classDecl_list, classDecl, extend, field_meth, 
 						field_meth_end, field, id_list,	method, maybe_formals, 
-						formals, stat_type_void, type_void, type;
+						formals, stat_type_void, type_void, type,
+						call, staticCall, expr_list, virtualCall, location, 
+						binop, unop, literal;
 
+
+
+ 
+ 
 precedence left LOR;
 precedence left LAND;
 precedence left PLUS, MINUS;
-precedence left DIV, MULT;
+precedence left DIVIDE, MULT;
 precedence left UMINUS;
 precedence left GT, LT, GE, LE;
 
@@ -122,7 +128,7 @@ expr ::= expr:e1 PLUS:p expr:e2
 		{: RESULT = new BinaryOpExpr(e1, e2, Operator.MULT);
 		   System.out.println("Reduced rule e1 * e2 for e1=" + e1 + " and e2="+e2);
 		 :}
-		| expr:e1 DIV expr:e2
+		| expr:e1 DIVIDE expr:e2
 		{: RESULT = new BinaryOpExpr(e1, e2, Operator.DIV);
 		   System.out.println("Reduced rule e1 / e2 for e1=" + e1 + " and e2="+e2);
 		 :}
@@ -158,4 +164,30 @@ expr ::= expr:e1 PLUS:p expr:e2
 		{: RESULT = new NumberExpr(n.intValue()); :}
 		| ID:v
 		{: RESULT = new VarExpr(v); :}
+;
+	
+	
+call ::= staticCall | virtualCall
+;
+
+staticCall ::= CLASS DOT ID LP expr_list RP
+;
+
+expr_list ::= expr | expr_list expr
+;
+
+virtualCall ::= expr DOT ID LP expr_list RP |ID LP expr_list RP
+;
+
+location ::= ID | expr DOT ID | expr LB expr RB
+;
+
+binop ::= PLUS | MINUS | MULT | DIVIDE | MOD | LAND | LOR | 
+			GT | LT | GTE | LTE | EQUAL | NEQUAL
+;  
+
+unop ::= MINUS | LNEG
+;
+
+literal ::= INTEGER | STRING | TRUE | FALSE | NULL
 ;
