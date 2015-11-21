@@ -46,17 +46,26 @@ import java_cup.runtime.*;
 
 ****/   
 /* Code between %{ and %}, both of which must be at the beginning of a 
-
 line, */
-/* will be copied letter to letter into the Lexer class code.              
-
-  */
+/* will be copied letter to letter into the Lexer class code.*/
   
 %{
 private void printLineNumber(){
 	System.out.println();
 	System.out.print(yyline+1);
-	System.out.print(": ");
+	System.out.print(": "); 
+}
+
+private Token printToken(String token_name, int token_sym) {
+	printLineNumber(); 
+	System.out.print(token_name); 
+	return symbol(token_sym, token_name);
+}
+
+private Token printToken(String token_name, int token_sym, Object value) {
+	printLineNumber(); 
+	System.out.print(token_name); 
+	return symbol(token_sym, token_name, value);
 }
 %}
 /* Here you declare member variables and functions that are used inside 
@@ -82,12 +91,10 @@ current token */
 /*************************************************************************
 
 ********/
-    private Token symbol(int type)               {return new Token(type, 
-
-yyline, yycolumn);}
-    private Token symbol(int type, Object value) {return new Token(type, 
-
-yyline, yycolumn, value);}
+    private Token symbol(int type, String token_name)               
+   		{return new Token(type, yyline, yycolumn, token_name);}
+    private Token symbol(int type, String token_name, Object value) 
+    	{return new Token(type, yyline, yycolumn, token_name, value);}
 %}
 
 /***********************/
@@ -121,84 +128,72 @@ QUOTE			= \" {StringCharacter}* \"
    
 <YYINITIAL> {
 
-"="					{ printLineNumber(); System.out.print("ASSIGN"); return symbol(sym.ASSIGN);}
-"boolean"			{ printLineNumber(); System.out.print("BOOLEAN"); return symbol(sym.BOOLEAN);}
-"break"				{ printLineNumber(); System.out.print("BREAK"); return symbol(sym.BREAK);}
-"class"				{ printLineNumber(); System.out.print("CLASS"); return symbol(sym.CLASS);}
-","					{ printLineNumber(); System.out.print("COMMA"); return symbol(sym.COMMA);}
-"continue"			{ printLineNumber(); System.out.print("CONTINUE"); return symbol(sym.CONTINUE);}
-"/"					{ printLineNumber(); System.out.print("DIVIDE");    return symbol(sym.DIVIDE);}
-"."					{ printLineNumber(); System.out.print("DOT"); return symbol(sym.DOT);}
-"=="				{ printLineNumber(); System.out.print("EQUAL"); return symbol(sym.EQUAL);}
-"extends"			{ printLineNumber(); System.out.print("EXTENDS"); return symbol(sym.EXTENDS);}
-"else"				{ printLineNumber(); System.out.print("ELSE"); return symbol(sym.ELSE);}
-"false"				{ printLineNumber(); System.out.print("FALSE"); return symbol(sym.FALSE);}
-">"					{ printLineNumber(); System.out.print("GT"); return symbol(sym.GT);}
-">="				{ printLineNumber(); System.out.print("GTE"); return symbol(sym.GTE);}
-"if"				{ printLineNumber(); System.out.print("IF"); return symbol(sym.IF);}
-"int"				{ printLineNumber(); System.out.print("INT"); return symbol(sym.INT);}
-"&&"				{ printLineNumber(); System.out.print("LAND"); return symbol(sym.LAND);}
-"["					{ printLineNumber(); System.out.print("LB"); return symbol(sym.LB);}
-"("					{ printLineNumber(); System.out.print("LP"); return symbol(sym.LP);}
-"{"					{ printLineNumber(); System.out.print("LCBR"); return symbol(sym.LCBR);}
-"length"			{ printLineNumber(); System.out.print("LENGTH"); return symbol(sym.LENGTH);}
-"new"				{ printLineNumber(); System.out.print("NEW"); return symbol(sym.NEW);}
-"!"					{ printLineNumber(); System.out.print("LNEG"); return symbol(sym.LNEG);}
-"||"				{ printLineNumber(); System.out.print("LOR"); return symbol(sym.LOR);}
-"<"					{ printLineNumber(); System.out.print("LT"); return symbol(sym.LT);}
-"<="				{ printLineNumber(); System.out.print("LTE"); return symbol(sym.LTE);}
-"-"					{ printLineNumber(); System.out.print("MINUS"); return symbol(sym.MINUS);}
-"%"					{ printLineNumber(); System.out.print("MOD"); return symbol(sym.MOD);}
-"*"					{ printLineNumber(); System.out.print("MULTIPLY"); return symbol(sym.MULTIPLY);}
-"!="				{ printLineNumber(); System.out.print("NEQUAL"); return symbol(sym.NEQUAL);}
-"null"				{ printLineNumber(); System.out.print("NULL"); return symbol(sym.NULL);}
-"+"					{ printLineNumber(); System.out.print("PLUS"); return symbol(sym.PLUS);}
-"]"					{ printLineNumber(); System.out.print("RB"); return symbol(sym.RB);}
-"}"					{ printLineNumber(); System.out.print("RCBR"); return symbol(sym.RCBR);}
-"return"			{ printLineNumber(); System.out.print("RETURN"); return symbol(sym.RETURN);}
-")"					{ printLineNumber(); System.out.print("RP"); return symbol(sym.RP);}
-";"					{ printLineNumber(); System.out.print("SEMI"); return symbol(sym.SEMI);}
-"static"			{ printLineNumber(); System.out.print("STATIC"); return symbol(sym.STATIC);}
-"string"			{ printLineNumber(); System.out.print("STRING"); return symbol(sym.STRING);}
-"this"				{ printLineNumber(); System.out.print("THIS"); return symbol(sym.THIS);}
-"true"				{ printLineNumber(); System.out.print("TRUE"); return symbol(sym.TRUE);}
-"void"				{ printLineNumber(); System.out.print("VOID"); return symbol(sym.VOID);}
-"while"				{ printLineNumber(); System.out.print("WHILE"); return symbol(sym.WHILE);}
+"="					{ return printToken("ASSIGN", sym.ASSIGN);}
+"boolean"			{ return printToken("BOOLEAN", sym.BOOLEAN);}
+"break"				{ return printToken("BREAK",sym.BREAK);}
+"class"				{ return printToken("CLASS",sym.CLASS);}
+","					{ return printToken("COMMA",sym.COMMA);}
+"continue"			{ return printToken("CONTINUE",sym.CONTINUE);}
+"/"					{ return printToken("DIVIDE",sym.DIVIDE);}
+"."					{ return printToken("DOT",sym.DOT);}
+"=="				{ return printToken("EQUAL",sym.EQUAL);}
+"extends"			{ return printToken("EXTENDS",sym.EXTENDS);}
+"else"				{ return printToken("ELSE",sym.ELSE);}
+"FALSE"				{ return printToken("FALSE",sym.FALSE);}
+">"					{ return printToken("GT",sym.GT);}
+">="				{ return printToken("GTE",sym.GTE);}
+"if"				{ return printToken("IF",sym.IF);}
+"int"				{ return printToken("INT",sym.INT);}
+"&&"				{ return printToken("LAND",sym.LAND);}
+"["					{ return printToken("LB",sym.LB);}
+"("					{ return printToken("LP",sym.LP);}
+"{"					{ return printToken("LCBR",sym.LCBR);}
+"length"			{ return printToken("LENGTH",sym.LENGTH);}
+"new"				{ return printToken("NEW",sym.NEW);}
+"!"					{ return printToken("LNEG",sym.LNEG);}
+"||"				{ return printToken("LOR",sym.LOR);}
+"<"					{ return printToken("LT",sym.LT);}
+"<="				{ return printToken("LTE",sym.LTE);}
+"-"					{ return printToken("MINUS",sym.MINUS);}
+"%"					{ return printToken("MOD",sym.MOD);}
+"*"					{ return printToken("MULTIPLY",sym.MULTIPLY);}
+"!="				{ return printToken("NEQUAL",sym.NEQUAL);}
+"null"				{ return printToken("NULL",sym.NULL);}
+"+"					{ return printToken("PLUS",sym.PLUS);}
+"]"					{ return printToken("RB",sym.RB);}
+"}"					{ return printToken("RCBR",sym.RCBR);}
+"return"			{ return printToken("RETURN",sym.RETURN);}
+")"					{ return printToken("RP",sym.RP);}
+";"					{ return printToken("SEMI",sym.SEMI);}
+"static"			{ return printToken("STATIC",sym.STATIC);}
+"string"			{ return printToken("STRING",sym.STRING);}
+"this"				{ return printToken("THIS",sym.THIS);}
+"TRUE"				{ return printToken("TRUE",sym.TRUE);}
+"void"				{ return printToken("VOID",sym.VOID);}
+"while"				{ return printToken("WHILE",sym.WHILE);}
 "/*" 				{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }
 "*/"				{ throw new RuntimeException("Error: closed comment without an opening at line "+Integer.toString(yyline+1)); }
 
 
 {INTEGER}			{
-						printLineNumber();
-						System.out.print("INTEGER(");
-						System.out.print(yytext());
-						System.out.print(")");
-						return symbol(sym.INTEGER, new Integer(yytext()));
+						return printToken("INTEGER(" + new String(yytext()) + ")", 
+							sym.INTEGER, new Integer(yytext()));
 					}   
 {IDENTIFIER}		{
-						printLineNumber();
-						System.out.print("ID(");
-						System.out.print(yytext());
-						System.out.print(")");
-						return symbol(sym.ID, new String(yytext()));
+						return printToken("ID(" + new String(yytext()) + ")", 
+							sym.ID, new String(yytext()));
 					}
 						
 {CLASS_ID}			{
-						printLineNumber();
-						System.out.print("CLASS_ID(");
-						System.out.print(yytext());
-						System.out.print(")");
-						return symbol(sym.CLASS_ID, new String(yytext()));
+						return printToken("CLASS_ID(" + new String(yytext()) + ")", 
+							sym.CLASS_ID, new String(yytext()));
 					}	
 					
 {WhiteSpace}		{ /* just skip what was found, do nothing */ }  
 
 {QUOTE}				{
-						printLineNumber();
-						System.out.print("QUOTE(");
-						System.out.print(yytext());
-						System.out.print(")");
-						return symbol(sym.QUOTE, new String(yytext()));
+						return printToken("QUOTE(" + new String(yytext()) + ")", 
+							sym.QUOTE, new String(yytext()));
 					} 
 					
 {COMMENT}			{ /* skip */ }
@@ -210,9 +205,7 @@ QUOTE			= \" {StringCharacter}* \"
 
 
 <<EOF>>             {
-						printLineNumber();
-						System.out.print("EOF");
-						return symbol(sym.EOF, new String(yytext()));
+						return printToken("EOF", sym.EOF, new String(yytext()));
 					}
 
 

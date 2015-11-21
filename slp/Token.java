@@ -14,20 +14,21 @@ public class Token extends Symbol {
 		this.line = line + 1;
 	}
 
-	public Token(int m_type, int line, int column, Object value) {
-		super(m_type, line, column, value);
-		this.name = "";
-		this.line = line + 1;
-	}
-	public Token(int m_type, int line, int column) {
-		super(m_type, line, column);
-		this.name = "";
-		this.line = line + 1;
-	}
 
 	public Token(int line, String name, int id) {
 		super(id, null);
 		this.name = name;
+		this.line = line + 1;
+	}
+
+	public Token(int m_type, int line, int column, String token_name, Object value) {
+		super(m_type, line, column, value);
+		this.name = token_name;
+		this.line = line + 1;
+	}
+	public Token(int m_type, int line, int column, String token_name) {
+		super(m_type, line, column);
+		this.name = token_name;
 		this.line = line + 1;
 	}
 	

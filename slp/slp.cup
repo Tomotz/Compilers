@@ -21,7 +21,7 @@ parser code  {:
 	
 	public void syntax_error(Symbol s) {
 		Token tok = (Token) s;
-		System.out.println("Line " + tok.getLine()+": Syntax error; unexpected " + tok);
+		System.out.println("\nLine " + tok.getLine()+": Syntax error. unexpected token: " + tok.toString());
 	}
 :}  
 
@@ -38,7 +38,7 @@ terminal 			PLUS, MINUS, MULT, DIV, LPAREN, RPAREN, SEMI, ASSIGN,
 terminal Integer 	NUMBER; //TODO - i dont know how ints work 
 terminal String 	CLASS_ID, ID;
 terminal 			UMINUS;
-terminal 			INT, DOT, WHILE,  STATIC, MULTIPLY,
+terminal 			INT, DOT, WHILE,  STATIC, MULTIPLY, INTEGER,
 					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
 					BOOLEAN, ELSE, THIS, NEQUAL, DIVIDE, STRING, LCBR, EXTENDS, 
@@ -82,14 +82,13 @@ field ::= type id_list SEMI
 id_list ::= ID | id_list COMMA ID
 ;
 
-method ::= stat_type_void ID LP maybe_formals RP LCBR stmt_list RCBR
+method ::= stat_type_void maybe_formals RP LCBR stmt_list RCBR
 ;
 
-stat_type_void::= STATIC type_void | type_void
+stat_type_void::= STATIC type ID LP | type ID LP
+					| STATIC VOID ID LP | VOID ID LP
 ; 
 
-type_void::= /*type |*/ VOID //TODO - return me
-;
 
 type ::= INT | BOOLEAN | STRING | CLASS | type LB RB
 ;
