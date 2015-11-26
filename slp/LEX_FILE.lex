@@ -72,8 +72,13 @@ private Token printToken(String token_name, int token_sym, Object value) {
 
 the  */
 /* scanner actions.                                                        
+<<<<<<< HEAD
  
   */  
+=======
+  
+  */   
+>>>>>>> bc0a2fc3b5422655a9d3ef2adbe4253be8903df2
 /*************************************************************************
 
 ****/   
