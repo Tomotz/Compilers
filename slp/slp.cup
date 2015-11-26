@@ -1,0 +1,229 @@
+package slp;
+
+import java_cup.runtime.*;
+
+parser code  {:
+	/** Causes the parsr to print every token it reads.
+	 * This is useful for debugging.
+	 */
+	public boolean printTokens;
+	
+	private Lexer lexer;
+
+	public Parser(Lexer lexer) {
+		super(lexer);
+		this.lexer = lexer;
+	}
+	
+	public int getLine() {
+		return lexer.getLineNumber();
+	}
+	
+	public void syntax_error(Symbol s) {
+		Token tok = (Token) s;
+		System.out.println("\nLine " + tok.getLine()+": Syntax error. unexpected token: " + tok.toString());
+	}
+	
+	public static void print_rule(String rule_text) {
+		System.out.print("\nReduced rule: " + rule_text);
+	}
+:}  
+
+// This is just for debugging
+scan with {:
+	Token t = (Token)lexer.next_token();
+	if (printTokens)
+		System.out.println(t.getLine() + ":" + t);
+	return t; 
+:};
+
+terminal 			PLUS, MINUS, MULT, DIVIDE, LPAREN, RPAREN, SEMI, ASSIGN,
+					GT, LT, GE, LE, LAND, LOR;
+terminal Integer 	NUMBER; //TODO - i dont know how ints work 
+terminal String 	CLASS_ID, ID;
+terminal 			UMINUS;
+terminal 			INT, DOT, WHILE,  STATIC, MULTIPLY, INTEGER,
+					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
+					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
+					BOOLEAN, ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
+					RP, QUOTE, NEW, BREAK, CLASS;
+
+non terminal Expr 		expr;
+non terminal Stmt 		stmt;
+non terminal StmtList 	stmt_list;
+non terminal String 	type, id_list, classDecl, classDecl_list,method, extend, stat_type_void, formals;
+non terminal 			program, field_meth_list, 
+						field_meth, field, maybe_formals, 
+						call, staticCall, expr_list, virtualCall, location, 
+						binop, unop, literal;
+
+
+
+ 
+ 
+precedence left LOR;
+precedence left LAND;
+precedence left PLUS, MINUS;
+precedence left DIVIDE, MULT;
+precedence left UMINUS;
+precedence left GT, LT, GE, LE;
+
+program ::= classDecl_list
+		{: Parser.print_rule("program-> 'classDecl_list'"); :}
+;
+
+classDecl_list ::= classDecl_list:cl1 classDecl:c1
+		{: Parser.print_rule("classDecl_list-> 'cl1 c1' for cl1=" + cl1 + " and c1=" + c1); :}
+		| classDecl:c1
+		{: Parser.print_rule("classDecl_list-> 'c1' for c1=" + c1); :}
+; 
+
+classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list RCBR
+		{: RESULT = c1;
+		Parser.print_rule("classDecl_list-> 'class c1 e1 {fields_and_methods}' for c1=" + c1 + " and e1=" + e1); :}
+;
+
+extend ::= /*empty*/
+		{: RESULT = "";
+		Parser.print_rule("extend-> ''"); :} 
+		| EXTENDS CLASS_ID:c1
+		{: RESULT = "extends "+c1; 
+		Parser.print_rule("extend-> 'extends c1' for c1=" + c1); :} 
+;
+
+field_meth_list ::= field_meth 
+		{: Parser.print_rule("field_meth_list-> 'field_meth'"); :} 
+		| field_meth_list field_meth
+		{: Parser.print_rule("field_meth_list-> 'field_meth_list field_meth'"); :} 
+;
+
+field_meth ::= field
+		{: Parser.print_rule("field_meth-> 'field'"); :} 
+		 | method
+		{: Parser.print_rule("field_meth-> 'method'"); :} 
+;
+
+field ::= type:t1 id_list:is1 SEMI
+		{: Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
+;
+
+id_list ::= ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("id_list-> 'i1' for i1="+i1); :}
+		| id_list:is1 COMMA ID:i1
+		{: RESULT = is1 + ", " + i1;
+		Parser.print_rule("id_list-> 'is1, i1' for is1=" + is1 + ", i1="+i1); :}
+;
+
+method ::= stat_type_void:st1 LP maybe_formals RP LCBR stmt_list RCBR
+		{: RESULT = st1;
+		Parser.print_rule("stat_type_void-> 'st1 (maybe_formals) {stmt_list}' for st1="+st1); :} 
+;
+
+stat_type_void::= STATIC type:t1 ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("stat_type_void-> 'static t1 i1' for t1="+t1+" and i1="+i1); :}
+		| type:t1 ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("stat_type_void-> 't1 i1' for t1="+t1+" and i1="+i1); :}
+		| STATIC VOID ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("stat_type_void-> 'static void i1' for i1="+i1); :} 
+		| VOID ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("stat_type_void-> 'void i1' for i1="+i1); :} 
+; 
+
+
+type ::= INT 
+		{: RESULT = "INT";
+		Parser.print_rule("type-> 'INT'"); :}
+		| BOOLEAN
+		{: RESULT = "BOOLEAN";
+		Parser.print_rule("type-> 'BOOLEAN'"); :}
+		| STRING 
+		{: RESULT = "STRING";
+		Parser.print_rule("type-> 'STRING'"); :}
+		| CLASS_ID:c1 
+		{: RESULT = c1;
+		Parser.print_rule("type-> 'c1' for c1="+c1); :}
+		| type:t1 LB RB
+		{: RESULT = t1 + "[]";
+		Parser.print_rule("type-> 't1[]' for t1="+t1); :}
+;
+
+maybe_formals ::= /*empty*/ 
+		{: Parser.print_rule("maybe_formals-> ''"); :} 
+		| formals:fl1
+		{: Parser.print_rule("maybe_formals-> 'fl1' for fl1=" + fl1); :} 
+;
+
+formals ::= type:t1 ID:i1
+		{: RESULT = t1 + " " + i1;
+		Parser.print_rule("formals-> 't1 i1' for t1="+t1+" and i1="+i1); :}
+		| type:t1 ID:i1 COMMA formals:fl1
+		{: RESULT = t1 + " " + i1 + ", " + fl1;
+		Parser.print_rule("formals-> 't1 i1, fl1' for t1="+t1+" and i1="+i1+" and fl1="+fl1); :}
+;
+
+stmt_list ::= stmt:s
+	{: RESULT = new StmtList(s); :}
+	| stmt_list:sl stmt:s
+	{: sl.addStmt(s); RESULT = sl; :}
+;
+
+stmt ::= ID:v ASSIGN expr:e SEMI
+	{: VarExpr ve = new VarExpr(v); RESULT = new AssignStmt(ve, e); :}
+	| expr:e
+;
+
+expr ::= 	call:c1
+		{: RESULT = new Call(c1);
+		:}
+		| THIS
+		{: RESULT = THIS
+		:}
+		| NEW CLASS_ID:cid LP RP 
+		{: 
+		:}
+		| NEW type:t LB RB
+		{: 
+		:}
+		| expr:e1 DOT LENGTH
+		{: 
+		:}
+		| expr:e1 binop:o expr:e2
+		{: 
+		:}
+		| unop expr:e
+		{: RESULT = new UnaryOpExpr;
+		:}
+
+;
+
+	
+	
+call ::= staticCall | virtualCall
+;
+
+staticCall ::= CLASS DOT ID LP expr_list RP
+;
+
+expr_list ::= expr | expr_list expr
+;
+
+virtualCall ::= expr DOT ID LP expr_list RP |ID LP expr_list RP
+;
+
+location ::= ID | expr DOT ID | expr LB expr RB
+;
+
+binop ::= PLUS | MINUS | MULT | DIVIDE | MOD | LAND | LOR | 
+			GT | LT | GTE | LTE | EQUAL | NEQUAL
+;  
+
+unop ::= MINUS | LNEG
+;
+
+literal ::= INTEGER | STRING | TRUE | FALSE | NULL
+;
