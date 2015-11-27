@@ -37,16 +37,14 @@ scan with {:
 	return t; 
 :};
 
-terminal 			PLUS, MINUS, MULT, DIVIDE, LPAREN, RPAREN, SEMI, ASSIGN,
+terminal 			PLUS, MINUS, MULTIPLY, DIVIDE, SEMI, ASSIGN,
 					GT, LT, LAND, LOR;
-terminal Integer 	NUMBER; //TODO - i dont know how ints work 
-terminal String 	CLASS_ID, ID;
-terminal 			UMINUS;
-terminal 			INT, DOT, WHILE,  STATIC, MULTIPLY, INTEGER,
+terminal String 	CLASS_ID, ID, QUOTE;
+terminal 			INT, DOT, WHILE,  STATIC, INTEGER,
 					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
 					BOOLEAN, ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
-					RP, QUOTE, NEW, BREAK, CLASS;
+					RP, NEW, BREAK, CLASS;
 
 non terminal Expr 		expr;
 non terminal Stmt 		stmt;
@@ -55,7 +53,7 @@ non terminal String 	type, id_list, classDecl, classDecl_list,method, extend, st
 non terminal 			program, field_meth_list, 
 						field_meth, field, maybe_formals, 
 						call, staticCall, expr_list, virtualCall, location, 
-						binop, unop, literal;
+						binop, unop, literal, else_stmnt, assign_exp;
 
 precedence right ASSIGN; 
 precedence left LOR;
@@ -63,10 +61,10 @@ precedence left LAND;
 precedence left EQUAL, NEQUAL;
 precedence left GT, LT, GTE, LTE;
 precedence left PLUS, MINUS;
-precedence left DIVIDE, MULT, MOD;
-precedence right UMINUS, LNEG;
+precedence left LNEG;
+precedence left DIVIDE, MULTIPLY, MOD;
+precedence left ELSE;
 precedence left LB, RB, LP, RP, DOT;
-
 
 
 program ::= classDecl_list
@@ -75,8 +73,8 @@ program ::= classDecl_list
 
 classDecl_list ::= classDecl_list:cl1 classDecl:c1
 		{: Parser.print_rule("classDecl_list-> 'cl1 c1' for cl1=" + cl1 + " and c1=" + c1); :}
-		| classDecl:c1
-		{: Parser.print_rule("classDecl_list-> 'c1' for c1=" + c1); :}
+		| /*empty*/
+		{: Parser.print_rule("classDecl_list-> 'empty'"); :}
 ; 
 
 classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list RCBR
@@ -108,11 +106,11 @@ field ::= type:t1 id_list:is1 SEMI
 		{: Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
 ;
 
-id_list ::= ID:i1
-		{: RESULT = i1;
-		Parser.print_rule("id_list-> 'i1' for i1="+i1); :}
+id_list ::= /*empty*/
+		{: RESULT = "";
+		Parser.print_rule("id_list-> 'empty'"); :}
 		| id_list:is1 COMMA ID:i1
-		{: RESULT = is1 + ", " + i1;
+		{: RESULT = is1 + ", " + i1; 
 		Parser.print_rule("id_list-> 'is1, i1' for is1=" + is1 + ", i1="+i1); :}
 ;
 
@@ -167,30 +165,51 @@ formals ::= type:t1 ID:i1
 		Parser.print_rule("formals-> 't1 i1, fl1' for t1="+t1+" and i1="+i1+" and fl1="+fl1); :}
 ;
 
-stmt_list ::= stmt:s
-	{: RESULT = new StmtList(s); :}
+stmt_list ::= /*empty*/
+	{:  :}
 	| stmt_list:sl stmt:s
 	{: sl.addStmt(s); RESULT = sl; :}
 ;
 
-stmt ::= ID:v ASSIGN expr:e SEMI
-	{: VarExpr ve = new VarExpr(v); RESULT = new AssignStmt(ve, e); :}
-	| expr:e
+stmt ::= location:v ASSIGN expr:e SEMI
+	{: /*VarExpr ve = new VarExpr(v); RESULT = new AssignStmt(ve, e);*/
+	Parser.print_rule("stmt -> v = e for v: " + v + "and e :" + e); :}
+	| call SEMI
+	| RETURN expr:e1 SEMI
+	{: Parser.print_rule("stmt -> return e1 for: " + e1);:}
+	| IF LP expr:e1 RP stmt else_stmnt 
+	{: Parser.print_rule("stmt -> if e1 for: " + e1);:}
+	| WHILE LP expr:e1 RP stmt
+	{: Parser.print_rule("stmt -> while e1 for: " + e1);:}
+	| BREAK SEMI
+	{: Parser.print_rule("stmt -> Break");:}
+	| CONTINUE SEMI
+	{: Parser.print_rule("stmt -> Continue");:}
+	| LCBR stmt RCBR 
+	| type:t1 ID:i1 assign_exp: e1 SEMI
+	{: Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + "i1: " + i1 + "e1: " + e1);:}
+;
+
+else_stmnt ::= /*empty*/ |
+				 ELSE stmt
+				 {: Parser.print_rule("else statement");:}
+;
+assign_exp ::= /*empty*/ | ASSIGN expr 
 ;
 
 
 expr ::= location
 		|
 		call:c1
-		{: RESULT = new Call(c1);
+		{: /*RESULT = new Call(c1);*/
 		:}
 		| THIS
-		{: RESULT = THIS
+		{: /*RESULT = THIS*/
 		:}
 		| NEW CLASS_ID:cid LP RP 
 		{: 
 		:}
-		| NEW type:t LB RB
+		| NEW type:t LB expr RB
 		{: 
 		:}
 		| expr:e1 DOT LENGTH
@@ -199,8 +218,8 @@ expr ::= location
 		| expr:e1 binop:o expr:e2
 		{: 
 		:}
-		| unop expr:e
-		{: RESULT = new UnaryOpExpr;
+		| unop:u expr:e
+		{: /*RESULT = new UnaryOpExpr(e,u);*/
 		:}
 		| literal:l
 		{:
@@ -208,14 +227,14 @@ expr ::= location
 		| LP expr:e RP
 		{:
 		:}
-
-
-
 ;
 
+	  
 	
-	
-call ::= staticCall | virtualCall
+call ::= staticCall:m1 
+		{: Parser.print_rule("Call -> m1 for m1: " + m1); :}
+		| virtualCall:vm
+		{: Parser.print_rule("Call -> m1 for vm: " + vm); :}
 ;
 
 staticCall ::= CLASS DOT ID LP expr_list RP
@@ -230,12 +249,12 @@ virtualCall ::= expr DOT ID LP expr_list RP |ID LP expr_list RP
 location ::= ID | expr DOT ID | expr LB expr RB
 ;
 
-binop ::= PLUS | MINUS | MULT | DIVIDE | MOD | LAND | LOR | 
-			GT | LT | GTE | LTE | EQUAL | NEQUAL
+binop ::= PLUS | MINUS | MULTIPLY | DIVIDE | LAND | LOR | 
+			GT | LT | GTE | LTE | EQUAL | NEQUAL | MOD
 ;  
 
 unop ::= MINUS | LNEG
 ;
 
-literal ::= INTEGER | STRING | TRUE | FALSE | NULL
+literal ::= INTEGER | QUOTE | TRUE | FALSE | NULL
 ;
