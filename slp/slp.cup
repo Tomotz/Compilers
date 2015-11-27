@@ -14,7 +14,7 @@ parser code  {:
 		super(lexer);
 		this.lexer = lexer;
 	}
-	                 /***????????****/
+	                 
 	public int getLine() {
 		return lexer.getLineNumber();
 	}
@@ -38,7 +38,7 @@ scan with {:
 :};
 
 terminal 			PLUS, MINUS, MULT, DIVIDE, LPAREN, RPAREN, SEMI, ASSIGN,
-					GT, LT, GE, LE, LAND, LOR;
+					GT, LT, LAND, LOR;
 terminal Integer 	NUMBER; //TODO - i dont know how ints work 
 terminal String 	CLASS_ID, ID;
 terminal 			UMINUS;
@@ -58,15 +58,16 @@ non terminal 			program, field_meth_list,
 						binop, unop, literal;
 
 
-
- 
- 
+precedence right ASSIGN; 
 precedence left LOR;
 precedence left LAND;
+precedence left EQUAL, NEQUAL;
+precedence left GT, LT, GTE, LTE;
 precedence left PLUS, MINUS;
-precedence left DIVIDE, MULT;
-precedence left UMINUS;
-precedence left GT, LT, GE, LE;
+precedence left DIVIDE, MULT, MOD;
+precedence right UMINUS, LNEG;
+precedence left DOT;
+
 
 program ::= classDecl_list
 		{: Parser.print_rule("program-> 'classDecl_list'"); :}
@@ -178,7 +179,9 @@ stmt ::= ID:v ASSIGN expr:e SEMI
 ;
 
 
-expr ::= 	call:c1
+expr ::= location
+		|
+		call:c1
 		{: RESULT = new Call(c1);
 		:}
 		| THIS
@@ -198,6 +201,12 @@ expr ::= 	call:c1
 		:}
 		| unop expr:e
 		{: RESULT = new UnaryOpExpr;
+		:}
+		| literal:l
+		{:
+		:}
+		| LP expr:e RP
+		{:
 		:}
 
 
