@@ -50,7 +50,7 @@ non terminal Expr 		expr;
 non terminal Stmt 		stmt;
 non terminal StmtList 	stmt_list;
 non terminal String 	type, id_list, classDecl, classDecl_list,method, extend, stat_type_void, formals;
-non terminal 			program, field_meth_list, 
+non terminal 			program, field_meth_list, maby_expr,
 						field_meth, field, maybe_formals, 
 						call, staticCall, expr_list, virtualCall, location, 
 						binop, unop, literal, else_stmnt, assign_exp;
@@ -106,9 +106,9 @@ field ::= type:t1 id_list:is1 SEMI
 		{: Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
 ;
 
-id_list ::= /*empty*/
-		{: RESULT = "";
-		Parser.print_rule("id_list-> 'empty'"); :}
+id_list ::= ID:i1
+		{: RESULT = i1;
+		Parser.print_rule("id_list-> 'i1' for i1="+i1); :}
 		| id_list:is1 COMMA ID:i1
 		{: RESULT = is1 + ", " + i1; 
 		Parser.print_rule("id_list-> 'is1, i1' for is1=" + is1 + ", i1="+i1); :}
@@ -168,35 +168,40 @@ formals ::= type:t1 ID:i1
 stmt_list ::= /*empty*/
 	{:  :}
 	| stmt_list:sl stmt:s
-	{: sl.addStmt(s); RESULT = sl; :}
+	{: /*sl.addStmt(s); RESULT = sl; */:}
 ;
 
 stmt ::= location:v ASSIGN expr:e SEMI
 	{: /*VarExpr ve = new VarExpr(v); RESULT = new AssignStmt(ve, e);*/
-	Parser.print_rule("stmt -> v = e for v: " + v + "and e :" + e); :}
+	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call SEMI
-	| RETURN expr:e1 SEMI
-	{: Parser.print_rule("stmt -> return e1 for: " + e1);:}
+	| RETURN maby_expr:e1 SEMI
+	{: Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
 	| IF LP expr:e1 RP stmt else_stmnt 
-	{: Parser.print_rule("stmt -> if e1 for: " + e1);:}
+	{: Parser.print_rule("stmt -> 'if e1' for: " + e1);:}
 	| WHILE LP expr:e1 RP stmt
-	{: Parser.print_rule("stmt -> while e1 for: " + e1);:}
+	{: Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
 	| BREAK SEMI
-	{: Parser.print_rule("stmt -> Break");:}
+	{: Parser.print_rule("stmt -> 'break;'");:}
 	| CONTINUE SEMI
-	{: Parser.print_rule("stmt -> Continue");:}
-	| LCBR stmt RCBR 
-	| type:t1 ID:i1 assign_exp: e1 SEMI
-	{: Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + "i1: " + i1 + "e1: " + e1);:}
+	{: Parser.print_rule("stmt -> 'continue;'");:}
+	| LCBR stmt_list RCBR 
+	| type:t1 ID:i1 assign_exp:e1 SEMI
+	{: Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
 else_stmnt ::= /*empty*/ |
 				 ELSE stmt
 				 {: Parser.print_rule("else statement");:}
 ;
-assign_exp ::= /*empty*/ | ASSIGN expr 
+assign_exp ::= /*empty*/ 
+		| ASSIGN expr:e1
+		{: Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
 ;
 
+maby_expr ::= /*empty*/ 
+		| expr:e1
+;
 
 expr ::= location
 		|
@@ -237,13 +242,17 @@ call ::= staticCall:m1
 		{: Parser.print_rule("Call -> m1 for vm: " + vm); :}
 ;
 
-staticCall ::= CLASS DOT ID LP expr_list RP
+staticCall ::= CLASS_ID:ci1 DOT ID:i1 LP expr_list:e2 RP
+		{: Parser.print_rule("staticCall -> 'ci1.i1 (e2)' for ci1=" + ci1 + ", i1="+i1); :}
 ;
 
-expr_list ::= expr | expr_list expr
+expr_list ::= /*empty*/ | expr | expr_list COMMA expr
 ;
 
-virtualCall ::= expr DOT ID LP expr_list RP |ID LP expr_list RP
+virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
+		{: Parser.print_rule("virtualCall -> 'e1.i1(e2)' for i1="+i1); :}
+		 | ID:i1 LP expr_list:e2 RP
+		{: Parser.print_rule("virtualCall -> 'i1(e2)' for i1="+i1); :}
 ;
 
 location ::= ID | expr DOT ID | expr LB expr RB

@@ -57,28 +57,23 @@ private void printLineNumber(){
 }
 
 private Token printToken(String token_name, int token_sym) {
-	printLineNumber(); 
-	System.out.print(token_name); 
+	/*printLineNumber(); 
+	System.out.print(token_name); */
 	return symbol(token_sym, token_name);
 }
 
 private Token printToken(String token_name, int token_sym, Object value) {
-	printLineNumber(); 
-	System.out.print(token_name); 
+	/*printLineNumber(); 
+	System.out.print(token_name); */
 	return symbol(token_sym, token_name, value);
 }
 %}
 /* Here you declare member variables and functions that are used inside 
 
 the  */
-/* scanner actions.                                                        
-<<<<<<< HEAD
- 
-  */  
-=======
+/* scanner actions.                
   
   */   
->>>>>>> bc0a2fc3b5422655a9d3ef2adbe4253be8903df2
 /*************************************************************************
 
 ****/   
