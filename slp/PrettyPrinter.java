@@ -35,21 +35,6 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent--;
 	}
 
-	public void visit(ASTStmt stmt) {
-		ASTNode.indent++;
-		throw new UnsupportedOperationException("Unexpected visit of Stmt abstract class");
-		//ASTNode.indent--;
-	}
-	
-	
-	public void visit(ASTAssignStmt stmt) {
-		ASTNode.indent++;
-		stmt.varExpr.accept(this);
-		System.out.print("=");
-		stmt.rhs.accept(this);
-		System.out.print(";");
-		ASTNode.indent--;
-	}
 	
 	public void visit(ASTExpr expr) {
 		ASTNode.indent++;
@@ -199,5 +184,53 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent--;
 		
 	}
+	
+	@Override
+	public void visit(ASTAssignStmt assign){
+		ASTNode.indent++;
+		if (assign.varExpr == null){    // type id = exp
+			lineStart();
+			System.out.print("Declaration of local variable: ");
+			assign.rhs.accept(this);
+			System.out.print(", with initial value \n");
+		}
+		else{
+			lineStart();
+			System.out.print("Assignment statement");
+			assign.varExpr.accept(this);
+			assign.rhs.accept(this);
+		}
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTRetExp ret){
+		ASTNode.indent++;
+		lineStart();
+		System.out.print("Return statement, with return value");
+		ret.exp.accept(this);	
+		ASTNode.indent--;
+		}
+	
+	public void visit(ASTIfElseStmt ifstmt){
+		ASTNode.indent++;
+		lineStart();
+		System.out.print("If statement \n");
+		ifstmt.expr.accept(this);
+		System.out.print("Block of statements \n");
+		ifstmt.stmt.accept(this);
+		if (ifstmt.elsestmt != null){
+			System.out.print("Else statement \n");
+			System.out.print("Block of statements \n");
+			ifstmt.elsestmt.accept(this);
+		}
+		ASTNode.indent--;
+	}
 
+	@Override
+	public void visit(ASTStmt stmt) {
+		
+	}
+	
+	
 }
+

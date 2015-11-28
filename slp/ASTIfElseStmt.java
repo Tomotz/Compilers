@@ -2,7 +2,7 @@ package slp;
 
 public class ASTIfElseStmt extends ASTStmt {
 
-	public final ASTStmt elsestmt;
+	public  ASTStmt elsestmt = null;
 	public final ASTStmt stmt; 
 	public final ASTExpr expr;
 	
