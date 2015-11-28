@@ -47,11 +47,11 @@ terminal String		INT, DOT, WHILE,  STATIC,
 					RP, NEW, BREAK, CLASS;
 terminal Integer	INTEGER;
 terminal 			BOOLEAN;
-
-non terminal ASTExpr 		expr, maby_expr, assign_exp, literal, staticCall,
+ 
+non terminal ASTExpr 		expr, maby_expr, literal, staticCall,
 						 	location, virtualCall;
 non terminal ASTExprList	expr_list;
-non terminal ASTStmt 		stmt, else_stmnt, call;
+non terminal ASTStmt 		stmt, else_stmnt, call, assign_exp;
 non terminal Operator		binop, unop;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;

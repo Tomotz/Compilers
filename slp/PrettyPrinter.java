@@ -28,7 +28,6 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTStmtList stmts) {
 		ASTNode.indent++;
 		for (ASTStmt s : stmts.statements) {
-			lineStart();
 			s.accept(this);
 			System.out.println();
 		}
@@ -36,11 +35,6 @@ public class PrettyPrinter implements Visitor {
 	}
 
 	
-	public void visit(ASTExpr expr) {
-		ASTNode.indent++;
-		throw new UnsupportedOperationException("Unexpected visit of Expr abstract class");
-		//ASTNode.indent--;
-	}	
 	
 	
 	public void visit(ASTVarExpr expr) {
@@ -189,8 +183,8 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTAssignStmt assign){
 		if (assign != null){
 			ASTNode.indent++;
-			lineStart();
 			if (assign.varExpr != null){
+				lineStart();
 				System.out.print("Assignment statement");
 				assign.varExpr.accept(this);
 			}
@@ -210,9 +204,10 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTIfElseStmt ifstmt){
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("If statement \n");
+		System.out.println("If statement");
+		lineStart();
 		ifstmt.expr.accept(this);
-		System.out.print("Block of statements \n");
+		System.out.println("Block of statements");
 		ifstmt.stmt.accept(this);
 	
 		ASTNode.indent--;
@@ -221,9 +216,11 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTWhileStmt whl){
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("While statement \n");
+		System.out.println("While statement");
+		lineStart();
 		whl.expr.accept(this);
-		System.out.print("Block of statements \n");
+		lineStart();
+		System.out.println("Block of statements");
 		whl.stmt.accept(this);
 		ASTNode.indent--;
 	}
@@ -238,16 +235,15 @@ public class PrettyPrinter implements Visitor {
 	
 	public void visit(ASTAssignFormals varStmt){
 		ASTNode.indent++;
+
 		lineStart();
-		
 		System.out.print("Declaration of local variable: ");
 		System.out.print(varStmt.form.id);
 		System.out.println(", with initial value");
 		lineStart();
-		System.out.print("Primitive data type:");
+		System.out.print("Primitive data type: ");
 		System.out.println(varStmt.form.type);
-		lineStart();
-		if (varStmt.rhs != null){0
+		if (varStmt.rhs != null){
 			varStmt.rhs.accept(this);
 		}
 		ASTNode.indent--;
@@ -294,9 +290,92 @@ public class PrettyPrinter implements Visitor {
 	}
 	
 	@Override
-	public void visit(ASTStmt stmt) {
+	public void visit(ASTDotLength expr) {
+		ASTNode.indent++;
+		lineStart();
+		System.out.println("Reference to object length");
+		expr.e.accept(this);
+		ASTNode.indent--;
+	}
+
+	@Override
+	public void visit(ASTLiteral l){
+		ASTNode.indent++;
+		switch (l.literalType){
+		case 0:
+			System.out.print("Integer literal: "+l.s);
+			break;
+		case 1:
+			System.out.print("String literal: "+l.s);
+			break;
+		case 2:
+			System.out.print("Boolean literal: "+l.s);
+			break;
+		case 3:
+			System.out.print("Boolean literal: "+l.s);
+			break;
+		case 4:
+			System.out.print("Null literal");
+			break;
+		}
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTLocation loc){
+		ASTNode.indent++;
+		switch (loc.type){
+			case 0:
+				lineStart();
+				System.out.println("Reference to variable: " + loc.id);
+				break;
+			case 1:
+				lineStart();
+				System.out.println("Reference to field or function: ");
+				loc.e1.accept(this);
+				lineStart();
+				System.out.println(loc.id);
+			case 2:
+				lineStart();
+				System.out.println("Reference to array");
+				loc.e1.accept(this);
+				loc.e2.accept(this);
+				break;
+		
+			
+		}
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTStaticCall c){
+		ASTNode.indent++;
+		System.out.println("Call to static method: "+ c.classId + "." + c.id);
+		c.exprList.accept(this);
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTVirtualCall c){
+		ASTNode.indent++;
+		switch (c.type){
+			case 0:
+				System.out.println("Call to virtual method: " + c.id);
+				c.exprList.accept(this);
+				break;
+			case 1:
+				c.expr.accept(this);
+				lineStart();
+				System.out.println("Call to virtual method: " + c.id);
+				c.exprList.accept(this);
+		}
+		ASTNode.indent--;
+	}
+
+	@Override
+	public void visit(ASTCallStmt astCallStmt) {
+		// TODO Auto-generated method stub
 		
 	}
+
+
 	
 	
 }

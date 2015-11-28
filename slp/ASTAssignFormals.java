@@ -3,7 +3,7 @@ package slp;
 public class ASTAssignFormals extends ASTStmt {
 	
 	public final Formal form;
-	public final ASTExpr rhs;
+	public ASTExpr rhs = null;
 
 	public ASTAssignFormals(Formal form, ASTExpr rhs) {
 		this.form = form;
