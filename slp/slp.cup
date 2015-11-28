@@ -78,7 +78,7 @@ precedence left LB, RB, LP, RP, DOT;
 
 
 program ::= classDecl_list:c1
-		{: RESULT = new ASTRoot("program", c1);
+		{:  RESULT = new ASTRoot("program", c1);
 		Parser.print_rule("program-> 'classDecl_list'"); :}
 ;
 

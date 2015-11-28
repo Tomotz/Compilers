@@ -78,7 +78,7 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 		case MINUS:
 			result = lhsInt - rhsInt;
 			break;
-		case MULT:
+		case MULTIPLY:
 			result = lhsInt * rhsInt;
 			break;
 		case PLUS:
@@ -90,10 +90,10 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 		case GT:
 			result = lhsInt > rhsInt ? 1 : 0;
 			break;
-		case LE:
+		case LTE:
 			result = lhsInt <= rhsInt ? 1 : 0;
 			break;
-		case GE:
+		case GTE:
 			result = lhsInt >= rhsInt ? 1 : 0;
 			break;
 		case LAND:
@@ -140,6 +140,30 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 
 	@Override
 	public Integer visit(ASTRoot astGenNode, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTFormalList astFormalList, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTStatType astStatType, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTMethod astMethod, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTClassDecl astClassDecl, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
