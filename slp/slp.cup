@@ -52,14 +52,15 @@ non terminal Operator		binop, unop;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
 non terminal ASTClassList	classDecl_list;
+non terminal ASTFormalList	formals, maybe_formals;
 non terminal ASTRoot		program;
 non terminal ASTClassDecl 	classDecl;
 non terminal ASTIdList		id_list;
 non terminal ASTExtend		extend;
+non terminal ASTStatType	stat_type_void;
 non terminal String 	type;
-non terminal ASTNode 	method,  
-						stat_type_void, formals, maby_expr,
-						field_meth, field, maybe_formals, 
+non terminal ASTNode 	method,  maby_expr,
+						field_meth, field,
 						call, staticCall, expr_list, virtualCall, location, 
 						literal, else_stmnt, assign_exp;
 
@@ -131,22 +132,22 @@ id_list ::= ID:i1
 		Parser.print_rule("id_list-> 'is1, i1' for is1=" + is1 + ", i1="+i1); :}
 ;
 
-method ::= stat_type_void:st1 LP maybe_formals RP LCBR stmt_list RCBR
-		{: RESULT = new ASTExtend(""); //change me!!!!!!!
+method ::= stat_type_void:st1 LP maybe_formals:mf1 RP LCBR stmt_list:sl1 RCBR
+		{: RESULT = new ASTMethod(st1.isStatic, st1.type, st1.id, mf1, sl1); 
 		Parser.print_rule("stat_type_void-> 'st1 (maybe_formals) {stmt_list}' for st1="+st1); :} 
 ;
 
 stat_type_void::= STATIC type:t1 ID:i1
-		{: RESULT = new ASTExtend(""); //change me!!!!!!!
+		{: RESULT = new ASTStatType(true, t1, i1); 
 		Parser.print_rule("stat_type_void-> 'static t1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1
-		{:RESULT = new ASTExtend(""); //change me!!!!!!!
+		{:RESULT = new ASTStatType(false, t1, i1); 
 		Parser.print_rule("stat_type_void-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| STATIC VOID ID:i1
-		{: RESULT = new ASTExtend(""); //change me!!!!!!!
+		{: RESULT = new ASTStatType(true, Keyword.VOID.toString(), i1); 
 		Parser.print_rule("stat_type_void-> 'static void i1' for i1="+i1); :} 
 		| VOID ID:i1
-		{: RESULT = new ASTExtend(""); //change me!!!!!!!
+		{: RESULT = new ASTStatType(false, Keyword.VOID.toString(), i1); 
 		Parser.print_rule("stat_type_void-> 'void i1' for i1="+i1); :} 
 ; 
 
@@ -169,16 +170,18 @@ type ::= INT
 ;
 
 maybe_formals ::= /*empty*/ 
-		{: Parser.print_rule("maybe_formals-> ''"); :} 
+		{: RESULT = new ASTFormalList();
+		Parser.print_rule("maybe_formals-> ''"); :} 
 		| formals:fl1
-		{: Parser.print_rule("maybe_formals-> 'fl1' for fl1=" + fl1); :} 
+		{: RESULT = fl1;
+		  Parser.print_rule("maybe_formals-> 'fl1' for fl1=" + fl1); :} 
 ;
 
 formals ::= type:t1 ID:i1
-		{:  RESULT = new ASTExtend(""); //change me!!!!!!!
+		{:  RESULT = new ASTFormalList(t1, i1); 
 		Parser.print_rule("formals-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1 COMMA formals:fl1
-		{: RESULT = new ASTExtend(""); //change me!!!!!!!
+		{: fl1.addNode(t1, i1); RESULT = fl1;
 		Parser.print_rule("formals-> 't1 i1, fl1' for t1="+t1+" and i1="+i1+" and fl1="+fl1); :}
 ;
 

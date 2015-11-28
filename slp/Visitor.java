@@ -18,4 +18,7 @@ public interface Visitor {
 	public void visit(ASTField astField);
 	public void visit(ASTIdList astIdList);
 	public void visit(ASTClassList astClassList);
+	public void visit(ASTMethod astMethod);
+	public void visit(ASTStatType astStatType);
+	public void visit(ASTFormalList astFormalList);
 }

@@ -1,5 +1,7 @@
 package slp;
 
+import slp.ASTFormalList.Formal;
+
 /** Pretty-prints an SLP AST.
  */
 public class PrettyPrinter implements Visitor {
@@ -110,7 +112,7 @@ public class PrettyPrinter implements Visitor {
 		System.out.print("decleration of fields: ");
 		astField.ids.accept(this);
 		System.out.print("; of type: ");
-		System.out.println(astField.type);
+		System.out.print(astField.type);
 	}
 
 	@Override
@@ -123,6 +125,37 @@ public class PrettyPrinter implements Visitor {
 			++i;
 				
 		}
+	}
+
+	@Override
+	public void visit(ASTMethod astMethod) {
+		if (astMethod.isStatic)
+			System.out.print("decleration of static method: ");
+		else
+			System.out.print("decleration of virtual method: ");
+		System.out.print(astMethod.id);
+		System.out.print("; of type: ");
+		System.out.println(astMethod.type);
+		astMethod.formals.accept(this);
+		astMethod.stmts.accept(this);
+	}
+
+	@Override
+	public void visit(ASTStatType astStatType) {
+		/*empty*/
+		
+	}
+
+	@Override
+	public void visit(ASTFormalList formals) {
+		for (Formal f : formals.lst) {
+			System.out.print("Parameter: ");
+			System.out.print(f.id);
+			System.out.print("; of type: ");
+			System.out.println(f.type);
+			
+		}
+		
 	}
 
 }

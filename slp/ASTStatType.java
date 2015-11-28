@@ -1,12 +1,14 @@
 package slp;
 
-public class ASTField extends ASTNode {
+public class ASTStatType extends ASTNode {
+	public final Boolean isStatic;
 	public final String type;
-	ASTIdList ids;
+	public final String id;
 	
-	public ASTField(String type, ASTIdList ids) {
+	public ASTStatType(Boolean isStatic, String type, String id) {
 		this.type = type;
-		this.ids = ids;
+		this.id = id;
+		this.isStatic = isStatic;
 	}
 
 	@Override
