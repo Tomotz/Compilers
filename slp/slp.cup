@@ -45,25 +45,25 @@ terminal String		INT, DOT, WHILE,  STATIC,
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
 					 ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
 					RP, NEW, BREAK, CLASS;
-terminal			BOOLEAN, INTEGER;
+terminal Integer	 INTEGER;
+terminal 	BOOLEAN;
 
-non terminal ASTExpr 		expr, maby_expr, assign_exp;
-non terminal ASTStmt 		stmt, else_stmnt, call, staticCall, virtualCall;
+non terminal ASTExpr 		expr, maby_expr, assign_exp, literal, staticCall,
+						 	location, virtualCall;
+non terminal ASTExprList	expr_list;
+non terminal ASTStmt 		stmt, else_stmnt, call;
 non terminal Operator		binop, unop;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
 non terminal ASTClassList	classDecl_list;
 non terminal ASTFormalList	formals, maybe_formals;
 non terminal ASTRoot		program;
-non terminal ASTClassDecl 	classDecl;
-non terminal ASTIdList		id_list;
+non terminal ASTClassDecl 	classDecl; 
+non terminal ASTIdList		id_list; 
 non terminal ASTExtend		extend;
 non terminal ASTStatType	stat_type_void;
 non terminal String 	type;
-non terminal ASTNode 	method,  
-						field_meth, field,
-						 expr_list, location, 
-						literal;
+non terminal ASTNode 	method, field_meth, field;
 
 precedence right ASSIGN; 
 precedence left LOR;
@@ -239,40 +239,32 @@ maby_expr ::= /*empty*/
 		{: RESULT = e1; :}
 ;
 
-expr ::= location
-		{: RESULT = new ASTVarExpr("");
-		:}
+expr ::= location:l 
+			{: RESULT = l; :}
 		|
-		call:c1
-		{: RESULT = new ASTVarExpr("");
-		/*RESULT = new Call(c1);*/
-		:}
+		call:c 
+			{: RESULT = c; :}
 		| THIS
-		{: RESULT = new ASTVarExpr(Keyword.THIS.toString());
-		:}
-		| NEW CLASS_ID:cid LP RP 
-		{: RESULT = new ASTVarExpr("");
-		:}
-		| NEW type:t LB expr RB
-		{:  RESULT = new ASTVarExpr("");
-		:}
+			{: RESULT = new ASTVarExpr("this");
+			:}
+		| NEW CLASS_ID:c LP RP 
+			{: RESULT = new ASTNewObject(c); :}
+		| NEW type:t LB expr:e RB 
+			{: RESULT = new ASTNewArray(t,e); :}
 		| expr:e1 DOT LENGTH
-		{:  RESULT = new ASTVarExpr("");
-		:}
+			{:  RESULT = new ASTDotLength(e1); :}
 		| expr:e1 binop:b expr:e2
-		{: RESULT = new ASTBinaryOpExpr(e1, e2, b);
-		:}  
-		| unop:u expr:e
-		{: RESULT = new ASTUnaryOpExpr(e,u);
-		:}
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} 
+		| MINUS expr:e 
+			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS); :} %prec UMINUS
+		| LNEG:l expr:e 
+		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG); :} 
 		| literal:l
-		{: RESULT = new ASTVarExpr("");
+		{: RESULT = l;
 		:}
 		| LP expr:e RP
-		{: RESULT = new ASTVarExpr("");
-		:}
+		{: RESULT = e; :}
 ;
-
 	  
 	
 call ::= staticCall:m1 
@@ -282,19 +274,31 @@ call ::= staticCall:m1
 ;
 
 staticCall ::= CLASS_ID:ci1 DOT ID:i1 LP expr_list:e2 RP
-		{: Parser.print_rule("staticCall -> 'ci1.i1 (e2)' for ci1=" + ci1 + ", i1="+i1); :}
+		{: Parser.print_rule("staticCall -> 'ci1.i1 (e2)' for ci1=" + ci1 + ", i1="+i1);
+		RESULT = new ASTStaticCall(ci1,i1,e2);
+		 :}
 ;
 
-expr_list ::= /*empty*/ | expr | expr_list COMMA expr
+expr_list ::= /*empty*/ {: RESULT = new ASTExprList(); :} 
+				| expr:e 
+				{: RESULT = new ASTExprList(e); :} 
+				| expr_list:elist COMMA expr:e 
+				{: elist.add(e); RESULT = elist; :}
 ;
 
 virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
-		{: Parser.print_rule("virtualCall -> 'e1.i1(e2)' for i1="+i1); :}
+		{: Parser.print_rule("virtualCall -> 'e1.i1(e2)' for i1="+i1); 
+		RESULT = new ASTVirtualCall(e1,i1,e2);
+		:}
 		 | ID:i1 LP expr_list:e2 RP
-		{: Parser.print_rule("virtualCall -> 'i1(e2)' for i1="+i1); :}
+		{: Parser.print_rule("virtualCall -> 'i1(e2)' for i1="+i1);
+		RESULT = new ASTVirtualCall(i1,e2);
+		 :}
 ;
 
-location ::= ID | expr DOT ID | expr LB expr RB
+location ::= ID:id {: RESULT =  new ASTLocation(id); :} 
+		| expr:e DOT ID:id {: RESULT = new ASTLocation(e,id); :}
+		| expr:e1 LB expr:e2 RB {: RESULT =  new ASTLocation(e1,e2); :}
 ;
 
 binop ::= PLUS 
@@ -331,5 +335,9 @@ unop ::= MINUS
 		{: RESULT = Operator.LNEG; :} 
 ;
 
-literal ::= INTEGER | QUOTE | TRUE | FALSE | NULL
+literal ::= INTEGER:l {: RESULT = new ASTLiteral(l.toString(),0); :} 
+		| QUOTE:l {: RESULT = new ASTLiteral(l,1); :}
+		| TRUE:l {: RESULT = new ASTLiteral(l,2); :} 
+		| FALSE:l {: RESULT = new ASTLiteral(l,3); :}
+		| NULL:l {: RESULT = new ASTLiteral(l,4); :}
 ;

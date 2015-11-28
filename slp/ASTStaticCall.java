@@ -1,10 +1,10 @@
 package slp;
 
 public class ASTStaticCall extends ASTExpr {
-	public ASTExpr classId;
-	public ASTExpr id;
+	public String classId;
+	public String id;
 	public ASTExprList exprList;
-	public ASTStaticCall(ASTExpr classId, ASTExpr id, ASTExprList exprList){
+	public ASTStaticCall(String classId, String id, ASTExprList exprList){
 		this.classId = classId;
 		this.id = id;
 		this.exprList = exprList;

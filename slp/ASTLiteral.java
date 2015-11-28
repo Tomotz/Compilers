@@ -1,6 +1,6 @@
 package slp;
 
-public class ASTLiteral extends ASTNode {
+public class ASTLiteral extends ASTExpr {
 
 /*
  * 
