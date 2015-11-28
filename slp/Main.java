@@ -42,6 +42,7 @@ public class Main {
 			System.out.println("Parsed " + args[0] + " successfully!");
 			ASTRoot root = (ASTRoot) parseSymbol.value;
 			
+			
 			// Pretty-print the program to System.out
 			PrettyPrinter printer = new PrettyPrinter(root);
 			printer.print();

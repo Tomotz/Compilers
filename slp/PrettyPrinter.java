@@ -35,21 +35,6 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent--;
 	}
 
-	public void visit(ASTStmt stmt) {
-		ASTNode.indent++;
-		throw new UnsupportedOperationException("Unexpected visit of Stmt abstract class");
-		//ASTNode.indent--;
-	}
-	
-	
-	public void visit(ASTAssignStmt stmt) {
-		ASTNode.indent++;
-		stmt.varExpr.accept(this);
-		System.out.print("=");
-		stmt.rhs.accept(this);
-		System.out.print(";");
-		ASTNode.indent--;
-	}
 	
 	public void visit(ASTExpr expr) {
 		ASTNode.indent++;
@@ -280,5 +265,13 @@ public class PrettyPrinter implements Visitor {
 		}
 		ASTNode.indent--;
 	}
+
+
+	@Override
+	public void visit(ASTStmt stmt) {
+		
+	}
+	
+	
 }
 
