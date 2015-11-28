@@ -186,28 +186,45 @@ formals ::= type:t1 ID:i1
 ;
 
 stmt_list ::= /*empty*/
-	{:  :}
+	{:RESULT = new ASTStmtList()  :}
 	| stmt_list:sl stmt:s
-	{: /*sl.addStmt(s); RESULT = sl; */:}
+	{: sl.addNode(s); RESULT = sl 
+	 /*sl.addStmt(s); RESULT = sl; */:}
 ;
 
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: /*ASTVarExpr ve = new ASTVarExpr(v); RESULT = new ASTAssignStmt(ve, e);*/
+	{: ASTVarExpr ve = new ASTVarExpr(v); RESULT = new ASTAssignStmt(ve, e);
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
-	| call SEMI
-	| RETURN maby_expr:e1 SEMI
-	{: Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
-	| IF LP expr:e1 RP stmt else_stmnt 
-	{: Parser.print_rule("stmt -> 'if e1' for: " + e1);:}
-	| WHILE LP expr:e1 RP stmt
-	{: Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
+	| call:cl SEMI
+	{: RESULT = cl;
+	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
+	| RETURN:rt maby_expr:e1 SEMI
+	{: e1 = new ASTExpr(); RESULT = new ASTRetExp(e1); 
+	Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
+	| IF:f1 LP expr:ex1 RP stmt:s1 else_stmnt:el1 
+	{:  el1 = new ASTVarExpr(Keyword.ELSE.toString());
+		s1 = new ASTStmt();
+		ex1 = new ASTExpr(); 
+		RESULT = new ASTIfElseStmt(f1, ex1, s1, el1); 
+	 	Parser.print_rule("stmt -> 'if e1' for: " + e1);:}
+	| WHILE:w1 LP expr:e1 RP stmt:s1
+	{: w1 = new ASTVarExpr(Keyword.WHILE.toString()); 
+		e1 = new ASTExpr(); 
+		s1 = new ASTStmt();
+		RESULT = new ASTWhileStmt(w1,e1,s1);
+		Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
 	| BREAK SEMI
-	{: Parser.print_rule("stmt -> 'break;'");:}
+	{: RESULT = new ASTVarExpr(Keyword.BREAK.toString());
+		Parser.print_rule("stmt -> 'break;'");:}
 	| CONTINUE SEMI
-	{: Parser.print_rule("stmt -> 'continue;'");:}
-	| LCBR stmt_list RCBR 
+	{: RESULT = new ASTVarExpr(Keyword.CONTINUE.toString());
+		Parser.print_rule("stmt -> 'continue;'");:}	
+	| LCBR stmt_list:st RCBR 
+		{:RESULT = st;:} 
 	| type:t1 ID:i1 assign_exp:e1 SEMI
-	{: Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
+	{:
+	
+	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
 else_stmnt ::= /*empty*/ |
