@@ -234,8 +234,8 @@ assign_exp ::= /*empty*/
 ;
 
 maby_expr ::= /*empty*/ 
-		{: RETURN = NULL:} 
-		| expr:e1
+		{: RESULT = NULL:} 
+		| expr:e1;
 		{: RESULT = e1 :}
 ;
 

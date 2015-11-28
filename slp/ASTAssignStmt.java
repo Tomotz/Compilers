@@ -4,7 +4,7 @@ package slp;
  * An AST node for assignment statements.
  */
 public class ASTAssignStmt extends ASTStmt {
-	public  ASTVarExpr varExpr;
+	public  ASTVarExpr varExpr = null;
 
 	public  ASTExpr rhs;
 
@@ -40,4 +40,6 @@ public class ASTAssignStmt extends ASTStmt {
 			PropagatingVisitor<DownType, UpType> visitor, DownType context) {
 		return visitor.visit(this, context);
 	}
+	
+	
 }

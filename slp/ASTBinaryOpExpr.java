@@ -36,6 +36,6 @@ public class ASTBinaryOpExpr extends ASTExpr {
 	}
 	
 	public String toString() {
-		return lhs.toString() + op + rhs.toString();
+		return lhs.toString();
 	}	
 }
