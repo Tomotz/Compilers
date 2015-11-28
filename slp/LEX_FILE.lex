@@ -50,7 +50,7 @@ line, */
 /* will be copied letter to letter into the Lexer class code.*/
   
 %{
-private void printLineNumber(){
+public void printLineNumber(){
 	System.out.println();
 	System.out.print(yyline+1);
 	System.out.print(": "); 
