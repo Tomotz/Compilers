@@ -13,16 +13,16 @@ public class ASTRoot extends ASTNode{
 		this.name = "";
 		this.child = null;
 	}
+	
 	@Override
 	public void accept(Visitor visitor) {
 		visitor.visit(this);
-		
 	}
-
+	
 	@Override
 	public <DownType, UpType> UpType accept(
-			PropagatingVisitor<DownType, UpType> visitor, DownType context) {
-		return visitor.visit(this, context);
+		PropagatingVisitor<DownType, UpType> visitor, DownType context) {
+			return visitor.visit(this, context);
 	}
 
 }

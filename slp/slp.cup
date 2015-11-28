@@ -248,9 +248,9 @@ expr ::= location:l
 			{: RESULT = new ASTVarExpr("this");
 			:}
 		| NEW CLASS_ID:c LP RP 
-			{: RESULT = new ASTNewObject(c); :}
+			{: RESULT = new ASTNewObject(c); :} 
 		| NEW type:t LB expr:e RB 
-			{: RESULT = new ASTNewArray(t,e); :}
+			{: RESULT = new ASTNewArray(t,e); :} 
 		| expr:e1 DOT LENGTH
 			{:  RESULT = new ASTDotLength(e1); :}
 		| expr:e1 binop:b expr:e2
@@ -279,13 +279,6 @@ staticCall ::= CLASS_ID:ci1 DOT ID:i1 LP expr_list:e2 RP
 		 :}
 ;
 
-expr_list ::= /*empty*/ {: RESULT = new ASTExprList(); :} 
-				| expr:e 
-				{: RESULT = new ASTExprList(e); :} 
-				| expr_list:elist COMMA expr:e 
-				{: elist.add(e); RESULT = elist; :}
-;
-
 virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
 		{: Parser.print_rule("virtualCall -> 'e1.i1(e2)' for i1="+i1); 
 		RESULT = new ASTVirtualCall(e1,i1,e2);
@@ -295,6 +288,15 @@ virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
 		RESULT = new ASTVirtualCall(i1,e2);
 		 :}
 ;
+
+expr_list ::= /*empty*/ {: RESULT = new ASTExprList(); :}  //mark
+				| expr:e 
+				{: RESULT = new ASTExprList(e); :} 
+				| expr_list:elist COMMA expr:e 
+				{: elist.add(e); RESULT = elist; :}
+;
+
+
 
 location ::= ID:id {: RESULT =  new ASTLocation(id); :} 
 		| expr:e DOT ID:id {: RESULT = new ASTLocation(e,id); :}

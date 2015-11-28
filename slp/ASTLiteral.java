@@ -23,15 +23,13 @@ public class ASTLiteral extends ASTExpr {
 	
 	@Override
 	public void accept(Visitor visitor) {
-		// TODO Auto-generated method stub
-
+		visitor.visit(this);
 	}
-
+	
 	@Override
 	public <DownType, UpType> UpType accept(
-			PropagatingVisitor<DownType, UpType> visitor, DownType context) {
-		// TODO Auto-generated method stub
-		return null;
+		PropagatingVisitor<DownType, UpType> visitor, DownType context) {
+			return visitor.visit(this, context);
 	}
 
 }

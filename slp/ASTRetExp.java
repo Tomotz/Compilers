@@ -18,7 +18,6 @@ public final ASTExpr exp;
 		PropagatingVisitor<DownType, UpType> visitor, DownType context) {
 			return visitor.visit(this, context);
 	}
-
 }
 
 	
