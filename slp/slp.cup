@@ -221,17 +221,22 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
-else_stmnt ::= /*empty*/ |
-				 ELSE stmt
-				 {: Parser.print_rule("else statement");:}
+else_stmnt ::= /*empty*/ {: RETURN = NULL:} |
+				 ELSE stmt:st
+				 {: RETURN = ASTElseStmt(st);
+				 	 Parser.print_rule("else statement");:}
 ;
-assign_exp ::= /*empty*/ 
+assign_exp ::= /*empty*/  
+		{: RETURN = NULL:} 
 		| ASSIGN expr:e1
-		{: Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
+		{: RESULT = new ASTElseStmt(e1);
+		   Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
 ;
 
 maby_expr ::= /*empty*/ 
+		{: RETURN = NULL:} 
 		| expr:e1
+		{: RESULT = e1 :}
 ;
 
 expr ::= location
