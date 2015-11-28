@@ -4,11 +4,13 @@ package slp;
  * An AST node for assignment statements.
  */
 public class ASTAssignStmt extends ASTStmt {
-	public  ASTVarExpr varExpr = null;
+
+	public  ASTNode varExpr;
+
 
 	public  ASTExpr rhs;
 
-	public ASTAssignStmt(ASTVarExpr varExpr, ASTExpr rhs) {
+	public ASTAssignStmt(ASTNode varExpr, ASTExpr rhs) {
 		this.varExpr = varExpr;
 		this.rhs = rhs;
 	}

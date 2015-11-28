@@ -1,6 +1,5 @@
 package slp;
 
-import slp.ASTFormalList.Formal;
 
 /** Pretty-prints an SLP AST.
  */

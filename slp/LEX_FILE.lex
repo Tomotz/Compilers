@@ -50,15 +50,15 @@ line, */
 /* will be copied letter to letter into the Lexer class code.*/
   
 %{
-private void printLineNumber(){
+public void printLineNumber(){
 	System.out.println();
 	System.out.print(yyline+1);
 	System.out.print(": "); 
-}
+}  
 
 public int getLineNumber(){
 	return yyline+1;
-}
+} 
 
 private Token printToken(String token_name, int token_sym) {
 	/*printLineNumber(); 

@@ -37,17 +37,18 @@ scan with {:
 	return t; 
 :};
 
-terminal 			PLUS, MINUS,UMINUS, MULTIPLY, DIVIDE, SEMI, ASSIGN,
+terminal String		PLUS, MINUS,UMINUS, MULTIPLY, DIVIDE, SEMI, ASSIGN,
 					GT, LT, LAND, LOR;
 terminal String 	CLASS_ID, ID, QUOTE;
-terminal 			INT, DOT, WHILE,  STATIC, INTEGER,
+terminal String		INT, DOT, WHILE,  STATIC,
 					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
-					BOOLEAN, ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
+					 ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
 					RP, NEW, BREAK, CLASS;
+terminal			BOOLEAN, INTEGER;
 
-non terminal ASTExpr 		expr;
-non terminal ASTStmt 		stmt;
+non terminal ASTExpr 		expr, maby_expr, assign_exp;
+non terminal ASTStmt 		stmt, else_stmnt, call, staticCall, virtualCall;
 non terminal Operator		binop, unop;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
@@ -59,10 +60,10 @@ non terminal ASTIdList		id_list;
 non terminal ASTExtend		extend;
 non terminal ASTStatType	stat_type_void;
 non terminal String 	type;
-non terminal ASTNode 	method,  maby_expr,
+non terminal ASTNode 	method,  
 						field_meth, field,
-						call, staticCall, expr_list, virtualCall, location, 
-						literal, else_stmnt, assign_exp;
+						 expr_list, location, 
+						literal;
 
 precedence right ASSIGN; 
 precedence left LOR;
@@ -186,57 +187,56 @@ formals ::= type:t1 ID:i1
 ;
 
 stmt_list ::= /*empty*/
-	{:RESULT = new ASTStmtList()  :}
+	{: RESULT = new ASTStmtList();  :}
 	| stmt_list:sl stmt:s
-	{: sl.addNode(s); RESULT = sl 
-	 /*sl.addStmt(s); RESULT = sl; */:}
+	{: sl.addNode(s); RESULT = sl; :}
 ;
-
+ 
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: RESULT = new ASTAssignStmt(ve, e);
+	{: RESULT = new ASTAssignStmt(v, e);
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call:cl SEMI
-	{: RESULT = cl;
-	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
+	{: RESULT = cl; :}
 	| RETURN maby_expr:e1 SEMI
 	{:RESULT = new ASTRetExp(e1); 
 	Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
 	| IF LP expr:ex1 RP stmt:s1 else_stmnt:el1 
 	{: RESULT = new ASTIfElseStmt(ex1, s1, el1); 
-	 	Parser.print_rule("stmt -> 'if e1' for: " + e1);:}
+	 	:}
 	| WHILE LP expr:e1 RP stmt:s1
 	{:  RESULT = new ASTWhileStmt(e1,s1);
 		Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
 	| BREAK SEMI
-	{: RESULT = new ASTVarExpr(Keyword.BREAK.toString());
+	{: RESULT = new ASTVarStmt(Keyword.BREAK.toString());
 		Parser.print_rule("stmt -> 'break;'");:}
 	| CONTINUE SEMI
-	{: RESULT = new ASTVarExpr(Keyword.CONTINUE.toString());
+	{: RESULT = new ASTVarStmt(Keyword.CONTINUE.toString());
 		Parser.print_rule("stmt -> 'continue;'");:}	
 	| LCBR stmt_list:st RCBR 
-	{:RESULT = st;:} 
-	| type:t1 ID:i1 assign_exp:e1 SEMI
-	{: ASTFormalist.Formal f1 = new ASTFormalList(t1, i1);
+	{:RESULT = st;:}  
+	| type:t1 ID:i1 assign_exp:e1 SEMI 
+	{: Formal f1 = new Formal(t1, i1);
 	   RESULT = new ASTAssignFormals(f1,e1);
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
-else_stmnt ::= /*empty*/ {: RETURN = NULL:} |
+else_stmnt ::= /*empty*/ {: RESULT = null;:} |
 				 ELSE stmt:st
-				 {: RETURN = ASTElseStmt(st);
+				 {: RESULT = new ASTElseStmt(st);
 				 	 Parser.print_rule("else statement");:}
-;
+; 
 assign_exp ::= /*empty*/  
-		{: RETURN = NULL:} 
+		{: RESULT = null;:} 
 		| ASSIGN expr:e1
-		{: RESULT = new ASTElseStmt(e1);
+		{: RESULT = new ASTAssignStmt(e1);
 		   Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
 ;
 
 maby_expr ::= /*empty*/ 
-		{: RESULT = NULL:} 
-		| expr:e1;
-		{: RESULT = e1 :}
+
+		{: RESULT = null;:} 
+		| expr:e1
+		{: RESULT = e1; :}
 ;
 
 expr ::= location

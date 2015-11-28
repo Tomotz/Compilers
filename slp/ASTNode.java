@@ -3,6 +3,7 @@ package slp;
 /** The base class of all AST nodes in this package.
  */
 public abstract class ASTNode {
+	static public int indent = 0;
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.
 	 */
