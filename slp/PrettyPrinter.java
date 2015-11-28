@@ -266,7 +266,33 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent--;
 	}
 
-
+	public void visit(ASTNewObject obj){
+		ASTNode.indent++;
+		lineStart();
+		System.out.print("Instantiation of class: ");
+		System.out.println(obj.c);
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTNewArray arr){
+		ASTNode.indent++;
+		lineStart();
+		System.out.println("Array allocation");
+		lineStart();
+		System.out.println(arr.type);
+		lineStart();
+		arr.expr.accept(this);
+		ASTNode.indent--;
+	}
+	
+	public void visit(ASTExprList eList){
+		ASTNode.indent++;
+		for (ASTExpr exp : eList.lst){
+			lineStart();
+			exp.accept(this);
+		}
+	}
+	
 	@Override
 	public void visit(ASTStmt stmt) {
 		
