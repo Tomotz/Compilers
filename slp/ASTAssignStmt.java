@@ -5,7 +5,7 @@ package slp;
  */
 public class ASTAssignStmt extends ASTStmt {
 
-	public  ASTNode varExpr;
+	public  ASTNode varExpr = null;
 
 
 	public  ASTExpr rhs;
