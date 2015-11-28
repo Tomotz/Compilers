@@ -1,6 +1,7 @@
 package slp;
 
 import java.io.*;
+
 import java_cup.runtime.*;
 
 /** The entry point of the SLP (Straight Line Program) application.
@@ -12,8 +13,9 @@ public class Main {
 	/** Reads an SLP and pretty-prints it.
 	 * 
 	 * @param args Should be the name of the file containing an SLP.
+	 * @throws Exception 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		try {
 			if (args.length == 0) {
 				System.out.println("Error: Missing input file argument!");
@@ -38,7 +40,7 @@ public class Main {
 			
 			Symbol parseSymbol = parser.parse();
 			System.out.println("Parsed " + args[0] + " successfully!");
-			StmtList root = (StmtList) parseSymbol.value;
+			ASTRoot root = (ASTRoot) parseSymbol.value;
 			
 			// Pretty-print the program to System.out
 			PrettyPrinter printer = new PrettyPrinter(root);
@@ -47,7 +49,7 @@ public class Main {
 			// Interpret the program
 			SLPEvaluator evaluator = new SLPEvaluator(root);
 			evaluator.evaluate();
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
 			System.out.print(e);
 		}
 	}

@@ -22,58 +22,40 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 		root.accept(this, env);
 	}
 	
-	public Integer visit(StmtList stmts, Environment env) {
-		for (Stmt st : stmts.statements) {
+	public Integer visit(ASTStmtList stmts, Environment env) {
+		for (ASTStmt st : stmts.statements) {
 			st.accept(this, env);
 		}
 		return null;
 	}
 
-	public Integer visit(Stmt stmt, Environment env) {
+	public Integer visit(ASTStmt stmt, Environment env) {
 		throw new UnsupportedOperationException("Unexpected visit of Stmt!");
 	}
 
-	public Integer visit(PrintStmt stmt, Environment env) {
-		Integer printValue = stmt.expr.accept(this, env);
-		System.out.println(printValue);
-		return null;
-	}
 
-	public Integer visit(AssignStmt stmt, Environment env) {
-		Expr rhs = stmt.rhs;
+	public Integer visit(ASTAssignStmt stmt, Environment env) {
+		ASTExpr rhs = stmt.rhs;
 		Integer expressionValue = rhs.accept(this, env);
-		VarExpr var = stmt.varExpr;
+		ASTVarExpr var = stmt.varExpr;
 		env.update(var, expressionValue);
 		return null;
 	}
 
-	public Integer visit(Expr expr, Environment env) {
+	public Integer visit(ASTExpr expr, Environment env) {
 		throw new UnsupportedOperationException("Unexpected visit of Expr!");
 	}
 
-	public Integer visit(ReadIExpr expr, Environment env) {
-		int readValue;
-		try {
-			System.out.println("Enter number: ");
-			readValue = System.in.read();
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e.getMessage());
-		}
-		return new Integer(readValue);
-		// return readValue; also works in Java 1.5 because of auto-boxing
-	}
-
-	public Integer visit(VarExpr expr, Environment env) {
+	public Integer visit(ASTVarExpr expr, Environment env) {
 		return env.get(expr);
 	}
 
-	public Integer visit(NumberExpr expr, Environment env) {
+	public Integer visit(ASTNumberExpr expr, Environment env) {
 		return new Integer(expr.value);		
 		// return expr.value; also works in Java 1.5 because of auto-boxing
 	}
 
-	public Integer visit(UnaryOpExpr expr, Environment env) {
+	public Integer visit(ASTUnaryOpExpr expr, Environment env) {
 		Operator op = expr.op;
 		if (op != Operator.MINUS)
 			throw new RuntimeException("Encountered unexpected operator " + op);
@@ -81,7 +63,7 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 		return new Integer(- value.intValue());
 	}
 
-	public Integer visit(BinaryOpExpr expr, Environment env) {
+	public Integer visit(ASTBinaryOpExpr expr, Environment env) {
 		Integer lhsValue = expr.lhs.accept(this, env);
 		int lhsInt = lhsValue.intValue();
 		Integer rhsValue = expr.rhs.accept(this, env);
@@ -124,5 +106,41 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 			throw new RuntimeException("Encountered unexpected operator type: " + expr.op);
 		}
 		return new Integer(result);
+	}
+
+	@Override
+	public Integer visit(ASTClassList astClassList, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTIdList astIdList, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTField astField, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTExtend astExtend, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTfmList astGenList, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer visit(ASTRoot astGenNode, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

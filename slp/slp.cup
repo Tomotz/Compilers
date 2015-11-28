@@ -25,7 +25,7 @@ parser code  {:
 	}
 	
 	public static void print_rule(String rule_text) {
-		System.out.print("\nReduced rule: " + rule_text);
+		//System.out.print("\nReduced rule: " + rule_text);
 	}
 :}  
 
@@ -37,7 +37,7 @@ scan with {:
 	return t; 
 :};
 
-terminal 			PLUS, MINUS, MULTIPLY, DIVIDE, SEMI, ASSIGN,
+terminal 			PLUS, MINUS,UMINUS, MULTIPLY, DIVIDE, SEMI, ASSIGN,
 					GT, LT, LAND, LOR;
 terminal String 	CLASS_ID, ID, QUOTE;
 terminal 			INT, DOT, WHILE,  STATIC, INTEGER,
@@ -46,14 +46,22 @@ terminal 			INT, DOT, WHILE,  STATIC, INTEGER,
 					BOOLEAN, ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
 					RP, NEW, BREAK, CLASS;
 
-non terminal Expr 		expr;
-non terminal Stmt 		stmt;
-non terminal StmtList 	stmt_list;
-non terminal String 	type, id_list, classDecl, classDecl_list,method, extend, stat_type_void, formals;
-non terminal 			program, field_meth_list, maby_expr,
+non terminal ASTExpr 		expr;
+non terminal ASTStmt 		stmt;
+non terminal Operator		binop, unop;
+non terminal ASTStmtList 	stmt_list;
+non terminal ASTfmList		field_meth_list;
+non terminal ASTClassList	classDecl_list;
+non terminal ASTRoot		program;
+non terminal ASTClassDecl 	classDecl;
+non terminal ASTIdList		id_list;
+non terminal ASTExtend		extend;
+non terminal String 	type;
+non terminal ASTNode 	method,  
+						stat_type_void, formals, maby_expr,
 						field_meth, field, maybe_formals, 
 						call, staticCall, expr_list, virtualCall, location, 
-						binop, unop, literal, else_stmnt, assign_exp;
+						literal, else_stmnt, assign_exp;
 
 precedence right ASSIGN; 
 precedence left LOR;
@@ -61,89 +69,98 @@ precedence left LAND;
 precedence left EQUAL, NEQUAL;
 precedence left GT, LT, GTE, LTE;
 precedence left PLUS, MINUS;
-precedence left LNEG;
 precedence left DIVIDE, MULTIPLY, MOD;
+precedence right LNEG, UMINUS;
 precedence left ELSE;
 precedence left LB, RB, LP, RP, DOT;
 
 
-program ::= classDecl_list
-		{: Parser.print_rule("program-> 'classDecl_list'"); :}
+program ::= classDecl_list:c1
+		{: RESULT = new ASTRoot("program", c1);
+		Parser.print_rule("program-> 'classDecl_list'"); :}
 ;
 
 classDecl_list ::= classDecl_list:cl1 classDecl:c1
-		{: Parser.print_rule("classDecl_list-> 'cl1 c1' for cl1=" + cl1 + " and c1=" + c1); :}
+		{: cl1.addNode(c1); 
+		RESULT = cl1;
+		Parser.print_rule("classDecl_list-> 'cl1 c1' for cl1=" + cl1 + " and c1=" + c1); :}
 		| /*empty*/
-		{: Parser.print_rule("classDecl_list-> 'empty'"); :}
+		{:  RESULT = new ASTClassList();
+		Parser.print_rule("classDecl_list-> 'empty'"); :}
 ; 
 
-classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list RCBR
-		{: RESULT = c1;
+classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list:fml RCBR
+		{: RESULT = new ASTClassDecl(c1, e1, fml);
 		Parser.print_rule("classDecl_list-> 'class c1 e1 {fields_and_methods}' for c1=" + c1 + " and e1=" + e1); :}
 ;
 
 extend ::= /*empty*/
-		{: RESULT = "";
+		{: RESULT = new ASTExtend();
 		Parser.print_rule("extend-> ''"); :} 
 		| EXTENDS CLASS_ID:c1
-		{: RESULT = "extends "+c1; 
+		{: RESULT = new ASTExtend(c1);
 		Parser.print_rule("extend-> 'extends c1' for c1=" + c1); :} 
 ;
 
-field_meth_list ::= field_meth 
-		{: Parser.print_rule("field_meth_list-> 'field_meth'"); :} 
-		| field_meth_list field_meth
-		{: Parser.print_rule("field_meth_list-> 'field_meth_list field_meth'"); :} 
+field_meth_list ::= /**/
+		{: RESULT = new ASTfmList();
+		Parser.print_rule("field_meth_list-> 'field_meth'"); :} 
+		| field_meth_list:fml field_meth:fm
+		{: fml.addNode(fm); RESULT = fml;
+		Parser.print_rule("field_meth_list-> 'field_meth_list field_meth'"); :} 
 ;
 
-field_meth ::= field
-		{: Parser.print_rule("field_meth-> 'field'"); :} 
-		 | method
-		{: Parser.print_rule("field_meth-> 'method'"); :} 
+field_meth ::= field:f1
+		{: RESULT = f1;
+		Parser.print_rule("field_meth-> 'field'"); :} 
+		 | method:m1
+		{: RESULT = m1;
+		Parser.print_rule("field_meth-> 'method'"); :} 
 ;
 
 field ::= type:t1 id_list:is1 SEMI
-		{: Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
+		{: RESULT = new ASTField(t1, is1);
+		Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
 ;
 
 id_list ::= ID:i1
-		{: RESULT = i1;
+		{: RESULT = new ASTIdList(i1);
 		Parser.print_rule("id_list-> 'i1' for i1="+i1); :}
 		| id_list:is1 COMMA ID:i1
-		{: RESULT = is1 + ", " + i1; 
+		{: is1.addNode(i1); RESULT = is1 ;
 		Parser.print_rule("id_list-> 'is1, i1' for is1=" + is1 + ", i1="+i1); :}
 ;
 
 method ::= stat_type_void:st1 LP maybe_formals RP LCBR stmt_list RCBR
-		{: RESULT = st1;
+		{: RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("stat_type_void-> 'st1 (maybe_formals) {stmt_list}' for st1="+st1); :} 
 ;
 
 stat_type_void::= STATIC type:t1 ID:i1
-		{: RESULT = i1;
+		{: RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("stat_type_void-> 'static t1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1
-		{: RESULT = i1;
+		{:RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("stat_type_void-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| STATIC VOID ID:i1
-		{: RESULT = i1;
+		{: RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("stat_type_void-> 'static void i1' for i1="+i1); :} 
 		| VOID ID:i1
-		{: RESULT = i1;
+		{: RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("stat_type_void-> 'void i1' for i1="+i1); :} 
 ; 
 
 
 type ::= INT 
-		{: RESULT = "INT";
+		{: RESULT = Keyword.INT.toString();
 		Parser.print_rule("type-> 'INT'"); :}
 		| BOOLEAN
-		{: RESULT = "BOOLEAN";
+		{: RESULT = Keyword.BOOLEAN.toString();
 		Parser.print_rule("type-> 'BOOLEAN'"); :}
 		| STRING 
-		{: RESULT = "STRING";
+		{: RESULT = Keyword.STRING.toString();
 		Parser.print_rule("type-> 'STRING'"); :}
-		| CLASS_ID:c1 
+		| CLASS_ID:c1  
 		{: RESULT = c1;
 		Parser.print_rule("type-> 'c1' for c1="+c1); :}
 		| type:t1 LB RB
@@ -158,10 +175,10 @@ maybe_formals ::= /*empty*/
 ;
 
 formals ::= type:t1 ID:i1
-		{: RESULT = t1 + " " + i1;
+		{:  RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("formals-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1 COMMA formals:fl1
-		{: RESULT = t1 + " " + i1 + ", " + fl1;
+		{: RESULT = new ASTExtend(""); //change me!!!!!!!
 		Parser.print_rule("formals-> 't1 i1, fl1' for t1="+t1+" and i1="+i1+" and fl1="+fl1); :}
 ;
 
@@ -172,7 +189,7 @@ stmt_list ::= /*empty*/
 ;
 
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: /*VarExpr ve = new VarExpr(v); RESULT = new AssignStmt(ve, e);*/
+	{: /*ASTVarExpr ve = new ASTVarExpr(v); RESULT = new ASTAssignStmt(ve, e);*/
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call SEMI
 	| RETURN maby_expr:e1 SEMI
@@ -204,33 +221,36 @@ maby_expr ::= /*empty*/
 ;
 
 expr ::= location
+		{: RESULT = new ASTVarExpr("");
+		:}
 		|
 		call:c1
-		{: /*RESULT = new Call(c1);*/
+		{: RESULT = new ASTVarExpr("");
+		/*RESULT = new Call(c1);*/
 		:}
 		| THIS
-		{: /*RESULT = THIS*/
+		{: RESULT = new ASTVarExpr(Keyword.THIS.toString());
 		:}
 		| NEW CLASS_ID:cid LP RP 
-		{: 
+		{: RESULT = new ASTVarExpr("");
 		:}
 		| NEW type:t LB expr RB
-		{: 
+		{:  RESULT = new ASTVarExpr("");
 		:}
 		| expr:e1 DOT LENGTH
-		{: 
+		{:  RESULT = new ASTVarExpr("");
 		:}
-		| expr:e1 binop:o expr:e2
-		{: 
-		:}
+		| expr:e1 binop:b expr:e2
+		{: RESULT = new ASTBinaryOpExpr(e1, e2, b);
+		:}  
 		| unop:u expr:e
-		{: /*RESULT = new UnaryOpExpr(e,u);*/
+		{: RESULT = new ASTUnaryOpExpr(e,u);
 		:}
 		| literal:l
-		{:
+		{: RESULT = new ASTVarExpr("");
 		:}
 		| LP expr:e RP
-		{:
+		{: RESULT = new ASTVarExpr("");
 		:}
 ;
 
@@ -258,11 +278,38 @@ virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
 location ::= ID | expr DOT ID | expr LB expr RB
 ;
 
-binop ::= PLUS | MINUS | MULTIPLY | DIVIDE | LAND | LOR | 
-			GT | LT | GTE | LTE | EQUAL | NEQUAL | MOD
+binop ::= PLUS 
+		{: RESULT = Operator.PLUS; :} 
+		| MINUS 
+		{: RESULT = Operator.MINUS; :} 
+		| MULTIPLY 
+		{: RESULT = Operator.MULTIPLY; :} 
+		| DIVIDE 
+		{: RESULT = Operator.DIV; :} 
+		| LAND 
+		{: RESULT = Operator.LAND; :} 
+		| LOR 
+		{: RESULT = Operator.LOR; :} 
+		| GT 
+		{: RESULT = Operator.GT; :} 
+		| LT 
+		{: RESULT = Operator.LT; :} 
+		| GTE 
+		{: RESULT = Operator.GTE; :} 
+		| LTE 
+		{: RESULT = Operator.LTE; :} 
+		| EQUAL 
+		{: RESULT = Operator.EQUAL; :} 
+		| NEQUAL 
+		{: RESULT = Operator.NEQUAL; :} 
+		| MOD
+		{: RESULT = Operator.MOD; :} 
 ;  
 
-unop ::= MINUS | LNEG
+unop ::= MINUS 
+		{: RESULT = Operator.MINUS; :} 
+		| LNEG
+		{: RESULT = Operator.LNEG; :} 
 ;
 
 literal ::= INTEGER | QUOTE | TRUE | FALSE | NULL

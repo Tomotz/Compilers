@@ -3,14 +3,19 @@ package slp;
 /** An interface for AST visitors.
  */
 public interface Visitor {
-	public void visit(StmtList stmts);
-	public void visit(Stmt stmt);
-	public void visit(PrintStmt stmt);
-	public void visit(AssignStmt stmt);
-	public void visit(Expr expr);
-	public void visit(ReadIExpr expr);
-	public void visit(VarExpr expr);
-	public void visit(NumberExpr expr);
-	public void visit(UnaryOpExpr expr);
-	public void visit(BinaryOpExpr expr);
+	public void visit(ASTStmtList stmts);
+	public void visit(ASTStmt stmt);
+	public void visit(ASTAssignStmt stmt);
+	public void visit(ASTExpr expr);
+	public void visit(ASTVarExpr expr);
+	public void visit(ASTNumberExpr expr);
+	public void visit(ASTUnaryOpExpr expr);
+	public void visit(ASTBinaryOpExpr expr);
+	public void visit(ASTRoot node);
+	public void visit(ASTfmList astGenList);
+	public void visit(ASTClassDecl cls);
+	public void visit(ASTExtend node);
+	public void visit(ASTField astField);
+	public void visit(ASTIdList astIdList);
+	public void visit(ASTClassList astClassList);
 }

@@ -56,6 +56,10 @@ private void printLineNumber(){
 	System.out.print(": "); 
 }
 
+public int getLineNumber(){
+	return yyline+1;
+}
+
 private Token printToken(String token_name, int token_sym) {
 	/*printLineNumber(); 
 	System.out.print(token_name); */
@@ -79,7 +83,7 @@ the  */
 ****/   
 %{   
     
-
+ 
 /*************************************************************************
 
 ********/
