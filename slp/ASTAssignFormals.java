@@ -2,10 +2,10 @@ package slp;
 
 public class ASTAssignFormals extends ASTStmt {
 	
-	public final ASTFormalList form;
+	public final ASTFormalList.Formal form;
 	public final ASTExpr rhs;
 
-	public ASTAssignFormals(ASTFormalList form, ASTExpr rhs) {
+	public ASTAssignFormals(ASTFormalList.Formal form, ASTExpr rhs) {
 		this.form = form;
 		this.rhs = rhs;
 	}

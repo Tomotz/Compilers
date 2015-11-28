@@ -3,7 +3,7 @@ package slp;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ASTFormalList extends ASTNode {
+public class ASTFormalList extends ASTStmt {
 	public class Formal {
 		public final String type;
 		public final String id;

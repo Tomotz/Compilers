@@ -1,11 +1,11 @@
 package slp;
-
+ 
 public class ASTWhileStmt  extends ASTStmt {
  
 	public final ASTStmt stmt; 
 	public final ASTExpr expr;
 	
-	public ASTWhileStmt(ASTStmt whStmt ,ASTExpr expr, ASTStmt stmt) {
+	public ASTWhileStmt(ASTExpr expr, ASTStmt stmt) {
 		this.stmt = stmt;
 		this.expr = expr;
 	}
