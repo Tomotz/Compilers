@@ -43,10 +43,10 @@ terminal String 	CLASS_ID, ID, QUOTE;
 terminal String		INT, DOT, WHILE,  STATIC,
 					CONTINUE, LB, MOD, GTE, LTE, EQUAL, IF, TRUE, LNEG, 
 					LP, RETURN, COMMA, RCBR, NULL, LENGTH, RB, FALSE, VOID, 
-					 ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
+					ELSE, THIS, NEQUAL,  STRING, LCBR, EXTENDS, 
 					RP, NEW, BREAK, CLASS;
-terminal Integer	 INTEGER;
-terminal 	BOOLEAN;
+terminal Integer	INTEGER;
+terminal 			BOOLEAN;
 
 non terminal ASTExpr 		expr, maby_expr, assign_exp, literal, staticCall,
 						 	location, virtualCall;
