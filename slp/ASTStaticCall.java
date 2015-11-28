@@ -1,6 +1,6 @@
 package slp;
 
-public class ASTStaticCall extends ASTExpr {
+public class ASTStaticCall extends ASTStmt {
 	public String classId;
 	public String id;
 	public ASTExprList exprList;

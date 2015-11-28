@@ -1,6 +1,6 @@
 package slp;
 
-public class ASTVirtualCall extends ASTExpr {
+public class ASTVirtualCall extends ASTStmt {
 	
 	/*
 	 * 

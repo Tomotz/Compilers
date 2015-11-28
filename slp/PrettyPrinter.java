@@ -28,8 +28,8 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTStmtList stmts) {
 		ASTNode.indent++;
 		for (ASTStmt s : stmts.statements) {
-			s.accept(this);
-			System.out.println();
+			if (s != null)
+				s.accept(this);
 		}
 		ASTNode.indent--;
 	}
@@ -58,8 +58,10 @@ public class PrettyPrinter implements Visitor {
 	
 	public void visit(ASTBinaryOpExpr expr) {
 		ASTNode.indent++;
+		lineStart();
+		System.out.print("Logical binary operation: " );
+		System.out.println(expr.op);
 		expr.lhs.accept(this);
-		System.out.print(expr.op);
 		expr.rhs.accept(this);
 		ASTNode.indent--;
 	}
@@ -185,10 +187,11 @@ public class PrettyPrinter implements Visitor {
 			ASTNode.indent++;
 			if (assign.varExpr != null){
 				lineStart();
-				System.out.print("Assignment statement");
+				System.out.println("Assignment statement");
 				assign.varExpr.accept(this);
 			}
-			assign.rhs.accept(this);
+			if (assign.rhs != null)
+				assign.rhs.accept(this);
 			ASTNode.indent--;
 		}
 	}
@@ -196,7 +199,7 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTRetExp ret){
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("Return statement, with return value");
+		System.out.println("Return statement, with return value");
 		ret.exp.accept(this);	
 		ASTNode.indent--;
 		}
@@ -205,8 +208,8 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		System.out.println("If statement");
-		lineStart();
 		ifstmt.expr.accept(this);
+		lineStart();
 		System.out.println("Block of statements");
 		ifstmt.stmt.accept(this);
 	
@@ -217,7 +220,6 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		System.out.println("While statement");
-		lineStart();
 		whl.expr.accept(this);
 		lineStart();
 		System.out.println("Block of statements");
@@ -273,10 +275,8 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTNewArray arr){
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("Array allocation");
-		lineStart();
+		System.out.print("Array allocation of type: ");
 		System.out.println(arr.type);
-		lineStart();
 		arr.expr.accept(this);
 		ASTNode.indent--;
 	}
@@ -284,7 +284,6 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTExprList eList){
 		ASTNode.indent++;
 		for (ASTExpr exp : eList.lst){
-			lineStart();
 			exp.accept(this);
 		}
 	}
@@ -301,21 +300,22 @@ public class PrettyPrinter implements Visitor {
 	@Override
 	public void visit(ASTLiteral l){
 		ASTNode.indent++;
+		lineStart();
 		switch (l.literalType){
 		case 0:
-			System.out.print("Integer literal: "+l.s);
+			System.out.println("Integer literal: "+l.s);
 			break;
 		case 1:
-			System.out.print("String literal: "+l.s);
+			System.out.println("String literal: "+l.s);
 			break;
 		case 2:
-			System.out.print("Boolean literal: "+l.s);
+			System.out.println("Boolean literal: "+l.s);
 			break;
 		case 3:
-			System.out.print("Boolean literal: "+l.s);
+			System.out.println("Boolean literal: "+l.s);
 			break;
 		case 4:
-			System.out.print("Null literal");
+			System.out.println("Null literal");
 			break;
 		}
 		ASTNode.indent--;
@@ -334,6 +334,7 @@ public class PrettyPrinter implements Visitor {
 				loc.e1.accept(this);
 				lineStart();
 				System.out.println(loc.id);
+				break;
 			case 2:
 				lineStart();
 				System.out.println("Reference to array");
@@ -348,6 +349,7 @@ public class PrettyPrinter implements Visitor {
 	
 	public void visit(ASTStaticCall c){
 		ASTNode.indent++;
+		lineStart();
 		System.out.println("Call to static method: "+ c.classId + "." + c.id);
 		c.exprList.accept(this);
 		ASTNode.indent--;
@@ -357,6 +359,7 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		switch (c.type){
 			case 0:
+				lineStart();
 				System.out.println("Call to virtual method: " + c.id);
 				c.exprList.accept(this);
 				break;
@@ -371,7 +374,6 @@ public class PrettyPrinter implements Visitor {
 
 	@Override
 	public void visit(ASTCallStmt astCallStmt) {
-		// TODO Auto-generated method stub
 		
 	}
 

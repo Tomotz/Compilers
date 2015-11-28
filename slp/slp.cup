@@ -48,10 +48,10 @@ terminal String		INT, DOT, WHILE,  STATIC,
 terminal Integer	INTEGER;
 terminal 			BOOLEAN;
  
-non terminal ASTExpr 		expr, maby_expr, literal, staticCall,
-						 	location, virtualCall;
+non terminal ASTExpr 		expr, maby_expr, literal,
+						 	location;
 non terminal ASTExprList	expr_list;
-non terminal ASTStmt 		stmt, else_stmnt, call, assign_exp;
+non terminal ASTStmt 		stmt, else_stmnt, call, assign_exp, virtualCall, staticCall;
 non terminal Operator		binop, unop;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
@@ -268,9 +268,11 @@ expr ::= location:l
 	  
 	
 call ::= staticCall:m1 
-		{: Parser.print_rule("Call -> m1 for m1: " + m1); :}
+		{: RESULT = m1;
+		 Parser.print_rule("Call -> m1 for m1: " + m1); :}
 		| virtualCall:vm
-		{: Parser.print_rule("Call -> m1 for vm: " + vm); :}
+		{: RESULT = vm;
+		Parser.print_rule("Call -> m1 for vm: " + vm); :}
 ;
 
 staticCall ::= CLASS_ID:ci1 DOT ID:i1 LP expr_list:e2 RP
