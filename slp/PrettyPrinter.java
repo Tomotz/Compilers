@@ -333,7 +333,7 @@ public class PrettyPrinter implements Visitor {
 				System.out.println("Reference to field or function: ");
 				loc.e1.accept(this);
 				lineStart();
-				System.out.println(loc.id);
+				System.out.println("Reference to variable: " + loc.id);
 				break;
 			case 2:
 				lineStart();

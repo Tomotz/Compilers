@@ -15,7 +15,7 @@ public class Main {
 	 * @param args Should be the name of the file containing an SLP.
 	 * @throws Exception 
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		try {
 			if (args.length == 0) {
 				System.out.println("Error: Missing input file argument!");
@@ -50,7 +50,7 @@ public class Main {
 			// Interpret the program
 			SLPEvaluator evaluator = new SLPEvaluator(root);
 			evaluator.evaluate();
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			System.out.print(e);
 		}
 	}
