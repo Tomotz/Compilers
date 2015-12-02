@@ -10,7 +10,8 @@ public class Environment {
 	 * name of the variable as a way of ensuring we a consistent mapping
 	 * for each variable. 
 	 */
-	private Map<String,Integer> varToValue = new HashMap<String,Integer>();
+	
+	private Map<String,Set<icObject>> varToValue = new HashMap<String,Set<icObject>>();
 	
 	/** Updates the value of a variable.
 	 * 
