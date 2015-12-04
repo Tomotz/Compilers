@@ -12,6 +12,8 @@ public class Environment {
 	 */
 	
 	private Map<String,Set<icObject>> varToValue = new HashMap<String,Set<icObject>>();
+	public icClass lastClass = null;
+	public icFunction lastFunc = null;
 	
 	public void add(String name, icObject obj)
 	{
@@ -43,4 +45,11 @@ public class Environment {
 		}
 		return varToValue.get(v.name);
 	}
+
+
+	public void destroyScope(int scope) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

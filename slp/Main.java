@@ -15,7 +15,7 @@ public class Main {
 	 * @param args Should be the name of the file containing an SLP.
 	 * @throws Exception 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		try {
 			if (args.length == 0) {
 				System.out.println("Error: Missing input file argument!");
@@ -50,7 +50,7 @@ public class Main {
 			// Interpret the program
 			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {//(Exception e) {
 			System.out.print(e);
 		}
 	}

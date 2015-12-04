@@ -1,5 +1,7 @@
 package slp;
 
+import sun.awt.image.BufImgSurfaceData.ICMColorData;
+
 
 /** Evaluates straight line programs.
  */
@@ -23,7 +25,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 	
 	public String visit(ASTStmtList stmts, Environment env) {
-		for (ASTStmt st : stmts.statements) {
+		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
 		return null;
@@ -120,25 +122,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTIdList astIdList, Environment d) {
-		// TODO Auto-generated method stub
+		/*should not be called. do nothing*/
 		return null;
 	}
 
 	@Override
 	public String visit(ASTField astField, Environment d) {
-		// TODO Auto-generated method stub
+		if (IS_DEBUG)
+			System.out.println("accepting fields: " + astField.ids.lst);
+		for (String field : astField.ids.lst) {
+			icObject o = new icObject(field, ASTNode.scope);
+			d.add(field, o);
+		}
 		return null;
 	}
 
 	@Override
 	public String visit(ASTExtend astExtend, Environment d) {
-		// TODO Auto-generated method stub
+		/*should not be called. do nothing*/
 		return null;
 	}
 
 	@Override
-	public String visit(ASTfmList astGenList, Environment d) {
-		// TODO Auto-generated method stub
+	public String visit(ASTfmList fmList, Environment d) {
+		/*should not be called. do nothing*/
 		return null;
 	}
 
@@ -150,19 +157,40 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTFormalList astFormalList, Environment d) {
-		// TODO Auto-generated method stub
+		/*should not be called. do nothing*/
 		return null;
 	}
 
 	@Override
 	public String visit(ASTStatType astStatType, Environment d) {
-		// TODO Auto-generated method stub
+		/*should not be called. do nothing*/
 		return null;
 	}
 
 	@Override
-	public String visit(ASTMethod astMethod, Environment d) {
-		// TODO Auto-generated method stub
+	public String visit(ASTMethod meth, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting method: " + meth.id);
+		String classType = d.lastClass.name;
+		icFunction func = new icFunction(meth.id, ASTNode.scope, meth.type, 
+				classType, meth.isStatic);
+		for (Formal formal : meth.formals.lst)
+		{
+			func.formals.add(formal);
+		}
+		d.lastFunc = func;
+		if (meth.isStatic)
+			d.lastClass.statScope.add(func.name);
+		else
+			d.lastClass.instScope.add(func.name);
+		d.add(func.name, func);
+			
+		++ASTNode.scope;
+		for (ASTStmt s : meth.stmts.statements) {
+			s.accept(this, d);
+		}
+		d.destroyScope(ASTNode.scope);
+		--ASTNode.scope;
 		return null;
 	}
 
@@ -171,12 +199,31 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		if (IS_DEBUG)
 			System.out.println("accepting classDecl: " + cls.class_id);
 		icClass c = new icClass(cls.class_id, ASTNode.scope);
+		c.ext = cls.extend.name;
+		d.add(cls.class_id, c);
+		d.lastClass = c;
 		++ASTNode.scope;
-		cls.extend;
-		cls.fieldmeths;
-		for (ASTClassDecl cls : astClassList.lst) {
-			cls.accept(this, d);
+		for (ASTNode fm : cls.fieldmeths.lst) {
+			fm.accept(this, d);
 		}
+		d.destroyScope(ASTNode.scope);
+		--ASTNode.scope;
 		return null;
+	}
+
+	@Override
+	public String visit(ASTDotLength expr, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting expr.length");
+		String e = expr.e.accept(this, d);
+		if (e.endsWith("[]"))
+		{
+			return "int";
+		}
+		else
+			throw new RuntimeException(
+					"tried accessing field length of non array expression: "
+					+e);
+
 	}
 }

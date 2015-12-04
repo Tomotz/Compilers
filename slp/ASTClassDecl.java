@@ -1,11 +1,11 @@
 package slp;
 
 public class ASTClassDecl extends ASTNode {
-	ASTNode fieldmeths;
+	ASTfmList fieldmeths;
 	public final String class_id;
-	public final ASTNode extend;
+	public final ASTExtend extend;
 	
-	public ASTClassDecl(String class_id, ASTNode extend, ASTNode fieldmeths) {
+	public ASTClassDecl(String class_id, ASTExtend extend, ASTfmList fieldmeths) {
 		this.class_id = class_id;
 		this.extend = extend;
 		this.fieldmeths = fieldmeths;

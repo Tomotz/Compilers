@@ -4,11 +4,11 @@ public class ASTMethod extends ASTNode {
 	public final Boolean isStatic;
 	public final String type;
 	public final String id;
-	public final ASTNode formals;
-	public final ASTNode stmts;
+	public final ASTFormalList formals;
+	public final ASTStmtList stmts;
 	
-	public ASTMethod(Boolean isStatic, String type, String id, ASTNode formals,
-			ASTNode stmts) {
+	public ASTMethod(Boolean isStatic, String type, String id, 
+			ASTFormalList formals, ASTStmtList stmts) {
 		this.type = type;
 		this.id = id;
 		this.isStatic = isStatic;

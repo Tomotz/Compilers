@@ -23,4 +23,5 @@ public interface PropagatingVisitor<DownType,UpType> {
 	public UpType visit(ASTNumberExpr expr, DownType d);
 	public UpType visit(ASTUnaryOpExpr expr, DownType d);
 	public UpType visit(ASTBinaryOpExpr expr, DownType d);
+	public UpType visit(ASTDotLength expr, DownType d);
 }
