@@ -4,14 +4,14 @@ import java.io.IOException;
 
 /** Evaluates straight line programs.
  */
-public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
+public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	protected ASTNode root;
 
 	/** Constructs an SLP interpreter for the given AST.
 	 * 
 	 * @param root An SLP AST node.
 	 */
-	public SLPEvaluator(ASTNode root) {
+	public ICEvaluator(ASTNode root) {
 		this.root = root;
 	}
 	
@@ -22,49 +22,49 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 		root.accept(this, env);
 	}
 	
-	public Integer visit(ASTStmtList stmts, Environment env) {
+	public String visit(ASTStmtList stmts, Environment env) {
 		for (ASTStmt st : stmts.statements) {
 			st.accept(this, env);
 		}
 		return null;
 	}
 
-	public Integer visit(ASTStmt stmt, Environment env) {
+	public String visit(ASTStmt stmt, Environment env) {
 		throw new UnsupportedOperationException("Unexpected visit of Stmt!");
 	}
 
 
-	public Integer visit(ASTAssignStmt stmt, Environment env) {
+	public String visit(ASTAssignStmt stmt, Environment env) {
 		ASTExpr rhs = stmt.rhs;
-		Integer expressionValue = rhs.accept(this, env);
-		ASTVarExpr var = stmt.varExpr;
-		env.update(var, expressionValue);
+		//Integer expressionValue = rhs.accept(this, env);
+		//ASTVarExpr var = stmt.varExpr;
+		//env.update(var, expressionValue);
 		return null;
 	}
 
-	public Integer visit(ASTExpr expr, Environment env) {
+	public String visit(ASTExpr expr, Environment env) {
 		throw new UnsupportedOperationException("Unexpected visit of Expr!");
 	}
 
-	public Integer visit(ASTVarExpr expr, Environment env) {
-		return env.get(expr);
+	public String visit(ASTVarExpr expr, Environment env) {
+		return null;// env.get(expr);
 	}
 
-	public Integer visit(ASTNumberExpr expr, Environment env) {
-		return new Integer(expr.value);		
+	public String visit(ASTNumberExpr expr, Environment env) {
+		return null;//new Integer(expr.value);		
 		// return expr.value; also works in Java 1.5 because of auto-boxing
 	}
 
-	public Integer visit(ASTUnaryOpExpr expr, Environment env) {
+	public String visit(ASTUnaryOpExpr expr, Environment env) {
 		Operator op = expr.op;
 		if (op != Operator.MINUS)
 			throw new RuntimeException("Encountered unexpected operator " + op);
-		Integer value = expr.operand.accept(this, env);
-		return new Integer(- value.intValue());
+		//Integer value = expr.operand.accept(this, env);
+		return null;// new Integer(- value.intValue());
 	}
 
-	public Integer visit(ASTBinaryOpExpr expr, Environment env) {
-		Integer lhsValue = expr.lhs.accept(this, env);
+	public String visit(ASTBinaryOpExpr expr, Environment env) {
+		/*Integer lhsValue = expr.lhs.accept(this, env);
 		int lhsInt = lhsValue.intValue();
 		Integer rhsValue = expr.rhs.accept(this, env);
 		int rhsInt = rhsValue.intValue();
@@ -104,66 +104,68 @@ public class SLPEvaluator implements PropagatingVisitor<Environment, Integer> {
 			break;
 		default:
 			throw new RuntimeException("Encountered unexpected operator type: " + expr.op);
+		}*/
+		return null;//new Integer(result);
+	}
+
+	@Override
+	public String visit(ASTClassList astClassList, Environment d) {
+		for (ASTClassDecl cls : astClassList.lst) {
+			cls.accept(this, d);
 		}
-		return new Integer(result);
+		return null;
 	}
 
 	@Override
-	public Integer visit(ASTClassList astClassList, Environment d) {
+	public String visit(ASTIdList astIdList, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTIdList astIdList, Environment d) {
+	public String visit(ASTField astField, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTField astField, Environment d) {
+	public String visit(ASTExtend astExtend, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTExtend astExtend, Environment d) {
+	public String visit(ASTfmList astGenList, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTfmList astGenList, Environment d) {
+	public String visit(ASTRoot root, Environment d) {
+		root.child.accept(this, d);
+		return null;
+	}
+
+	@Override
+	public String visit(ASTFormalList astFormalList, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTRoot astGenNode, Environment d) {
+	public String visit(ASTStatType astStatType, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTFormalList astFormalList, Environment d) {
+	public String visit(ASTMethod astMethod, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Integer visit(ASTStatType astStatType, Environment d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Integer visit(ASTMethod astMethod, Environment d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Integer visit(ASTClassDecl astClassDecl, Environment d) {
+	public String visit(ASTClassDecl astClassDecl, Environment d) {
 		// TODO Auto-generated method stub
 		return null;
 	}

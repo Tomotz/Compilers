@@ -52,7 +52,7 @@ non terminal ASTExpr 		expr, maby_expr, literal,
 						 	location;
 non terminal ASTExprList	expr_list;
 non terminal ASTStmt 		stmt, else_stmnt, call, assign_exp, virtualCall, staticCall;
-non terminal Operator		binop, unop;
+non terminal Operator		binmul, unop, bincomp, binplus,binequal;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
 non terminal ASTClassList	classDecl_list;
@@ -253,10 +253,6 @@ expr ::= location:l
 			{: RESULT = new ASTNewArray(t,e); :} 
 		| expr:e1 DOT LENGTH
 			{:  RESULT = new ASTDotLength(e1); :}
-		| expr:e1 binop:b expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} 
-		| MINUS expr:e 
-			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS); :} %prec UMINUS
 		| LNEG:l expr:e 
 		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG); :} 
 		| literal:l
@@ -264,8 +260,21 @@ expr ::= location:l
 		:}
 		| LP expr:e RP
 		{: RESULT = e; :}
+		| unop expr:e 
+			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS); :} %prec UMINUS
+		| expr:e1 binmul:b expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec MULTIPLY
+		| expr:e1 LAND expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LAND); :}%prec LAND
+		| expr:e1 LOR expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LOR); :}%prec LOR
+		| expr:e1 binplus:b expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec PLUS
+		| expr:e1 binequal:b expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec EQUAL
+		| expr:e1 bincomp:b expr:e2
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec GT
 ;
-	  
 	
 call ::= staticCall:m1 
 		{: RESULT = m1;
@@ -305,19 +314,7 @@ location ::= ID:id {: RESULT =  new ASTLocation(id); :}
 		| expr:e1 LB expr:e2 RB {: RESULT =  new ASTLocation(e1,e2); :}
 ;
 
-binop ::= PLUS 
-		{: RESULT = Operator.PLUS; :} 
-		| MINUS 
-		{: RESULT = Operator.MINUS; :} 
-		| MULTIPLY 
-		{: RESULT = Operator.MULTIPLY; :} 
-		| DIVIDE 
-		{: RESULT = Operator.DIV; :} 
-		| LAND 
-		{: RESULT = Operator.LAND; :} 
-		| LOR 
-		{: RESULT = Operator.LOR; :} 
-		| GT 
+bincomp ::=  GT 
 		{: RESULT = Operator.GT; :} 
 		| LT 
 		{: RESULT = Operator.LT; :} 
@@ -325,13 +322,27 @@ binop ::= PLUS
 		{: RESULT = Operator.GTE; :} 
 		| LTE 
 		{: RESULT = Operator.LTE; :} 
-		| EQUAL 
+;  
+
+binplus ::= PLUS 
+		{: RESULT = Operator.PLUS; :} 
+		| MINUS 
+		{: RESULT = Operator.MINUS; :} 
+
+;
+binequal ::= EQUAL 
 		{: RESULT = Operator.EQUAL; :} 
 		| NEQUAL 
 		{: RESULT = Operator.NEQUAL; :} 
+;
+
+binmul ::= MULTIPLY 
+		{: RESULT = Operator.MULTIPLY; :} 
+		| DIVIDE 
+		{: RESULT = Operator.DIV; :} 
 		| MOD
 		{: RESULT = Operator.MOD; :} 
-;  
+		;
 
 unop ::= MINUS 
 		{: RESULT = Operator.MINUS; :} 

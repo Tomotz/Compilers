@@ -212,6 +212,8 @@ public class PrettyPrinter implements Visitor {
 		lineStart();
 		System.out.println("Block of statements");
 		ifstmt.stmt.accept(this);
+		if (ifstmt.elsestmt != null)
+			ifstmt.elsestmt.accept(this);
 	
 		ASTNode.indent--;
 	}

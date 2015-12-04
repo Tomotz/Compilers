@@ -48,7 +48,7 @@ public class Main {
 			printer.print();
 			
 			// Interpret the program
-			SLPEvaluator evaluator = new SLPEvaluator(root);
+			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
 		} catch (Exception e) {
 			System.out.print(e);
