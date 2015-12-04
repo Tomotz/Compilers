@@ -13,6 +13,12 @@ public class Environment {
 	
 	private Map<String,Set<icObject>> varToValue = new HashMap<String,Set<icObject>>();
 	
+	public void add(String name, icObject obj)
+	{
+		
+	}
+	
+	
 	/** Updates the value of a variable.
 	 * 
 	 * @param v A variable expression.

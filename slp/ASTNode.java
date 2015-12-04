@@ -4,6 +4,7 @@ package slp;
  */
 public abstract class ASTNode {
 	static public int indent = 0;
+	static public int scope = 0;
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.
 	 */

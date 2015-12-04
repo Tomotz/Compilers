@@ -1,11 +1,11 @@
 package slp;
 
-import java.io.IOException;
 
 /** Evaluates straight line programs.
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	protected ASTNode root;
+	static Boolean IS_DEBUG = true;
 
 	/** Constructs an SLP interpreter for the given AST.
 	 * 
@@ -110,6 +110,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTClassList astClassList, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting classList");
 		for (ASTClassDecl cls : astClassList.lst) {
 			cls.accept(this, d);
 		}
@@ -165,8 +167,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTClassDecl astClassDecl, Environment d) {
-		// TODO Auto-generated method stub
+	public String visit(ASTClassDecl cls, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting classDecl: " + cls.class_id);
+		icClass c = new icClass(cls.class_id, ASTNode.scope);
+		++ASTNode.scope;
+		cls.extend;
+		cls.fieldmeths;
+		for (ASTClassDecl cls : astClassList.lst) {
+			cls.accept(this, d);
+		}
 		return null;
 	}
 }
