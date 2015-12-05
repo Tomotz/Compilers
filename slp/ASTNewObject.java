@@ -2,10 +2,10 @@ package slp;
 
 public class ASTNewObject extends ASTExpr {
 	
-	public final String c;
+	public final String type;
 	
-	public ASTNewObject(String c){
-		this.c = c;
+	public ASTNewObject(String type){
+		this.type = type;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.
@@ -31,7 +31,7 @@ public class ASTNewObject extends ASTExpr {
 	}
 	
 	public String toString() {
-		return "New object of class " + c;
+		return "New object of class " + type;
 	}	
 
 }

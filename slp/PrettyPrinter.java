@@ -270,7 +270,7 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		System.out.print("Instantiation of class: ");
-		System.out.println(obj.c);
+		System.out.println(obj.type);
 		ASTNode.indent--;
 	}
 	

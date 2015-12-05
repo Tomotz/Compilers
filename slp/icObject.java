@@ -1,6 +1,6 @@
 package slp;
 
-public class icObject {
+public abstract class icObject {
 	
 	String name;
 	int scope;

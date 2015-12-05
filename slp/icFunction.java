@@ -12,7 +12,7 @@ public class icFunction extends icObject {
 	String retType;
 	String classType;              // the father class of the function
 	boolean isStatic;              // states whether the function is static
-	List<Formal> formals = new ArrayList<Formal>();  //  list of function argument names and types
+	List<String> arg_types = new ArrayList<String>();  //  list of function argument types
 
 	
 

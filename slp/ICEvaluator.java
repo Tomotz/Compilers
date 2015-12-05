@@ -1,7 +1,5 @@
 package slp;
 
-import sun.awt.image.BufImgSurfaceData.ICMColorData;
-
 
 /** Evaluates straight line programs.
  */
@@ -131,8 +129,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		if (IS_DEBUG)
 			System.out.println("accepting fields: " + astField.ids.lst);
 		for (String field : astField.ids.lst) {
-			icObject o = new icObject(field, ASTNode.scope);
-			d.add(field, o);
+			icVariable o = new icVariable(field, ASTNode.scope, astField.type);
+			d.add(o);
 		}
 		return null;
 	}
@@ -174,18 +172,22 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		String classType = d.lastClass.name;
 		icFunction func = new icFunction(meth.id, ASTNode.scope, meth.type, 
 				classType, meth.isStatic);
-		for (Formal formal : meth.formals.lst)
-		{
-			func.formals.add(formal);
-		}
 		d.lastFunc = func;
 		if (meth.isStatic)
-			d.lastClass.statScope.add(func.name);
+			d.lastClass.statScope.add(func);
 		else
-			d.lastClass.instScope.add(func.name);
-		d.add(func.name, func);
+			d.lastClass.instScope.add(func);
+		d.add(func);
 			
 		++ASTNode.scope;
+		for (Formal formal : meth.formals.lst)
+		{
+			d.lastFunc.arg_types.add(formal.type);
+			icVariable v = new icVariable(formal.id,
+					ASTNode.scope, formal.type);
+			d.add(v);
+		}
+		
 		for (ASTStmt s : meth.stmts.statements) {
 			s.accept(this, d);
 		}
@@ -200,7 +202,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			System.out.println("accepting classDecl: " + cls.class_id);
 		icClass c = new icClass(cls.class_id, ASTNode.scope);
 		c.ext = cls.extend.name;
-		d.add(cls.class_id, c);
+		d.add(c);
 		d.lastClass = c;
 		++ASTNode.scope;
 		for (ASTNode fm : cls.fieldmeths.lst) {
@@ -217,13 +219,102 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			System.out.println("accepting expr.length");
 		String e = expr.e.accept(this, d);
 		if (e.endsWith("[]"))
-		{
 			return "int";
-		}
 		else
+		{
 			throw new RuntimeException(
-					"tried accessing field length of non array expression: "
+					"tried accessing length field of non array expression: "
 					+e);
+		}
+	}
 
+	@Override
+	public String visit(ASTNewArray expr, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting new array");
+		String type = expr.expr.accept(this, d);
+		if ("int" != type)
+			throw new RuntimeException(
+					"bad indexer type. expected int, got: " + type);
+		return expr.type;
+	}
+
+	@Override
+	public String visit(ASTNewObject expr, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting new object");
+		return expr.type;
+	}
+
+	@Override
+	public String visit(ASTElseStmt stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTAssignFormals stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTWhileStmt stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTVarStmt stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTRetExp expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTIfElseStmt stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTCallStmt stmt, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTLocation expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTVirtualCall expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTStaticCall expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTLiteral expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String visit(ASTExprList expr, Environment d) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

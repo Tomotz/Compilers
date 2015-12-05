@@ -7,12 +7,18 @@ public class icVariable extends icObject {
 	int arrSize = 0;
 	//int size;
 	// int value;
-	
+
 	public icVariable(String name, int scope, String kind, String type, boolean isArray) {
 		super(name, scope);
 		this.kind = kind;
 		this.type = type;
 		this.isArray = isArray;
+		
+	}
+
+	public icVariable(String name, int scope, String type) {
+		super(name, scope);
+		this.type = type;
 		
 	}
 	

@@ -24,4 +24,19 @@ public interface PropagatingVisitor<DownType,UpType> {
 	public UpType visit(ASTUnaryOpExpr expr, DownType d);
 	public UpType visit(ASTBinaryOpExpr expr, DownType d);
 	public UpType visit(ASTDotLength expr, DownType d);
+	public UpType visit(ASTNewArray expr, DownType d);
+	public UpType visit(ASTNewObject expr, DownType d);
+	public UpType visit(ASTElseStmt stmt, DownType d);	
+	public UpType visit(ASTAssignFormals stmt, DownType d);
+	public UpType visit(ASTWhileStmt stmt, DownType d);
+	public UpType visit(ASTVarStmt stmt, DownType d);
+	public UpType visit(ASTRetExp expr, DownType d);
+	public UpType visit(ASTIfElseStmt stmt, DownType d);
+	public UpType visit(ASTCallStmt stmt, DownType d);
+	public UpType visit(ASTLocation expr, DownType d);
+	public UpType visit(ASTVirtualCall expr, DownType d);
+	public UpType visit(ASTStaticCall expr, DownType d);
+	public UpType visit(ASTLiteral expr, DownType d);
+	public UpType visit(ASTExprList expr, DownType d);
+	
 }

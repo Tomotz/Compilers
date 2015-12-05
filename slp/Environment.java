@@ -15,7 +15,10 @@ public class Environment {
 	public icClass lastClass = null;
 	public icFunction lastFunc = null;
 	
-	public void add(String name, icObject obj)
+	/*TODO: if there is already an object with the same name in the same scope,
+	 * should throw an error!
+	 */
+	public void add(icObject obj)
 	{
 		
 	}
