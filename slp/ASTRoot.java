@@ -5,13 +5,15 @@ public class ASTRoot extends ASTNode{
 	public final String name;
 	public final ASTNode child;
 
-	public ASTRoot(String name, ASTNode child) {
+	public ASTRoot(String name, ASTNode child, int line) {
 		this.name = name;
 		this.child = child;
+		this.line = line;
 	}
-	public ASTRoot() {
+	public ASTRoot(int line) {
 		this.name = "";
 		this.child = null;
+		this.line = line;
 	}
 	
 	@Override

@@ -20,12 +20,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	 */
 	public void evaluate() {
 		Environment env = new Environment();
+		//TODO: add Library!!!!!!!!!!
+		if (IS_DEBUG)
+			System.out.println("starting first itteration");
 		root.accept(this, env);
 		++run_num;
-
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
 		root.accept(this, env);
+	}
+
+	private void error(String str, ASTNode n) {
+		throw new RuntimeException(str + " at line: " +
+			Integer.toString(n.line));
 	}
 	
 	public String visit(ASTStmtList stmts, Environment env) {
@@ -214,8 +221,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			icObject father = d.getObjByName(cls.extend.name);
 			if (!(father instanceof icClass))
 			{
-				throw new RuntimeException(
-						"unknown parent class");
+				error("unknown parent class", cls.extend);
 			}
 		}
 		d.add(c);
@@ -229,6 +235,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		return null;
 	}
 
+
 	@Override
 	public String visit(ASTDotLength expr, Environment d) {
 		if (IS_DEBUG)
@@ -238,10 +245,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			return "int";
 		else
 		{
-			throw new RuntimeException(
-					"tried accessing length field of non array expression: "
-					+e);
+			error("tried accessing length field of non array expression: "
+					+e, expr);
 		}
+		return null;
 	}
 
 	@Override
@@ -250,8 +257,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			System.out.println("accepting new array");
 		String index_type = expr.expr.accept(this, d);
 		if ("int" != index_type)
-			throw new RuntimeException(
-					"bad indexer type. expected int, got: " + index_type);
+			error("bad indexer type. expected int, got: " + index_type, 
+					expr);
 		if (run_num == 1)
 		{
 			d.validateType(expr.type);
