@@ -6,6 +6,19 @@ package slp;
 public class PrettyPrinter implements Visitor {
 	protected final ASTNode root;
 
+	void printstr(Object str)
+	{
+		//System.out.print(str);
+	}
+	void printstrln(Object str)
+	{
+		//System.out.println(str);
+		
+	}
+	void printstrln()
+	{
+		//System.out.println();
+	}
 	/** Constructs a printin visitor from an AST.
 	 * 
 	 * @param root The root of the AST.
@@ -16,8 +29,8 @@ public class PrettyPrinter implements Visitor {
 	
 	public void lineStart() {
 		for (int i=0;i<ASTNode.indent;++i)
-			System.out.print("-");
-		System.out.print(" ");
+			printstr("-");
+		printstr(" ");
 	}
 	/** Prints the AST with the given root.
 	 */
@@ -39,19 +52,19 @@ public class PrettyPrinter implements Visitor {
 	
 	public void visit(ASTVarExpr expr) {
 		ASTNode.indent++;
-		System.out.print(expr.name);
+		printstr(expr.name);
 		ASTNode.indent--;
 	}
 	
 	public void visit(ASTNumberExpr expr) {
 		ASTNode.indent++;
-		System.out.print(expr.value);
+		printstr(expr.value);
 		ASTNode.indent--;
 	}
 	
 	public void visit(ASTUnaryOpExpr expr) {
 		ASTNode.indent++;
-		System.out.print(expr.op);
+		printstr(expr.op);
 		expr.operand.accept(this);
 		ASTNode.indent--;
 	}
@@ -59,8 +72,8 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTBinaryOpExpr expr) {
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("Logical binary operation: " );
-		System.out.println(expr.op);
+		printstr("Logical binary operation: " );
+		printstrln(expr.op);
 		expr.lhs.accept(this);
 		expr.rhs.accept(this);
 		ASTNode.indent--;
@@ -71,7 +84,7 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		if (node.child != null)
 		{
-			//System.out.println(node.name);
+			//printstrln(node.name);
 			node.child.accept(this);
 		}
 		ASTNode.indent--;
@@ -84,7 +97,7 @@ public class PrettyPrinter implements Visitor {
 		for (ASTNode n : fmList.lst) {
 			lineStart();
 			n.accept(this);
-			System.out.println();
+			printstrln();
 		}
 		ASTNode.indent--;
 	}
@@ -94,7 +107,7 @@ public class PrettyPrinter implements Visitor {
 		for (ASTClassDecl n : classes.lst) {
 			lineStart();
 			n.accept(this);
-			System.out.println();
+			printstrln();
 		}
 		ASTNode.indent--;
 	}
@@ -102,8 +115,8 @@ public class PrettyPrinter implements Visitor {
 	@Override
 	public void visit(ASTClassDecl cls) {
 		ASTNode.indent++;
-		System.out.print("decleration of class: ");
-		System.out.print(cls.class_id + "\n");
+		printstr("decleration of class: ");
+		printstr(cls.class_id + "\n");
 		cls.extend.accept(this);
 		cls.fieldmeths.accept(this);
 		ASTNode.indent--;
@@ -115,8 +128,8 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		if (node.name != "")
 		{
-			System.out.print("extend ");
-			System.out.print(node.name);
+			printstr("extend ");
+			printstr(node.name);
 		}
 		ASTNode.indent--;
 	}
@@ -124,10 +137,10 @@ public class PrettyPrinter implements Visitor {
 	@Override
 	public void visit(ASTField astField) {
 		ASTNode.indent++;
-		System.out.print("decleration of fields: ");
+		printstr("decleration of fields: ");
 		astField.ids.accept(this);
-		System.out.print("; of type: ");
-		System.out.print(astField.type);
+		printstr("; of type: ");
+		printstr(astField.type);
 		ASTNode.indent--;
 	}
 
@@ -136,9 +149,9 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		int i=1;
 		for (String n : astIdList.lst) {
-			System.out.print(n);		
+			printstr(n);		
 			if (i<astIdList.lst.size())
-				System.out.print(", ");
+				printstr(", ");
 			++i;
 				
 		}
@@ -149,12 +162,12 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTMethod astMethod) {
 		ASTNode.indent++;
 		if (astMethod.isStatic)
-			System.out.print("decleration of static method: ");
+			printstr("decleration of static method: ");
 		else
-			System.out.print("decleration of virtual method: ");
-		System.out.print(astMethod.id);
-		System.out.print("; of type: ");
-		System.out.println(astMethod.type);
+			printstr("decleration of virtual method: ");
+		printstr(astMethod.id);
+		printstr("; of type: ");
+		printstrln(astMethod.type);
 		astMethod.formals.accept(this);
 		astMethod.stmts.accept(this);
 		ASTNode.indent--;
@@ -172,10 +185,10 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		for (Formal f : formals.lst) {
 			lineStart();
-			System.out.print("Parameter: ");
-			System.out.print(f.id);
-			System.out.print("; of type: ");
-			System.out.println(f.type);
+			printstr("Parameter: ");
+			printstr(f.id);
+			printstr("; of type: ");
+			printstrln(f.type);
 		}
 		ASTNode.indent--;
 		
@@ -187,7 +200,7 @@ public class PrettyPrinter implements Visitor {
 			ASTNode.indent++;
 			if (assign.varExpr != null){
 				lineStart();
-				System.out.println("Assignment statement");
+				printstrln("Assignment statement");
 				assign.varExpr.accept(this);
 			}
 			if (assign.rhs != null)
@@ -199,7 +212,7 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTRetExp ret){
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("Return statement, with return value");
+		printstrln("Return statement, with return value");
 		ret.exp.accept(this);	
 		ASTNode.indent--;
 		}
@@ -207,10 +220,10 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTIfElseStmt ifstmt){
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("If statement");
+		printstrln("If statement");
 		ifstmt.expr.accept(this);
 		lineStart();
-		System.out.println("Block of statements");
+		printstrln("Block of statements");
 		ifstmt.stmt.accept(this);
 		if (ifstmt.elsestmt != null)
 			ifstmt.elsestmt.accept(this);
@@ -221,10 +234,10 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTWhileStmt whl){
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("While statement");
+		printstrln("While statement");
 		whl.expr.accept(this);
 		lineStart();
-		System.out.println("Block of statements");
+		printstrln("Block of statements");
 		whl.stmt.accept(this);
 		ASTNode.indent--;
 	}
@@ -233,7 +246,7 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		varStmt.toString();
-		System.out.print("statement \n");
+		printstr("statement \n");
 		ASTNode.indent--;
 	}
 	
@@ -241,12 +254,12 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 
 		lineStart();
-		System.out.print("Declaration of local variable: ");
-		System.out.print(varStmt.form.id);
-		System.out.println(", with initial value");
+		printstr("Declaration of local variable: ");
+		printstr(varStmt.form.id);
+		printstrln(", with initial value");
 		lineStart();
-		System.out.print("Primitive data type: ");
-		System.out.println(varStmt.form.type);
+		printstr("Primitive data type: ");
+		printstrln(varStmt.form.type);
 		if (varStmt.rhs != null){
 			varStmt.rhs.accept(this);
 		}
@@ -258,9 +271,9 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		if (elseStmt.stmt != null){
-			System.out.print("Else statement \n");
+			printstr("Else statement \n");
 			lineStart();
-			System.out.print("Block of statements \n");
+			printstr("Block of statements \n");
 			elseStmt.stmt.accept(this);
 		}
 		ASTNode.indent--;
@@ -269,16 +282,16 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTNewObject obj){
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("Instantiation of class: ");
-		System.out.println(obj.type);
+		printstr("Instantiation of class: ");
+		printstrln(obj.type);
 		ASTNode.indent--;
 	}
 	
 	public void visit(ASTNewArray arr){
 		ASTNode.indent++;
 		lineStart();
-		System.out.print("Array allocation of type: ");
-		System.out.println(arr.type);
+		printstr("Array allocation of type: ");
+		printstrln(arr.type);
 		arr.expr.accept(this);
 		ASTNode.indent--;
 	}
@@ -294,7 +307,7 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTDotLength expr) {
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("Reference to object length");
+		printstrln("Reference to object length");
 		expr.e.accept(this);
 		ASTNode.indent--;
 	}
@@ -305,19 +318,19 @@ public class PrettyPrinter implements Visitor {
 		lineStart();
 		switch (l.literalType){
 		case 0:
-			System.out.println("Integer literal: "+l.s);
+			printstrln("Integer literal: "+l.s);
 			break;
 		case 1:
-			System.out.println("String literal: "+l.s);
+			printstrln("String literal: "+l.s);
 			break;
 		case 2:
-			System.out.println("Boolean literal: "+l.s);
+			printstrln("Boolean literal: "+l.s);
 			break;
 		case 3:
-			System.out.println("Boolean literal: "+l.s);
+			printstrln("Boolean literal: "+l.s);
 			break;
 		case 4:
-			System.out.println("Null literal");
+			printstrln("Null literal");
 			break;
 		}
 		ASTNode.indent--;
@@ -328,18 +341,18 @@ public class PrettyPrinter implements Visitor {
 		switch (loc.type){
 			case 0:
 				lineStart();
-				System.out.println("Reference to variable: " + loc.id);
+				printstrln("Reference to variable: " + loc.id);
 				break;
 			case 1:
 				lineStart();
-				System.out.println("Reference to field or function: ");
+				printstrln("Reference to field or function: ");
 				loc.e1.accept(this);
 				lineStart();
-				System.out.println("Reference to variable: " + loc.id);
+				printstrln("Reference to variable: " + loc.id);
 				break;
 			case 2:
 				lineStart();
-				System.out.println("Reference to array");
+				printstrln("Reference to array");
 				loc.e1.accept(this);
 				loc.e2.accept(this);
 				break;
@@ -352,7 +365,7 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTStaticCall c){
 		ASTNode.indent++;
 		lineStart();
-		System.out.println("Call to static method: "+ c.classId + "." + c.id);
+		printstrln("Call to static method: "+ c.classId + "." + c.id);
 		c.exprList.accept(this);
 		ASTNode.indent--;
 	}
@@ -362,13 +375,13 @@ public class PrettyPrinter implements Visitor {
 		switch (c.type){
 			case 0:
 				lineStart();
-				System.out.println("Call to virtual method: " + c.id);
+				printstrln("Call to virtual method: " + c.id);
 				c.exprList.accept(this);
 				break;
 			case 1:
 				c.expr.accept(this);
 				lineStart();
-				System.out.println("Call to virtual method: " + c.id);
+				printstrln("Call to virtual method: " + c.id);
 				c.exprList.accept(this);
 		}
 		ASTNode.indent--;

@@ -50,6 +50,8 @@ public class Main {
 			// Interpret the program
 			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
+			
+			
 		} catch (FileNotFoundException e) {//(Exception e) {
 			System.out.print(e);
 		}

@@ -6,6 +6,7 @@ package slp;
 public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	protected ASTNode root;
 	static Boolean IS_DEBUG = true;
+	static int run_num = 0;
 
 	/** Constructs an SLP interpreter for the given AST.
 	 * 
@@ -19,6 +20,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	 */
 	public void evaluate() {
 		Environment env = new Environment();
+		root.accept(this, env);
+		++run_num;
+
+		if (IS_DEBUG)
+			System.out.println("starting second itteration");
 		root.accept(this, env);
 	}
 	
@@ -131,6 +137,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		for (String field : astField.ids.lst) {
 			icVariable o = new icVariable(field, ASTNode.scope, astField.type);
 			d.add(o);
+			d.lastClass.addObject(o, d, false);
 		}
 		return null;
 	}
@@ -174,9 +181,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 				classType, meth.isStatic);
 		d.lastFunc = func;
 		if (meth.isStatic)
-			d.lastClass.statScope.add(func);
+			d.lastClass.addObject(func, d, true);
 		else
-			d.lastClass.instScope.add(func);
+			d.lastClass.addObject(func, d, false);
 		d.add(func);
 			
 		++ASTNode.scope;
@@ -202,6 +209,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			System.out.println("accepting classDecl: " + cls.class_id);
 		icClass c = new icClass(cls.class_id, ASTNode.scope);
 		c.ext = cls.extend.name;
+		if (run_num == 1 && cls.extend.name != null && cls.extend.name != "")
+		{
+			icObject father = d.getObjByName(cls.extend.name);
+			if (!(father instanceof icClass))
+			{
+				throw new RuntimeException(
+						"unknown parent class");
+			}
+		}
 		d.add(c);
 		d.lastClass = c;
 		++ASTNode.scope;
@@ -232,10 +248,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	public String visit(ASTNewArray expr, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting new array");
-		String type = expr.expr.accept(this, d);
-		if ("int" != type)
+		String index_type = expr.expr.accept(this, d);
+		if ("int" != index_type)
 			throw new RuntimeException(
-					"bad indexer type. expected int, got: " + type);
+					"bad indexer type. expected int, got: " + index_type);
+		if (run_num == 1)
+		{
+			d.validateType(expr.type);
+		}
 		return expr.type;
 	}
 
@@ -243,6 +263,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	public String visit(ASTNewObject expr, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting new object");
+		if (run_num == 1)
+		{
+			d.validateType(expr.type);
+		}
 		return expr.type;
 	}
 

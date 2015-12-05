@@ -23,6 +23,12 @@ public class Environment {
 		
 	}
 	
+	/*TODO: */
+	public icObject getObjByName(String name)
+	{
+		return null;
+	}
+	
 	
 	/** Updates the value of a variable.
 	 * 
@@ -51,6 +57,11 @@ public class Environment {
 
 
 	public void destroyScope(int scope) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void validateType(String type) {
 		// TODO Auto-generated method stub
 		
 	}
