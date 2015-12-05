@@ -5,8 +5,9 @@ package slp;
 public class ASTVarExpr extends ASTExpr {
 	public final String name;
 	
-	public ASTVarExpr(String name) {
+	public ASTVarExpr(String name, int line) {
 		this.name = name;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

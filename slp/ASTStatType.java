@@ -5,10 +5,11 @@ public class ASTStatType extends ASTNode {
 	public final String type;
 	public final String id;
 	
-	public ASTStatType(Boolean isStatic, String type, String id) {
+	public ASTStatType(Boolean isStatic, String type, String id, int line) {
 		this.type = type;
 		this.id = id;
 		this.isStatic = isStatic;
+		this.line = line;
 	}
 
 	@Override

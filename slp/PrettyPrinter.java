@@ -8,16 +8,16 @@ public class PrettyPrinter implements Visitor {
 
 	void printstr(Object str)
 	{
-		//System.out.print(str);
+		System.out.print(str);
 	}
 	void printstrln(Object str)
 	{
-		//System.out.println(str);
+		System.out.println(str);
 		
 	}
 	void printstrln()
 	{
-		//System.out.println();
+		System.out.println();
 	}
 	/** Constructs a printin visitor from an AST.
 	 * 
@@ -137,7 +137,7 @@ public class PrettyPrinter implements Visitor {
 	@Override
 	public void visit(ASTField astField) {
 		ASTNode.indent++;
-		printstr("decleration of fields: ");
+		printstr(astField.line + ": decleration of fields: ");
 		astField.ids.accept(this);
 		printstr("; of type: ");
 		printstr(astField.type);
@@ -341,18 +341,18 @@ public class PrettyPrinter implements Visitor {
 		switch (loc.type){
 			case 0:
 				lineStart();
-				printstrln("Reference to variable: " + loc.id);
+				printstrln(loc.line + ": Reference to variable: " + loc.id);
 				break;
 			case 1:
 				lineStart();
-				printstrln("Reference to field or function: ");
+				printstrln(loc.line + ": Reference to field or function: ");
 				loc.e1.accept(this);
 				lineStart();
-				printstrln("Reference to variable: " + loc.id);
+				printstrln(loc.line + ": Reference to variable: " + loc.id);
 				break;
 			case 2:
 				lineStart();
-				printstrln("Reference to array");
+				printstrln(loc.line + ": Reference to array");
 				loc.e1.accept(this);
 				loc.e2.accept(this);
 				break;

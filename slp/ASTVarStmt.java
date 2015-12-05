@@ -5,8 +5,9 @@ package slp;
 public class ASTVarStmt extends ASTStmt {
 	public final String name;
 	
-	public ASTVarStmt(String name) {
+	public ASTVarStmt(String name, int line) {
 		this.name = name;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

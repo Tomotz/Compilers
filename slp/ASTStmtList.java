@@ -8,10 +8,12 @@ import java.util.ArrayList;
 public class ASTStmtList extends ASTStmt {
 	public final List<ASTStmt> statements = new ArrayList<ASTStmt>();
 
-	public ASTStmtList(ASTStmt stmt) {
+	public ASTStmtList(ASTStmt stmt, int line) {
 		statements.add(stmt);
+		this.line = line;
 	}
-	public ASTStmtList() {
+	public ASTStmtList(int line) {
+		this.line = line;
 	}
 
 	/** Adds a statement to the tail of the list.

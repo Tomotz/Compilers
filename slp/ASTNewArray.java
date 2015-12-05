@@ -4,9 +4,10 @@ public class ASTNewArray extends ASTExpr {
 	public final String type;
 	public final ASTExpr expr;
 	
-	public ASTNewArray(String type, ASTExpr expr){
+	public ASTNewArray(String type, ASTExpr expr, int line){
 		this.type = type;
 		this.expr = expr;
+		this.line = line;
 	}
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.

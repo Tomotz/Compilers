@@ -14,10 +14,10 @@ public class ASTLiteral extends ASTExpr {
 	public int literalType = 0;
 	public String s = null;
 	
-	public ASTLiteral(String s, int i){
+	public ASTLiteral(String s, int i, int line){
 		this.literalType=i;
 		this.s = s;
-			
+		this.line = line;
 	}
 
 

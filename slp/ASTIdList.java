@@ -7,8 +7,9 @@ public class ASTIdList extends ASTNode {
 
 	public final List<String> lst = new ArrayList<String>();
 
-	public ASTIdList(String node) {
+	public ASTIdList(String node, int line) {
 		lst.add(node);
+		this.line = line;
 	}
 
 	public void addNode(String n) {

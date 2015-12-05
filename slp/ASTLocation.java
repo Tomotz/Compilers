@@ -13,21 +13,24 @@ public class ASTLocation extends ASTExpr {
 	public ASTExpr e1 = null;
 	public ASTExpr e2 = null;
 	
-	public ASTLocation(String id){
+	public ASTLocation(String id, int line){
 		this.id = id;
 		this.type = 0;
+		this.line = line;
 	}
 	
-	public ASTLocation(ASTExpr e1, String id){ 
+	public ASTLocation(ASTExpr e1, String id, int line){ 
 		this.id = id;
 		this.e1 = e1;
 		this.type = 1;
+		this.line = line;
 	}
 	
-	public ASTLocation(ASTExpr e1, ASTExpr e2){
+	public ASTLocation(ASTExpr e1, ASTExpr e2, int line){
 		this.e1 = e1;
 		this.e2 = e2;
 		this.type = 2;
+		this.line = line;
 	}
 	
 	

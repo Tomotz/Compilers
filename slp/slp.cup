@@ -87,25 +87,25 @@ classDecl_list ::= classDecl_list:cl1 classDecl:c1
 		RESULT = cl1;
 		Parser.print_rule("classDecl_list-> 'cl1 c1' for cl1=" + cl1 + " and c1=" + c1); :}
 		| /*empty*/
-		{:  RESULT = new ASTClassList();
+		{:  RESULT = new ASTClassList(parser.getLine());
 		Parser.print_rule("classDecl_list-> 'empty'"); :}
 ; 
 
 classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list:fml RCBR
-		{: RESULT = new ASTClassDecl(c1, e1, fml);
+		{: RESULT = new ASTClassDecl(c1, e1, fml, parser.getLine());
 		Parser.print_rule("classDecl_list-> 'class c1 e1 {fields_and_methods}' for c1=" + c1 + " and e1=" + e1); :}
 ;
 
 extend ::= /*empty*/
-		{: RESULT = new ASTExtend();
+		{: RESULT = new ASTExtend(parser.getLine());
 		Parser.print_rule("extend-> ''"); :} 
 		| EXTENDS CLASS_ID:c1
-		{: RESULT = new ASTExtend(c1);
+		{: RESULT = new ASTExtend(c1, parser.getLine());
 		Parser.print_rule("extend-> 'extends c1' for c1=" + c1); :} 
 ;
 
 field_meth_list ::= /**/
-		{: RESULT = new ASTfmList();
+		{: RESULT = new ASTfmList(parser.getLine());
 		Parser.print_rule("field_meth_list-> 'field_meth'"); :} 
 		| field_meth_list:fml field_meth:fm
 		{: fml.addNode(fm); RESULT = fml;
@@ -121,12 +121,12 @@ field_meth ::= field:f1
 ;
 
 field ::= type:t1 id_list:is1 SEMI
-		{: RESULT = new ASTField(t1, is1);
+		{: RESULT = new ASTField(t1, is1, parser.getLine());
 		Parser.print_rule("field-> 't1 is1;' for t1=" + t1 + ", is1="+is1); :}
 ;
 
 id_list ::= ID:i1
-		{: RESULT = new ASTIdList(i1);
+		{: RESULT = new ASTIdList(i1, parser.getLine());
 		Parser.print_rule("id_list-> 'i1' for i1="+i1); :}
 		| id_list:is1 COMMA ID:i1
 		{: is1.addNode(i1); RESULT = is1 ;
@@ -134,21 +134,21 @@ id_list ::= ID:i1
 ;
 
 method ::= stat_type_void:st1 LP maybe_formals:mf1 RP LCBR stmt_list:sl1 RCBR
-		{: RESULT = new ASTMethod(st1.isStatic, st1.type, st1.id, mf1, sl1); 
+		{: RESULT = new ASTMethod(st1.isStatic, st1.type, st1.id, mf1, sl1, parser.getLine()); 
 		Parser.print_rule("stat_type_void-> 'st1 (maybe_formals) {stmt_list}' for st1="+st1); :} 
 ;
 
 stat_type_void::= STATIC type:t1 ID:i1
-		{: RESULT = new ASTStatType(true, t1, i1); 
+		{: RESULT = new ASTStatType(true, t1, i1, parser.getLine()); 
 		Parser.print_rule("stat_type_void-> 'static t1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1
-		{:RESULT = new ASTStatType(false, t1, i1); 
+		{:RESULT = new ASTStatType(false, t1, i1, parser.getLine()); 
 		Parser.print_rule("stat_type_void-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| STATIC VOID ID:i1
-		{: RESULT = new ASTStatType(true, Keyword.VOID.toString(), i1); 
+		{: RESULT = new ASTStatType(true, Keyword.VOID.toString(), i1, parser.getLine()); 
 		Parser.print_rule("stat_type_void-> 'static void i1' for i1="+i1); :} 
 		| VOID ID:i1
-		{: RESULT = new ASTStatType(false, Keyword.VOID.toString(), i1); 
+		{: RESULT = new ASTStatType(false, Keyword.VOID.toString(), i1, parser.getLine()); 
 		Parser.print_rule("stat_type_void-> 'void i1' for i1="+i1); :} 
 ; 
 
@@ -171,7 +171,7 @@ type ::= INT
 ;
 
 maybe_formals ::= /*empty*/ 
-		{: RESULT = new ASTFormalList();
+		{: RESULT = new ASTFormalList(parser.getLine());
 		Parser.print_rule("maybe_formals-> ''"); :} 
 		| formals:fl1
 		{: RESULT = fl1;
@@ -179,7 +179,7 @@ maybe_formals ::= /*empty*/
 ;
 
 formals ::= type:t1 ID:i1
-		{:  RESULT = new ASTFormalList(t1, i1); 
+		{:  RESULT = new ASTFormalList(t1, i1, parser.getLine()); 
 		Parser.print_rule("formals-> 't1 i1' for t1="+t1+" and i1="+i1); :}
 		| type:t1 ID:i1 COMMA formals:fl1
 		{: fl1.addNode(t1, i1); RESULT = fl1;
@@ -187,48 +187,48 @@ formals ::= type:t1 ID:i1
 ;
 
 stmt_list ::= /*empty*/
-	{: RESULT = new ASTStmtList();  :}
+	{: RESULT = new ASTStmtList(parser.getLine());  :}
 	| stmt_list:sl stmt:s
 	{: sl.addNode(s); RESULT = sl; :}
 ;
  
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: RESULT = new ASTAssignStmt(v, e);
+	{: RESULT = new ASTAssignStmt(v, e, parser.getLine());
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call:cl SEMI
 	{: RESULT = cl; :}
 	| RETURN maby_expr:e1 SEMI
-	{:RESULT = new ASTRetExp(e1); 
+	{:RESULT = new ASTRetExp(e1, parser.getLine()); 
 	Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
 	| IF LP expr:ex1 RP stmt:s1 else_stmnt:el1 
-	{: RESULT = new ASTIfElseStmt(ex1, s1, el1); 
+	{: RESULT = new ASTIfElseStmt(ex1, s1, el1, parser.getLine()); 
 	 	:}
 	| WHILE LP expr:e1 RP stmt:s1
-	{:  RESULT = new ASTWhileStmt(e1,s1);
+	{:  RESULT = new ASTWhileStmt(e1,s1, parser.getLine());
 		Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
 	| BREAK SEMI
-	{: RESULT = new ASTVarStmt(Keyword.BREAK.toString());
+	{: RESULT = new ASTVarStmt(Keyword.BREAK.toString(), parser.getLine());
 		Parser.print_rule("stmt -> 'break;'");:}
 	| CONTINUE SEMI
-	{: RESULT = new ASTVarStmt(Keyword.CONTINUE.toString());
+	{: RESULT = new ASTVarStmt(Keyword.CONTINUE.toString(), parser.getLine());
 		Parser.print_rule("stmt -> 'continue;'");:}	
 	| LCBR stmt_list:st RCBR 
 	{:RESULT = st;:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
-	{: Formal f1 = new Formal(t1, i1);
-	   RESULT = new ASTAssignFormals(f1,e1);
+	{: Formal f1 = new Formal(t1, i1, parser.getLine());
+	   RESULT = new ASTAssignFormals(f1,e1, parser.getLine());
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
 else_stmnt ::= /*empty*/ {: RESULT = null;:} |
 				 ELSE stmt:st
-				 {: RESULT = new ASTElseStmt(st);
+				 {: RESULT = new ASTElseStmt(st, parser.getLine());
 				 	 Parser.print_rule("else statement");:}
 ; 
 assign_exp ::= /*empty*/  
 		{: RESULT = null;:} 
 		| ASSIGN expr:e1
-		{: RESULT = new ASTAssignStmt(e1);
+		{: RESULT = new ASTAssignStmt(e1, parser.getLine());
 		   Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
 ;
 
@@ -245,35 +245,35 @@ expr ::= location:l
 		call:c 
 			{: RESULT = c; :}
 		| THIS
-			{: RESULT = new ASTVarExpr("this");
+			{: RESULT = new ASTVarExpr("this", parser.getLine());
 			:}
 		| NEW CLASS_ID:c LP RP 
-			{: RESULT = new ASTNewObject(c); :} 
+			{: RESULT = new ASTNewObject(c, parser.getLine()); :} 
 		| NEW type:t LB expr:e RB 
-			{: RESULT = new ASTNewArray(t,e); :} 
+			{: RESULT = new ASTNewArray(t,e, parser.getLine()); :} 
 		| expr:e1 DOT LENGTH
-			{:  RESULT = new ASTDotLength(e1); :}
+			{:  RESULT = new ASTDotLength(e1, parser.getLine()); :}
 		| LNEG:l expr:e 
-		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG); :} 
+		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG, parser.getLine()); :} 
 		| literal:l
 		{: RESULT = l;
 		:}
 		| LP expr:e RP
 		{: RESULT = e; :}
 		| unop expr:e 
-			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS); :} %prec UMINUS
+			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS, parser.getLine()); :} %prec UMINUS
 		| expr:e1 binmul:b expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec MULTIPLY
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec MULTIPLY
 		| expr:e1 LAND expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LAND); :}%prec LAND
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LAND, parser.getLine()); :}%prec LAND
 		| expr:e1 LOR expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LOR); :}%prec LOR
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, Operator.LOR, parser.getLine()); :}%prec LOR
 		| expr:e1 binplus:b expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec PLUS
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec PLUS
 		| expr:e1 binequal:b expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec EQUAL
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec EQUAL
 		| expr:e1 bincomp:b expr:e2
-			{: RESULT = new ASTBinaryOpExpr(e1, e2, b); :} %prec GT
+			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec GT
 ;
 	
 call ::= staticCall:m1 
@@ -286,32 +286,32 @@ call ::= staticCall:m1
 
 staticCall ::= CLASS_ID:ci1 DOT ID:i1 LP expr_list:e2 RP
 		{: Parser.print_rule("staticCall -> 'ci1.i1 (e2)' for ci1=" + ci1 + ", i1="+i1);
-		RESULT = new ASTStaticCall(ci1,i1,e2);
+		RESULT = new ASTStaticCall(ci1,i1,e2, parser.getLine());
 		 :}
 ;
 
 virtualCall ::= expr:e1 DOT ID:i1 LP expr_list:e2 RP
 		{: Parser.print_rule("virtualCall -> 'e1.i1(e2)' for i1="+i1); 
-		RESULT = new ASTVirtualCall(e1,i1,e2);
+		RESULT = new ASTVirtualCall(e1,i1,e2, parser.getLine());
 		:}
 		 | ID:i1 LP expr_list:e2 RP
 		{: Parser.print_rule("virtualCall -> 'i1(e2)' for i1="+i1);
-		RESULT = new ASTVirtualCall(i1,e2);
+		RESULT = new ASTVirtualCall(i1,e2, parser.getLine());
 		 :}
 ;
 
-expr_list ::= /*empty*/ {: RESULT = new ASTExprList(); :}  //mark
+expr_list ::= /*empty*/ {: RESULT = new ASTExprList(parser.getLine()); :}  //mark
 				| expr:e 
-				{: RESULT = new ASTExprList(e); :} 
+				{: RESULT = new ASTExprList(e, parser.getLine()); :} 
 				| expr_list:elist COMMA expr:e 
 				{: elist.add(e); RESULT = elist; :}
 ;
 
 
 
-location ::= ID:id {: RESULT =  new ASTLocation(id); :} 
-		| expr:e DOT ID:id {: RESULT = new ASTLocation(e,id); :}
-		| expr:e1 LB expr:e2 RB {: RESULT =  new ASTLocation(e1,e2); :}
+location ::= ID:id {: RESULT =  new ASTLocation(id,parser.getLine()); :} 
+		| expr:e DOT ID:id {: RESULT = new ASTLocation(e,id, parser.getLine()); :}
+		| expr:e1 LB expr:e2 RB {: RESULT =  new ASTLocation(e1,e2,parser.getLine()); :}
 ;
 
 bincomp ::=  GT 
@@ -350,9 +350,9 @@ unop ::= MINUS
 		{: RESULT = Operator.LNEG; :} 
 ;
 
-literal ::= INTEGER:l {: RESULT = new ASTLiteral(l.toString(),0); :} 
-		| QUOTE:l {: RESULT = new ASTLiteral(l,1); :}
-		| TRUE:l {: RESULT = new ASTLiteral(l,2); :} 
-		| FALSE:l {: RESULT = new ASTLiteral(l,3); :}
-		| NULL:l {: RESULT = new ASTLiteral(l,4); :}
+literal ::= INTEGER:l {: RESULT = new ASTLiteral(l.toString(),0, parser.getLine()); :} 
+		| QUOTE:l {: RESULT = new ASTLiteral(l,1, parser.getLine()); :}
+		| TRUE:l {: RESULT = new ASTLiteral(l,2, parser.getLine()); :} 
+		| FALSE:l {: RESULT = new ASTLiteral(l,3, parser.getLine()); :}
+		| NULL:l {: RESULT = new ASTLiteral(l,4, parser.getLine()); :}
 ;

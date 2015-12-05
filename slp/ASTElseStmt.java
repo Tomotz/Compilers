@@ -3,8 +3,9 @@ package slp;
 public class ASTElseStmt  extends ASTStmt {
 	public final ASTStmt stmt; 
 	
-	public ASTElseStmt(ASTStmt stmt) {
+	public ASTElseStmt(ASTStmt stmt, int line) {
 		this.stmt = stmt;
+		this.line = line;
 	}
 	
 	@Override

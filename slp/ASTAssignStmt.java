@@ -10,12 +10,14 @@ public class ASTAssignStmt extends ASTStmt {
 
 	public  ASTExpr rhs;
 
-	public ASTAssignStmt(ASTNode varExpr, ASTExpr rhs) {
+	public ASTAssignStmt(ASTNode varExpr, ASTExpr rhs, int line) {
 		this.varExpr = varExpr;
 		this.rhs = rhs;
+		this.line = line;
 	}
-	public ASTAssignStmt(ASTExpr rhs){
+	public ASTAssignStmt(ASTExpr rhs, int line){
 		this.rhs = rhs;
+		this.line = line;
 	}
 
 	/**

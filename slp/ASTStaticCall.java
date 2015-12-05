@@ -4,10 +4,11 @@ public class ASTStaticCall extends ASTStmt {
 	public String classId;
 	public String id;
 	public ASTExprList exprList;
-	public ASTStaticCall(String classId, String id, ASTExprList exprList){
+	public ASTStaticCall(String classId, String id, ASTExprList exprList, int line){
 		this.classId = classId;
 		this.id = id;
 		this.exprList = exprList;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

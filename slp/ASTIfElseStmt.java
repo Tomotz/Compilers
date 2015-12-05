@@ -6,10 +6,11 @@ public class ASTIfElseStmt extends ASTStmt {
 	public final ASTStmt stmt; 
 	public final ASTExpr expr;
 	
-	public ASTIfElseStmt( ASTExpr expr, ASTStmt stmt, ASTStmt elsestmt) {
+	public ASTIfElseStmt( ASTExpr expr, ASTStmt stmt, ASTStmt elsestmt, int line) {
 		this.elsestmt = elsestmt;
 		this.stmt = stmt;
 		this.expr = expr;
+		this.line = line;
 	}
 	
 	@Override

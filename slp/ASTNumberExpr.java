@@ -8,8 +8,9 @@ public class ASTNumberExpr extends ASTExpr {
 	 */
 	public final int value;
 	
-	public ASTNumberExpr(int value) {
+	public ASTNumberExpr(int value, int line) {
 		this.value = value;
+		this.line = line;
 	}
 	
 	/** Accepts a visitor object as part of the visitor pattern.

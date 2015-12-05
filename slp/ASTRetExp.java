@@ -4,8 +4,9 @@ public class ASTRetExp extends ASTStmt {
 
 public final ASTExpr exp;
 	
-	public ASTRetExp(ASTExpr exp) {
+	public ASTRetExp(ASTExpr exp, int line) {
 		this.exp = exp;
+		this.line = line;
 	}
 	
 	@Override

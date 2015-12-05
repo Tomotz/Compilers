@@ -4,8 +4,9 @@ public class ASTCallStmt extends ASTStmt {
 
 	public final ASTExpr call; 
 	
-	public ASTCallStmt( ASTExpr call) {
+	public ASTCallStmt( ASTExpr call, int line) {
 		this.call = call;
+		this.line = line;
 	}
 	
 	@Override

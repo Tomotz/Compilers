@@ -7,10 +7,12 @@ public class ASTfmList extends ASTNode {
 
 	public final List<ASTNode> lst = new ArrayList<ASTNode>();
 
-	public ASTfmList(ASTNode node) {
+	public ASTfmList(ASTNode node, int line) {
 		lst.add(node);
+		this.line = line;
 	}
-	public ASTfmList() {
+	public ASTfmList(int line) {
+		this.line = line;
 	}
 
 	public void addNode(ASTNode n) {

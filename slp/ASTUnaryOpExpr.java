@@ -6,9 +6,10 @@ public class ASTUnaryOpExpr extends ASTExpr {
 	public final Operator op;
 	public final ASTExpr operand;
 	
-	public ASTUnaryOpExpr(ASTExpr operand, Operator op) {
+	public ASTUnaryOpExpr(ASTExpr operand, Operator op, int line) {
 		this.operand = operand;
 		this.op = op;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

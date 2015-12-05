@@ -4,11 +4,13 @@ package slp;
 public class ASTExtend extends ASTNode{
 	public final String name;
 
-	public ASTExtend(String name) {
+	public ASTExtend(String name, int line) {
 		this.name = name;
+		this.line = line;
 	}
-	public ASTExtend() {
+	public ASTExtend(int line) {
 		this.name = "";
+		this.line = line;
 	}
 	
 	@Override

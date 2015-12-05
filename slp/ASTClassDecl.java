@@ -5,10 +5,11 @@ public class ASTClassDecl extends ASTNode {
 	public final String class_id;
 	public final ASTExtend extend;
 	
-	public ASTClassDecl(String class_id, ASTExtend extend, ASTfmList fieldmeths) {
+	public ASTClassDecl(String class_id, ASTExtend extend, ASTfmList fieldmeths, int line) {
 		this.class_id = class_id;
 		this.extend = extend;
 		this.fieldmeths = fieldmeths;
+		this.line = line;
 	}
 	
 	@Override

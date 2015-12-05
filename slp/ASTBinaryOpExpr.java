@@ -7,10 +7,11 @@ public class ASTBinaryOpExpr extends ASTExpr {
 	public final ASTExpr rhs;
 	public final Operator op;
 	
-	public ASTBinaryOpExpr(ASTExpr lhs, ASTExpr rhs, Operator op) {
+	public ASTBinaryOpExpr(ASTExpr lhs, ASTExpr rhs, Operator op, int line) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.op = op;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

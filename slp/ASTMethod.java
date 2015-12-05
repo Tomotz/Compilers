@@ -8,12 +8,13 @@ public class ASTMethod extends ASTNode {
 	public final ASTStmtList stmts;
 	
 	public ASTMethod(Boolean isStatic, String type, String id, 
-			ASTFormalList formals, ASTStmtList stmts) {
+			ASTFormalList formals, ASTStmtList stmts, int line) {
 		this.type = type;
 		this.id = id;
 		this.isStatic = isStatic;
 		this.formals = formals;
 		this.stmts = stmts;
+		this.line = line;
 	}
 
 	@Override

@@ -3,8 +3,9 @@ package slp;
 public class ASTDotLength extends ASTExpr {
 	public final ASTExpr e;
 	
-	public ASTDotLength(ASTExpr e){
+	public ASTDotLength(ASTExpr e, int line){
 		this.e = e;
+		this.line = line;
 	}
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.

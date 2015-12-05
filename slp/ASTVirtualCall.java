@@ -20,17 +20,19 @@ public class ASTVirtualCall extends ASTStmt {
 	public ASTExpr expr = null;
 	public int type = 0;
 	
-	public ASTVirtualCall(String id, ASTExprList exprList){
+	public ASTVirtualCall(String id, ASTExprList exprList, int line){
 		this.id = id;
 		this.exprList = exprList;
 		this.type = 0;
+		this.line = line;
 	}
 	
-	public ASTVirtualCall(ASTExpr expr, String id, ASTExprList exprList){
+	public ASTVirtualCall(ASTExpr expr, String id, ASTExprList exprList, int line){
 		this.id = id;
 		this.exprList = exprList;
 		this.expr = expr;
 		this.type = 1;
+		this.line = line;
 	}
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.

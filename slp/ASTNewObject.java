@@ -4,8 +4,9 @@ public class ASTNewObject extends ASTExpr {
 	
 	public final String type;
 	
-	public ASTNewObject(String type){
+	public ASTNewObject(String type, int line){
 		this.type = type;
+		this.line = line;
 	}
 
 	/** Accepts a visitor object as part of the visitor pattern.

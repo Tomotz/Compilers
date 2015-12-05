@@ -7,10 +7,12 @@ public class ASTClassList extends ASTNode {
 
 	public final List<ASTClassDecl> lst = new ArrayList<ASTClassDecl>();
 
-	public ASTClassList(ASTClassDecl node) {
+	public ASTClassList(ASTClassDecl node, int line) {
 		lst.add(node);
+		this.line = line;
 	}
-	public ASTClassList() {
+	public ASTClassList(int line) {
+		this.line = line;
 	}
 
 	public void addNode(ASTClassDecl n) {

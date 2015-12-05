@@ -5,9 +5,10 @@ public class ASTAssignFormals extends ASTStmt {
 	public final Formal form;
 	public ASTExpr rhs = null;
 
-	public ASTAssignFormals(Formal form, ASTExpr rhs) {
+	public ASTAssignFormals(Formal form, ASTExpr rhs, int line) {
 		this.form = form;
 		this.rhs = rhs;
+		this.line = line;
 	}
 
 	/**

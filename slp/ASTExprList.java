@@ -7,10 +7,12 @@ public class ASTExprList extends ASTExpr {
 
 	public final List<ASTExpr> lst = new ArrayList<ASTExpr>();
 
-	public ASTExprList(ASTExpr node) {
+	public ASTExprList(ASTExpr node, int line) {
 		lst.add(node);
+		this.line = line;
 	}
-	public ASTExprList() {
+	public ASTExprList(int line) {
+		this.line = line;
 	}
 
 	public void add(ASTExpr n) {

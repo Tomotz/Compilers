@@ -5,9 +5,10 @@ public class ASTWhileStmt  extends ASTStmt {
 	public final ASTStmt stmt; 
 	public final ASTExpr expr;
 	
-	public ASTWhileStmt(ASTExpr expr, ASTStmt stmt) {
+	public ASTWhileStmt(ASTExpr expr, ASTStmt stmt, int line) {
 		this.stmt = stmt;
 		this.expr = expr;
+		this.line = line;
 	}
 	
 	@Override
