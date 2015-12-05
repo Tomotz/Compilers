@@ -45,10 +45,37 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	public String visit(ASTStmt stmt, Environment env) {
 		throw new UnsupportedOperationException("Unexpected visit of Stmt!");
 	}
-
-
+	
+	// have to deal with arrays
 	public String visit(ASTAssignStmt stmt, Environment env) {
-		ASTExpr rhs = stmt.rhs;
+		icObject father;
+		int flag =0;
+		String varExpr = stmt.varExpr.accept(this, env);
+		icObject var = env.getObjByName(varExpr);
+		String rhs = stmt.rhs.accept(this, env);
+		icObject value = env.getObjByName(rhs);
+		
+		if (var instanceof icClass){
+			father = value;
+			while (father != null){
+				if (father.getName().equals(var.getName())){
+					flag =1;
+					break;
+				}
+				father =  env.getObjByName(father.getAssignType());
+			}
+		}
+		else if (var.getAssignType().equals(value.getAssignType())){
+			flag =1;
+		}
+		
+		if (flag ==0){
+			throw new UnsupportedOperationException("Type mismatch: cannot convert from" + value.getAssignType() + "to" + var.getAssignType());
+		}
+		else{
+			// assign value to variable
+		}
+		
 		//Integer expressionValue = rhs.accept(this, env);
 		//ASTVarExpr var = stmt.varExpr;
 		//env.update(var, expressionValue);
@@ -302,8 +329,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTRetExp expr, Environment d) {
-		// TODO Auto-generated method stub
+	public String visit(ASTRetExp expr, Environment env) {
+		String rExpr = expr.exp.accept(this, env);
+		icObject retExp = env.getObjByName(rExpr);
+		if (!env.lastFunc.getAssignType().equals(retExp.getAssignType())){
+			throw new UnsupportedOperationException("Type mismatch: cannot convert from" + retExp.getAssignType() + "to" + env.lastFunc.getAssignType());
+		}
 		return null;
 	}
 
@@ -348,4 +379,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	
+	
 }

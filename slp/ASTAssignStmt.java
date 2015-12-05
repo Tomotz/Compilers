@@ -6,8 +6,6 @@ package slp;
 public class ASTAssignStmt extends ASTStmt {
 
 	public  ASTNode varExpr = null;
-
-
 	public  ASTExpr rhs;
 
 	public ASTAssignStmt(ASTNode varExpr, ASTExpr rhs, int line) {

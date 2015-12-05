@@ -9,7 +9,7 @@ import slp.icObject;
 public class icClass extends icObject {
 	List<icFunction> statScope = new ArrayList<icFunction>();  // list of names for static methods
 	List <icObject> instScope = new ArrayList<icObject>(); // list of names for dynamic methods and fields
-	String ext;  // the class that the method extends (or null)
+	String ext;  // the class type that the method extends (null if the class is a base class)
 
 	
 	public icClass(String name, int scope) {
@@ -52,6 +52,12 @@ public class icClass extends icObject {
 				return true;
 		}
 		return false;
+	}
+
+
+	@Override
+	public String getAssignType() {
+		return ext;
 	}
 
 }

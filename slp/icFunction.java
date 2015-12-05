@@ -25,4 +25,10 @@ public class icFunction extends icObject {
 		this.isStatic = isStatic;
 	}
 
+
+	@Override
+	public String getAssignType() {
+		return this.retType;
+	}
+
 }

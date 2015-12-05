@@ -1,16 +1,15 @@
 package slp;
 
 public class icVariable extends icObject {
-	String kind; // basic type of variable (i.e. int ,String...)
-	String type; // 'object type' if the variable has one 
+	
+	String type; //basic type of variable (i.e. int ,String...) or 'object type' 
 	boolean isArray; // states whether the regular array or an array
 	int arrSize = 0;
 	//int size;
 	// int value;
 
-	public icVariable(String name, int scope, String kind, String type, boolean isArray) {
+	public icVariable(String name, int scope, String type, boolean isArray) {
 		super(name, scope);
-		this.kind = kind;
 		this.type = type;
 		this.isArray = isArray;
 		
@@ -22,11 +21,15 @@ public class icVariable extends icObject {
 		
 	}
 	
-	public icVariable(String name, int scope, String kind, String type, boolean isArray, int arrSize) {
+	public icVariable(String name, int scope, String type, boolean isArray, int arrSize) {
 		super(name, scope);
-		this.kind = kind;
 		this.type = type;
 		this.isArray = isArray;
 		this.arrSize = arrSize;
+	}
+
+	@Override
+	public String getAssignType() {
+		return this.type;
 	}
 }
