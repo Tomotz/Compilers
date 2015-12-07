@@ -15,6 +15,7 @@ public class Environment {
 	private Map<String, Queue<icObject>> varToValue = new HashMap<String, Queue<icObject>>();
 	public icClass lastClass = null;
 	public icFunction lastFunc = null;
+	public boolean loopScope = false;
 
 	/*
 	 * TODO: if there is already an object with the same name in the same scope,
@@ -75,6 +76,7 @@ public class Environment {
 		return varToValue.get(v.name);
 	}
 	*/
+	
 
 	public void destroyScope(int scope) {
 		// TODO Auto-generated method stub
