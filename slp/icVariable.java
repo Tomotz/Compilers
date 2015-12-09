@@ -3,7 +3,7 @@ package slp;
 public class icVariable extends icObject {
 	
 	String type; //basic type of variable (i.e. int ,String...) or 'object type' 
-	boolean isArray; // states whether the regular array or an array
+	boolean isArray = false; // states whether the regular array or an array
 	int arrSize = 0;
 	//int size;
 	// int value;
@@ -18,7 +18,7 @@ public class icVariable extends icObject {
 	public icVariable(String name, int scope, String type) {
 		super(name, scope);
 		this.type = type;
-		
+		setArray(type);
 	}
 	
 	public icVariable(String name, int scope, String type, boolean isArray, int arrSize) {
@@ -31,5 +31,17 @@ public class icVariable extends icObject {
 	@Override
 	public String getAssignType() {
 		return this.type;
+	}
+	
+	public void setArray(String id){
+		int length = id.length();
+		if (id.charAt(length-1) == ']'){
+			this.isArray = true;
+			return;
+		}
+		else{
+			this.isArray = false;
+			return;
+		}
 	}
 }

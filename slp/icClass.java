@@ -45,13 +45,13 @@ public class icClass extends icObject {
 	Boolean hasObject(String objectName)
 	{
 		for (icObject o : instScope) {
-			if (o.name == objectName){
+			if (o.name.equals(objectName)){
 				lastSubObject = o;
 				return true;
 			}
 		}
 		for (icFunction f : statScope) {
-			if (f.name == objectName){
+			if (f.name.equals(objectName)){
 				lastSubObject = f;
 				return true;
 			}
@@ -69,6 +69,7 @@ public class icClass extends icObject {
 	public boolean checkIfSubType(icObject value,icObject var, Environment env){
 		icObject father = value;
 		while (father != null){
+			System.out.println("child: " + father.getName() + "father: " + var.getName() );
 			if (father.getName().equals(var.getName())){
 				return true;
 			}

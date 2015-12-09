@@ -320,6 +320,7 @@ public class PrettyPrinter implements Visitor {
 			printstrln("Integer literal: "+l.s);
 			break;
 		case 1:
+			
 			printstrln("String literal: "+l.s);
 			break;
 		case 2:
