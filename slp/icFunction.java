@@ -30,5 +30,9 @@ public class icFunction extends icObject {
 	public String getAssignType() {
 		return this.retType;
 	}
+	
+	public int getNumofArg(){
+		return arg_types.size();
+	}
 
 }
