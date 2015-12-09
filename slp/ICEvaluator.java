@@ -34,7 +34,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		throw new RuntimeException(str + " at line: " +
 			Integer.toString(n.line));
 	}
-	
+		
 	public String visit(ASTStmtList stmts, Environment env) {
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
@@ -87,65 +87,125 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	public String visit(ASTVarExpr expr, Environment env) {
-		return null;// env.get(expr);
+		if (expr.name.equals("this")) return env.lastClass.name;
+		else 
+			throw new RuntimeException("Error!!! should never reach this code. parser at line " + expr.line);
 	}
-
+	
+	
 	public String visit(ASTNumberExpr expr, Environment env) {
-		return null;//new Integer(expr.value);		
-		// return expr.value; also works in Java 1.5 because of auto-boxing
+		throw new RuntimeException("Error!!! should never reach this code. parser at line " + expr.line);
 	}
-
+	
+	
 	public String visit(ASTUnaryOpExpr expr, Environment env) {
 		Operator op = expr.op;
-		if (op != Operator.MINUS)
-			throw new RuntimeException("Encountered unexpected operator " + op);
+		ASTExpr rhs = expr.operand;
+		String rhsType = rhs.accept(this, env);	
+		if (op == Operator.MINUS){
+			if (rhsType.equals("int")) return "int";
+			else throw new RuntimeException("Line " + expr.line + ": Expected an Integer after '-' ");
+		}
+		if(op == Operator.LNEG){
+			if (rhsType.equals("boolean")) return "boolean"; 
+			else throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression after '!' ");
+		}
+		else
+			throw new RuntimeException("Line " + expr.line + ": Encountered unexpected operator " + op);
 		//Integer value = expr.operand.accept(this, env);
-		return null;// new Integer(- value.intValue());
+		// new Integer(- value.intValue());
 	}
 
 	public String visit(ASTBinaryOpExpr expr, Environment env) {
-		/*Integer lhsValue = expr.lhs.accept(this, env);
-		int lhsInt = lhsValue.intValue();
-		Integer rhsValue = expr.rhs.accept(this, env);
-		int rhsInt = rhsValue.intValue();
-		int result;
-		switch (expr.op) {
-		case DIV:
-			if (rhsInt == 0)
-				throw new RuntimeException("Attempt to divide by zero: " + expr);
-			result = lhsInt / rhsInt;
-			break;
-		case MINUS:
-			result = lhsInt - rhsInt;
-			break;
-		case MULTIPLY:
-			result = lhsInt * rhsInt;
-			break;
-		case PLUS:
-			result = lhsInt + rhsInt;
-			break;
-		case LT:
-			result = lhsInt < rhsInt ? 1 : 0;
-			break;
-		case GT:
-			result = lhsInt > rhsInt ? 1 : 0;
-			break;
-		case LTE:
-			result = lhsInt <= rhsInt ? 1 : 0;
-			break;
-		case GTE:
-			result = lhsInt >= rhsInt ? 1 : 0;
-			break;
-		case LAND:
-			result = (lhsInt!=0 && rhsInt!=0) ? 1 : 0;
-			break;
-		case LOR:
-			result = (lhsInt!=0 || rhsInt!=0) ? 1 : 0;
-			break;
-		default:
-			throw new RuntimeException("Encountered unexpected operator type: " + expr.op);
-		}*/
-		return null;//new Integer(result);
+		Operator op = expr.op;
+		ASTExpr lhs = expr.lhs;
+		ASTExpr rhs = expr.rhs;
+		String lhsType = lhs.accept(this, env);
+		String rhsType = rhs.accept(this, env);
+		if (op == Operator.LAND || op == Operator.LOR){
+			if (!lhsType.equals("boolean"))
+				throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression before " + op);
+			if (!rhsType.equals("boolean"))
+				throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression after " + op);
+			else
+				return "boolean";
+		}
+		if (op == Operator.PLUS){
+			if (lhsType.equals("string") || lhsType.equals("int")){
+				if (lhsType.equals(rhsType))return lhsType;
+				else 
+					throw new RuntimeException("Line " + expr.line + 
+							": Expected operands of same type for the binary operator " + op);
+			} else
+				throw new RuntimeException("Line " + expr.line + 
+						": The binary operator '+' accepts only Integer or String types as operands");
+		}
+		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD){
+			if (!(lhsType.equals("int") && rhsType.equals("int")))
+				throw new RuntimeException("Line " + expr.line + 
+						": The binary operator '" + op + "' accepts only Integer types as operands");
+			else
+				return "int";
+		}
+		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE){
+			if (!(lhsType.equals("int") && rhsType.equals("int")))
+				throw new RuntimeException("Line " + expr.line + 
+						": The binary operator '" + op + "' accepts only Integer types as operands");
+			else 
+				return "boolean";
+		}
+		if (op == Operator.EQUAL || op == Operator.NEQUAL){
+			if (run_num == 0) return "boolean";
+			if (run_num == 1){
+				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null"))
+					return "boolean";
+				// if reached here - lhsType != rhsType
+				if (lhsType.equals("string")|| lhsType.equals("int") || lhsType.equals("boolean") || 
+						rhsType.equals("string")|| rhsType.equals("int") || rhsType.equals("boolean"))
+					throw new RuntimeException("Line " + expr.line + 
+							": Type mismatch for the operands of '" + op + "'");
+				//if reached here - lhsType and rhsType are not primitive types
+				//
+				//check if lhsType extends rhsType:
+				icObject lhsClass = env.getObjByName(lhsType);	
+				if (!(lhsClass instanceof icClass)) 
+					throw new RuntimeException("Line " + expr.line + 
+							": Undefined type: " + lhsType);
+				String parent = ((icClass)lhsClass).ext;
+				icObject parentClass = env.getObjByName(parent);
+				if (!(parentClass instanceof icClass)) 
+					throw new RuntimeException("Line " + expr.line + 
+							": Unexpected error!!! undefined parent class - should have catched this before");
+				while (parent != null){
+					if (rhsType.equals(parent)) return "boolean";
+					else
+						parent = ((icClass)parentClass).ext;
+				}
+				// if reached here - lhsType doesn't extend rhsType
+				//
+				//check if rhsType extends lhsType
+				icObject rhsClass = env.getObjByName(rhsType);	
+				if (!(rhsClass instanceof icClass)) 
+					throw new RuntimeException("Line " + expr.line + 
+							": Undefined type: " + rhsType);
+				parent = ((icClass)rhsClass).ext;
+				parentClass = env.getObjByName(parent);
+				if (!(parentClass instanceof icClass)) 
+					throw new RuntimeException("Line " + expr.line + 
+							": Unexpected error!!! undefined parent class - should have catched this before");
+				while (parent != null){
+					if (lhsType.equals(parent)) return "boolean";
+					else
+						parent = ((icClass)parentClass).ext;
+				}
+				//if reached here - rhsType doesn't extend lhsType
+				throw new RuntimeException("Line " + expr.line + 
+						": Type mismatch for operands of '" + op +"'");
+			}
+			else throw new RuntimeException("Error!!!! should never reach this line of code");
+		}
+		else
+			throw new RuntimeException("Error!!!! should never reach this line of code");
 	}
 
 	@Override
@@ -358,7 +418,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTVirtualCall expr, Environment d) {
-		// TODO Auto-generated method stub
+		// TODO
 		return null;
 	}
 
