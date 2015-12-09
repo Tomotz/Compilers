@@ -1,6 +1,7 @@
 package slp;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Represents a state during the evaluation of a program.
@@ -79,13 +80,23 @@ public class Environment {
 	
 
 	public void destroyScope(int scope) {
-		// TODO Auto-generated method stub
+		for (Entry<String, Queue<icObject>> entry : varToValue.entrySet()){
+			Queue<icObject> expSet = entry.getValue();
+			icObject obj = expSet.peek();
+			if (obj.getScope() == scope){
+				expSet.poll();
+			}
+		}
 
 	}
 
 	public void validateType(String type) {
-		// TODO Auto-generated method stub
-
+		if (!type.equals("int") || !type.equals("string") || !type.equals("boolean")){
+			icObject obj = getObjByName(type);
+			if (obj == null){
+				throw new RuntimeException(type + "cannot be resolved to a type");
+			}
+		}
 	}
 
 }

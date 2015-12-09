@@ -61,32 +61,23 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 		// value is a number or a string
 		if (value == null) {
-			if (rhs.equals("integer") || rhs.equals("string") || rhs.equals("boolean")) {
+			if (rhs.equals(varExpr)) {
 				flag = 1;
-			} else if (utility.isInteger(varExpr) && var.getAssignType().equals("integer")) {
-				flag = 1;
-			} else if ((rhs.equals("true") || rhs.equals("false")) && var.getAssignType().equals("boolean")) {
-				flag = 1;
+				}
 			}
-
-		}
-
+			
 		else if (var instanceof icClass) {
+			// if the value is a son of a father class
 			if (((icClass) var).checkIfSubType(value, var, env) == true) {
 				flag = 1;
 			}
-		} else {
-			if (var.getAssignType().equals(value.getAssignType())) {
-				flag = 1;
-			}
+		} 
 
-			if (flag == 0) {
-				throw new UnsupportedOperationException(
-						"Type mismatch: cannot convert from" + value.getAssignType() + "to" + var.getAssignType());
-			} else {
-				// assign value to variable
-			}
+		if (flag == 0) {
+			throw new UnsupportedOperationException(
+					"Type mismatch: cannot convert from" + value.getAssignType() + "to" + var.getAssignType());
 		}
+		
 		// Integer expressionValue = rhs.accept(this, env);
 		// ASTVarExpr var = stmt.varExpr;
 		// env.update(var, expressionValue);
@@ -369,8 +360,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTElseStmt stmt, Environment d) {
-		// TODO Auto-generated method stub
+	public String visit(ASTElseStmt elseStmt, Environment env) {
+		elseStmt.stmt.accept(this,env);
 		return null;
 	}
 
@@ -378,23 +369,57 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	public String visit(ASTAssignFormals stmt, Environment env) {
 		String type = stmt.form.type;
 		String id = stmt.form.id;
+		icObject val = env.getObjByName(id);
 		String rhs = stmt.rhs.accept(this,env);
-		icVariable var = new icVariable(id,ASTNode.scope,type);
-		env.add(var);
-		if (var != null){
-			//
+		icObject var = env.getObjByName(type);
+		int flag =0;
+		
+		if (!type.equals("int") || !type.equals("string") || !type.equals("boolean")){
+			throw new RuntimeException("Line " + stmt.line + 
+					": " + type + "cannot be resolved to a type");
 		}
-		return null;
+		
+		if (var instanceof icClass) {
+			// if the value is a son of a father class
+			if (((icClass) var).checkIfSubType(val, var, env) == true) {
+				flag = 1;
+			}
+		}else if (type.equals(rhs)){
+			flag =1;
+		}
+		
+		if (flag ==1){
+			throw new RuntimeException("Line " + stmt.line + 
+					": Type mismatch: cannot convert from" + type + "to " + rhs);
+		}
+		
+		icVariable newVar = new icVariable(id,ASTNode.scope,type);
+		env.add(newVar);
+		return type;
 	}
 
 	@Override
 	public String visit(ASTWhileStmt stm, Environment env) {
 		ASTExpr expr = stm.expr;
+		int nestFlag; 
 		String ExprType = expr.accept(this, env);
 		if (!ExprType.equals("boolean"))
 			throw new RuntimeException("Line " + expr.line + 
 					": Expected boolean expression after 'while'");
+		++ASTNode.scope;
+		// while loop might be nested
+		if(env.loopScope == true){
+			nestFlag = 0;
+		}
+		else{
+			env.loopScope = true;
+			nestFlag = 1; 
+		}
 		stm.stmt.accept(this, env);
+		if (nestFlag ==1){
+			env.loopScope = false;
+		}
+		--ASTNode.scope;
 		return null;
 		
 	}
@@ -422,19 +447,21 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTIfElseStmt stmt, Environment env) {
 		String cond = stmt.expr.accept(this, env);
-		String ifStmt = stmt.stmt.accept(this, env);
-		icObject body = env.getObjByName(ifStmt);
+		
+	
 		if (!cond.equals("boolean")) {
 			throw new UnsupportedOperationException("Type mismatch: cannot convert from" + cond + "to" + "boolean");
 		}
-
+		++ASTNode.scope;
+		String ifStmt = stmt.stmt.accept(this, env);
+		--ASTNode.scope;
 		return null;
 	}
 
 	@Override
-	public String visit(ASTCallStmt stmt, Environment d) {
-		// TODO Auto-generated method stub
-		return null;
+	public String visit(ASTCallStmt stmt, Environment env) {
+		String call = stmt.call.accept(this,env);
+		return call;
 	}
 
 	@Override
@@ -444,50 +471,56 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		String id = expr.id;
 		icObject ident = env.getObjByName(id);
 		
+		// only a variable name
 		if(expr.type == 0){
+			// checking if the variables has been declared
 			if (ident == null){
 				throw new UnsupportedOperationException(id + "cannot be resolved!");
 			}
-			return id;
+			return ident.getAssignType();
 		}
 		else if(expr.type ==1){
-			
+			// checking if the class has been declared
 			if (ident == null){
 				throw new UnsupportedOperationException(id + "cannot be resolved!");
 			}
 			
 			// e1 is a name of a class
 			if (ident instanceof icClass ){
+				// checking if exp1 is a valid field inside of class
 				if(((icClass) ident).hasObject(exp1) == false) {
 					throw new UnsupportedOperationException(exp1 + "cannot be resolved or is not a field");
 				}
 				else{
-					return ((icClass) ident).lastSubObject.name;
+					return ((icClass) ident).lastSubObject.getAssignType();
 				}
 			}
 			
 		}
+		// e1 is an array
 		else if (expr.type == 2){
+			
 			icVariable var =  (icVariable) env.getObjByName(exp1);
 			icObject inVar =  env.getObjByName(exp2);
-			
-			
-			if (var == null){                           // the variable doesn't exist
+			/*
+			if (var == null){                           // the array has not been declared before
 				throw new UnsupportedOperationException(exp1 + "cannot be resolved to a variable");
 			}
+			*/
 			
 			if (var.isArray == false){                  // the variable is not an array
 				throw new UnsupportedOperationException("The type of the expression must be an array type but it resolved to" + var.getAssignType());
 			}
 			
-			
+			/*
 			if (inVar == null){
 				if (!exp2.equals("integer") || !utility.isInteger(exp2)){   // checking if ext2 has a value or a representation of an integer
 				throw new UnsupportedOperationException(id + "cannot be resolved to a variable");
 				}
 			}
+			*/
 			
-			if (!inVar.getAssignType().equals("integer")){  // checking if ext is a name of variable of type integer
+			if (!inVar.getAssignType().equals("integer")){  // checking if the parameter inside the array is an integer
 				throw new UnsupportedOperationException("Type mismatch: cannot convert from" + inVar.getAssignType() +  "to int");
 			}
 			
@@ -528,27 +561,38 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTStaticCall expr, Environment env) {
+		/*
 		String expLst = expr.exprList.accept(this, env);
-		
+		*/
+		List<ASTExpr> expLst = expr.exprList.lst;
+		String exp;
+		String funcArg;
 		String classId = expr.classId;
 		icClass className = (icClass) env.getObjByName(classId);
 		String funcId = expr.id;
 		
 		if (className == null){                           // the class doesn't exist
-			throw new UnsupportedOperationException(className + "cannot be resolved to a variable");
+			throw new UnsupportedOperationException("Line " + expr.line + className + "cannot be resolved to a variable");
 		}
 		
 		if (!className.hasObject(funcId)){
-			throw new UnsupportedOperationException(funcId + "cannot be resolved or is not a function");
+			throw new UnsupportedOperationException("Line " + expr.line + funcId + "cannot be resolved or is not a function");
 		}
 		icFunction func = (icFunction) env.getObjByName(funcId);
 		
-		if (expr.exprList.lst.size() != func.getNumofArg()){
-			throw new UnsupportedOperationException("The method" + funcId + "in the type" +  classId + "is not applicable for the arguments");
+		if (expLst.size() != func.getNumofArg()){
+			throw new UnsupportedOperationException("Line " + expr.line + "The method" + funcId + "in the type" +  classId + "is not applicable for the arguments");
 		}
-		for (int i =0; i<expLst.length();i++){
+		for (int i =0; i<expr.exprList.lst.size();i++){
+			exp = expLst.get(i).accept(this, env);
+			funcArg = func.arg_types.get(i);
+			if(!funcArg.equals(exp)){
+				throw new RuntimeException("Line " + expr.line + 
+						": Wrong argument types for the method '"+ classId + "'");
+		}
+			}
 			// have to figure a solution to check if the cariables are valid
-		}
+		
 		return null;
 	}
 
