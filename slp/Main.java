@@ -17,18 +17,29 @@ public class Main {
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
+			String libic_path = "libic.sig";
 			if (args.length == 0) {
 				System.out.println("Error: Missing input file argument!");
 				printUsage();
 				System.exit(-1);
 			}
-			if (args.length == 2) {
-				if (args[1].equals("-printtokens")) {
-					printtokens = true;
+			if (args.length >= 3) {
+				if (args[1].equals("-L")) {
+					libic_path = args[2];
 				}
 				else {
 					printUsage();
 					System.exit(-1);
+				}
+				if (args.length >= 4)
+				{
+					if (args[3].equals("-printtokens")) {
+						printtokens = true;
+					}
+					else {
+						printUsage();
+						System.exit(-1);
+					}
 				}
 			}
 			
@@ -60,6 +71,6 @@ public class Main {
 	/** Prints usage information about this application to System.out
 	 */
 	public static void printUsage() {
-		System.out.println("Usage: slp file [-printtokens]");
+		System.out.println("Usage: <slp file> [-L <libic file> [-printtokens]]");
 	}
 }

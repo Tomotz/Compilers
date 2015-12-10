@@ -39,6 +39,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		throw new RuntimeException(str + " at line: " + Integer.toString(n.line));
 	}
 	public String visit(ASTStmtList stmts, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTStmtList at line: " + stmts.line);
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
@@ -52,6 +54,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	// if object is array its range is expected to be checked before
 	// handle basic variables
 	public String visit(ASTAssignStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 
 		int flag = 0;
 		String varExpr = stmt.varExpr.accept(this, env);
@@ -89,7 +93,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	public String visit(ASTVarExpr expr, Environment env) {
-		if (expr.name.equals("this")) return env.lastClass.name;
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVarExpr at line: " + expr.line);
+		if (expr.name.equals("this")) 
+			return env.lastClass.name;
 		else 
 			throw new RuntimeException("Error!!! should never reach this code. parser at line " + expr.line);
 	}
@@ -102,6 +109,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	
 	
 	public String visit(ASTUnaryOpExpr expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTUnaryOpExpr at line: " + expr.line);
 		Operator op = expr.op;
 		ASTExpr rhs = expr.operand;
 		String rhsType = rhs.accept(this, env);	
@@ -120,6 +129,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	public String visit(ASTBinaryOpExpr expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTBinaryOpExpr at line: " + expr.line);
 		Operator op = expr.op;
 		ASTExpr lhs = expr.lhs;
 		ASTExpr rhs = expr.rhs;
@@ -217,7 +228,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTClassList astClassList, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting classList");
+			System.out.println("accepting classList at line: " + astClassList.line);
 		for (ASTClassDecl cls : astClassList.lst) {
 			cls.accept(this, d);
 		}
@@ -233,7 +244,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTField astField, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting fields: " + astField.ids.lst);
+			System.out.println("accepting fields: " + astField.ids.lst
+					+ " at line: " + astField.line);
 		for (String field : astField.ids.lst) {
 			icVariable o = new icVariable(field, ASTNode.scope, astField.type);
 			d.add(o);
@@ -256,6 +268,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTRoot root, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting root at line: " + root.line);
 		root.child.accept(this, d);
 		return null;
 	}
@@ -275,9 +289,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTMethod meth, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting method: " + meth.id);
+			System.out.println("accepting method: " + meth.id + 
+					" at line: " + meth.line);
 		String classType = d.lastClass.name;
-		icFunction func = new icFunction(meth.id, ASTNode.scope, meth.type, classType, meth.isStatic);
+		icFunction func = new icFunction(meth.id, ASTNode.scope, meth.type, meth.isStatic);
 		d.lastFunc = func;
 		if (meth.isStatic)
 			d.lastClass.addObject(func, d, true);
@@ -303,7 +318,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTClassDecl cls, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting classDecl: " + cls.class_id);
+			System.out.println("accepting classDecl: " + cls.class_id +
+					 " at line: " + cls.line);
 		icClass c = new icClass(cls.class_id, ASTNode.scope);
 		c.ext = cls.extend.name;
 		if (run_num == 1 && cls.extend.name != null && cls.extend.name != "") {
@@ -326,7 +342,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTDotLength expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting expr.length");
+			System.out.println("accepting expr.length at line: " + expr.line);
 		String e = expr.e.accept(this, d);
 		if (e.endsWith("[]"))
 			return "int";
@@ -339,7 +355,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTNewArray expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting new array");
+			System.out.println("accepting new array at line: " + expr.line);
 		String index_type = expr.expr.accept(this, d);
 		if ("int" != index_type)
 			error("bad indexer type. expected int, got: " + index_type, expr);
@@ -352,7 +368,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	@Override
 	public String visit(ASTNewObject expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting new object");
+			System.out.println("accepting new object at line: " + expr.line);
 		if (run_num == 1) {
 			d.validateType(expr.type);
 		}
@@ -361,20 +377,26 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTElseStmt elseStmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting elseStmt at line: " + elseStmt.line);
 		elseStmt.stmt.accept(this,env);
 		return null;
 	}
 
 	@Override
 	public String visit(ASTAssignFormals stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTAssignFormals at line: " + stmt.line);
 		String type = stmt.form.type;
 		String id = stmt.form.id;
 		icObject val = env.getObjByName(id);
-		String rhs = stmt.rhs.accept(this,env);
+		String rhs = null;
+		if (stmt.rhs != null)
+			rhs = stmt.rhs.accept(this,env);
 		icObject var = env.getObjByName(type);
 		int flag =0;
 		
-		if (!type.equals("int") || !type.equals("string") || !type.equals("boolean")){
+		if (!type.equals("int") && !type.equals("string") && !type.equals("boolean")){
 			throw new RuntimeException("Line " + stmt.line + 
 					": " + type + "cannot be resolved to a type");
 		}
@@ -384,7 +406,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			if (((icClass) var).checkIfSubType(val, var, env) == true) {
 				flag = 1;
 			}
-		}else if (type.equals(rhs)){
+		}else if (rhs != null && type.equals(rhs)){
 			flag =1;
 		}
 		
@@ -400,6 +422,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTWhileStmt stm, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
 		ASTExpr expr = stm.expr;
 		int nestFlag; 
 		String ExprType = expr.accept(this, env);
@@ -426,6 +450,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTVarStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVarStmt at line: " + stmt.line);
 		if (env.loopScope == false) {
 			throw new UnsupportedOperationException(stmt.name + "cannot be used outside of a loop");
 		}
@@ -446,6 +472,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTIfElseStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTIfElseStmt at line: " + stmt.line);
 		String cond = stmt.expr.accept(this, env);
 		
 	
@@ -460,12 +488,17 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTCallStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTCallStmt at line: " + stmt.line);
 		String call = stmt.call.accept(this,env);
 		return call;
 	}
 
 	@Override
 	public String visit(ASTLocation expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTLocation at line: " + expr.line);
+		/*
 		String exp1 = expr.e1.accept(this, env);
 		String exp2 = expr.e2.accept(this, env);
 		String id = expr.id;
@@ -502,23 +535,21 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			
 			icVariable var =  (icVariable) env.getObjByName(exp1);
 			icObject inVar =  env.getObjByName(exp2);
-			/*
-			if (var == null){                           // the array has not been declared before
-				throw new UnsupportedOperationException(exp1 + "cannot be resolved to a variable");
-			}
-			*/
+			//if (var == null){                           // the array has not been declared before
+			//	throw new UnsupportedOperationException(exp1 + "cannot be resolved to a variable");
+			//}
 			
 			if (var.isArray == false){                  // the variable is not an array
 				throw new UnsupportedOperationException("The type of the expression must be an array type but it resolved to" + var.getAssignType());
 			}
 			
-			/*
-			if (inVar == null){
-				if (!exp2.equals("integer") || !utility.isInteger(exp2)){   // checking if ext2 has a value or a representation of an integer
-				throw new UnsupportedOperationException(id + "cannot be resolved to a variable");
-				}
-			}
-			*/
+			
+			//if (inVar == null){
+			//	if (!exp2.equals("integer") || !utility.isInteger(exp2)){   // checking if ext2 has a value or a representation of an integer
+			//	throw new UnsupportedOperationException(id + "cannot be resolved to a variable");
+			//	}
+			//}
+			
 			
 			if (!inVar.getAssignType().equals("integer")){  // checking if the parameter inside the array is an integer
 				throw new UnsupportedOperationException("Type mismatch: cannot convert from" + inVar.getAssignType() +  "to int");
@@ -527,12 +558,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 			return exp1;
 			
 			
-		}
-		return null;
+		}*/
+		return "null";
 	}
 
 	@Override
 	public String visit(ASTVirtualCall vc, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
 		//check vc is a valid method:
 		if (!(f instanceof icFunction))
@@ -561,6 +594,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 
 	@Override
 	public String visit(ASTStaticCall expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTStaticCall at line: " + expr.line);
 		/*
 		String expLst = expr.exprList.accept(this, env);
 		*/
