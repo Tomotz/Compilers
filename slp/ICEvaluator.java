@@ -423,7 +423,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				error("unknown type: " + expr.type, expr);
 			}
 		}
-		return new VarType(expr.type);
+		return new VarType(expr.type +"[]");
 	}
 
 	@Override
@@ -569,7 +569,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		if (IS_DEBUG)
 			System.out.println("id: " + expr.id + " type " + expr.type );
-		int length;
 
 		String id = expr.id;
 		VarType exp1;
@@ -615,11 +614,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					}
 				}
 			}
+			else
+				return exp1;
 
 		}
-		exp2 = expr.e2.accept(this, env);
 		// e1 is an array
 		if (expr.type == 2) {
+			exp2 = expr.e2.accept(this, env);
 
 			if (exp1.num_arrays == 0) 
 			{ // the variable is not an array
