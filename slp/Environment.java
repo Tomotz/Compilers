@@ -99,7 +99,6 @@ public class Environment {
 				 */
 
 			}
-
 		}
 
 	}
@@ -112,6 +111,7 @@ public class Environment {
 			}
 		}
 	}
+	
 
 	public Environment() {// add library functions
 		icClass library = new icClass("Library", 0);
@@ -164,6 +164,7 @@ public class Environment {
 		library.addObject(f, this, true);
 		add(f);
 
+
 		f = new icFunction("atos", 0, "string", true);
 		f.arg_types.add("int[]");
 		library.addObject(f, this, true);
@@ -178,11 +179,12 @@ public class Environment {
 		library.addObject(f, this, true);
 		add(f);
 
+
 		f = new icFunction("exit", 0, "void", true);
 		f.arg_types.add("int");
 		library.addObject(f, this, true);
 		add(f);
-
 		add(library);
+
 	}
 }
