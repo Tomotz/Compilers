@@ -10,7 +10,7 @@ public class icClass extends icObject {
 	List<icFunction> statScope = new ArrayList<icFunction>();  // list of names for static methods
 	List <icObject> instScope = new ArrayList<icObject>(); // list of names for dynamic methods and fields
 	String ext;  // the class type that the method extends (null if the class is a base class)
-	icObject lastSubObject; 
+
 
 	
 	public icClass(String name, int scope) {
@@ -18,9 +18,9 @@ public class icClass extends icObject {
 	}
 	
 	
-	void addObject (icObject o, Environment d, boolean isStatic){
+	void addObject(icObject o, Environment d, boolean isStatic){
 		if (this.hasObject(o.name, d))
-		{
+		{ //there is already an object with this name in current scope
 			throw new RuntimeException(
 					"multiple declerations of object: " + o.name);
 		}
@@ -28,7 +28,7 @@ public class icClass extends icObject {
 		{
 			icClass father = (icClass)d.getObjByName(ext);
 			if (father.hasObject(o.name, d))
-			{
+			{ //father class already has an object with that name
 				throw new RuntimeException(
 						"multiple declerations of object: " + o.name);
 			}
@@ -37,7 +37,6 @@ public class icClass extends icObject {
 			statScope.add((icFunction)o);
 		else
 			instScope.add(o);
-		this.lastSubObject = o;
 	}
 	
 	/*returns true if class already has an object with the given object name.
@@ -83,6 +82,11 @@ public class icClass extends icObject {
 			cur = (icClass) env.getObjByName(cur.ext);
 		}
 		return false;		
+	}
+
+
+	public VarType getFieldType(String id, Environment env) {
+		return getObject(id, env).getAssignType();
 	}
 	
 

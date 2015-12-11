@@ -607,7 +607,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					} 
 					else 
 					{
-						VarType res = ((icClass) clss).lastSubObject.getAssignType();
+						VarType res = ((icClass) clss).getFieldType(id, env);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
 						return res;
