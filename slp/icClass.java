@@ -10,7 +10,7 @@ public class icClass extends icObject {
 	List<icFunction> statScope = new ArrayList<icFunction>();  // list of names for static methods
 	List <icObject> instScope = new ArrayList<icObject>(); // list of names for dynamic methods and fields
 	String ext;  // the class type that the method extends (null if the class is a base class)
-	icObject lastSubObject; 
+
 
 	
 	public icClass(String name, int scope) {
@@ -37,7 +37,6 @@ public class icClass extends icObject {
 			statScope.add((icFunction)o);
 		else
 			instScope.add(o);
-		this.lastSubObject = o;
 	}
 	
 	/*returns true if class already has an object with the given object name.
