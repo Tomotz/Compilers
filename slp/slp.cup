@@ -196,7 +196,7 @@ stmt_list ::= /*empty*/
 ;
  
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: RESULT = new ASTAssignStmt(v, e, parser.getLine());
+	{: RESULT = new ASTAssignStmt(v, e, e.line);
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call:cl SEMI
 	{: RESULT = cl; :}
@@ -219,7 +219,7 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	{:RESULT = st;:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
 	{: Formal f1 = new Formal(t1, i1, parser.getLine());
-	   RESULT = new ASTAssignFormals(f1,e1, parser.getLine());
+	   RESULT = new ASTAssignFormals(f1, e1, e1.line);
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 

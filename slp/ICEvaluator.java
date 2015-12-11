@@ -103,7 +103,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType varExpr_type = stmt.varExpr.accept(this, env);
 		VarType rhs_type = stmt.rhs.accept(this, env);
 		validateAssign(varExpr_type, rhs_type, stmt, env);
-
 		return null;
 	}
 
@@ -597,16 +596,18 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				// checking if the class has been declared
 				
 				if (clss == null) {
-					error(id + " cannot be resolved!", expr);
+					error(exp1.type + " cannot be resolved to a type", expr);
 				}
 				
 				// e1 is a name of a class
 				if (clss instanceof icClass) {
 					// checking if exp1 is a valid field inside of class
-					if (((icClass) clss).hasObject(id) == false) {
+					if (((icClass) clss).hasObject(id, env) == false)
+					{
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
-					} else {
-						
+					} 
+					else 
+					{
 						VarType res = ((icClass) clss).lastSubObject.getAssignType();
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
@@ -629,7 +630,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 			if (!exp2.isBaseType("int")) 
 			{ // checking if the parameter inside the array is an integer
-				error("Type mismatch: cannot convert from" + exp2 + "to int", expr);
+				error("Type mismatch: cannot convert from " + exp2 + " to int", expr);
 			}
 					
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1);
@@ -645,9 +646,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 	@Override
 	public VarType visit(ASTVirtualCall vc, Environment env) {
+		if (run_num != 1)
+			return null;
 		if (IS_DEBUG)
 			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
+		if (f==null)
+		{
+			env.lastClass.getObject(vc.id, env);
+		}
 		// check vc is a valid method:
 		if (!(f instanceof icFunction))
 			error("The method '" + vc.id + "' has not been declared", vc);
@@ -709,7 +716,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			error(className + " cannot be resolved to a variable", expr);
 		}
 
-		if (!className.hasObject(funcId)) {
+		if (!className.hasObject(funcId, env)) {
 			error(funcId + " cannot be resolved or is not a function", expr);
 		}
 		icFunction func = (icFunction) env.getObjByName(funcId);
