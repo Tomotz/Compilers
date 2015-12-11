@@ -48,6 +48,38 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			
 	}
 
+	public void validateAssign(VarType lhs, VarType rhs, ASTNode curNode, Environment env)
+	{
+		if (run_num != 1)
+			return;
+		if (lhs.num_arrays != rhs.num_arrays)
+			error("Type mismatch: cannot convert from " + rhs
+					+ " to " + lhs, curNode);
+		icObject rhsClass = env.getObjByName(rhs.type);
+		if (rhsClass == null) {
+			error("cannot find class: " + rhs.type, curNode);
+		} 
+		if (!(rhsClass instanceof icClass))
+		{
+			error(rhs.type + "is not a class", curNode);
+			
+		}
+		icObject lhsClass = env.getObjByName(lhs.type);
+
+		if (lhsClass == null) {
+			error("cannot find class: " + lhs.type, curNode);
+		} 
+		if (!(lhsClass instanceof icClass))
+		{
+			error(lhs.type + "is not a class", curNode);
+			
+		}
+		if (!((icClass) rhsClass).checkIfSubType(lhsClass, env)) {
+				error("Type mismatch: cannot convert from " + rhs.type
+						+ " to " + lhs.type, curNode);
+		}
+	}
+	
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
@@ -68,42 +100,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 
-		int flag = 0;
 		VarType varExpr_type = stmt.varExpr.accept(this, env);
-		String varExpr = varExpr_type.type;
-		icObject var = env.getObjByName(varExpr);
 		VarType rhs_type = stmt.rhs.accept(this, env);
-		String rhs = rhs_type.type;
-		icObject value = env.getObjByName(rhs);
-		if (varExpr_type.num_arrays != rhs_type.num_arrays)
-		{
-			error("Type mismatch: cannot convert from" + rhs_type + 
-					"to" + varExpr_type,	stmt);			
-		}
+		validateAssign(varExpr_type, rhs_type, stmt, env);
 
-		// value is a number or a string
-		if (value == null) {
-			if (rhs.equals(varExpr)) {
-				flag = 1;
-				}
-			}
-		
-		else if (var instanceof icClass) {
-			// if the value is a son of a father class
-			if (((icClass) var).checkIfSubType(var, env) == true) {
-				flag = 1;
-			}
-		}
-
-
-		if (flag == 0) {
-			error("Type mismatch: cannot convert from" + value.getAssignType() + 
-					"to" + var.getAssignType(),	stmt);
-		}
-
-		// Integer expressionValue = rhs.accept(this, env);
-		// ASTVarExpr var = stmt.varExpr;
-		// env.update(var, expressionValue);
 		return null;
 	}
 
@@ -265,7 +265,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				}
 				// if reached here - rhsType doesn't extend lhsType
 				error("Type mismatch for operands of '" + op + "'. got lhs: " + 
-				lhsType + ". rhs: " + rhsType, expr);
+						lhsType + ". rhs: " + rhsType, expr);
 			} 
 			else
 				error("Error!!!! should never reach this line of code", expr);
@@ -458,18 +458,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("type: " + type + " id: " + id);
 
-		String rhs = null;
-		int flag = 0;
+		VarType rhs = null;
 
 		// defining a new variable
 		icVariable var = new icVariable(id, ASTNode.scope, type);
 		env.add(var);
-		/*
-		 * if (var != null) { // cant define an identifier multiple times in the
-		 * same scope if (var.getScope() == ASTNode.scope) { throw new
-		 * RuntimeException("Duplicate local variable " + id); } }
-		 */
 
+		
 		// validating the the declared variable has been defined
 		if (run_num == 1) {
 			icObject type_classo = env.getObjByName(type.type);
@@ -478,39 +473,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 			else if (!(type_classo instanceof icClass))
 				error(type +" is not a class name", stmt);
-			icClass type_class = (icClass) type_classo;
 
 			// case of assignment
 			if (stmt.rhs != null) {
 				rhs = stmt.rhs.accept(this, env);
-				if (IS_DEBUG)
-					System.out.println("rhs: " + rhs);
-				if (type_class != null)
-				{
-					icObject val = env.getObjByName(rhs);
-					
-					// checking for type equality
-					if (val instanceof icClass) {
-						// if type of value is sub-type of the variable type
-						if (((icClass) val).checkIfSubType(type_class, env) == false) {
-							flag = 1;
-						}
-						// type equality of basic types
-					} 
-				}
-				else if (rhs != null && !type.equals(rhs)) {
-					flag = 1;
-				}
+				validateAssign(type, rhs, stmt, env);
 			}
 		}
 
-		if (flag == 1) {
-			error("Type mismatch: cannot convert from " + rhs + " to " + type, stmt);
-		}
-		if (run_num == 0) {
-			icVariable newVar = new icVariable(id, ASTNode.scope, type);
-			env.add(newVar);
-		}
+		icVariable newVar = new icVariable(id, ASTNode.scope, type);
+		env.add(newVar);
 
 		return type;
 	}
@@ -558,25 +530,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	// handle non-simple objects
 	public VarType visit(ASTRetExp expr, Environment env) {
 		VarType rExpr = expr.exp.accept(this, env);
-		icObject func = env.lastFunc;
-		VarType funcRet = func.getAssignType();
-		if (funcRet.num_arrays != rExpr.num_arrays)
-			error("Type mismatch: cannot convert from" + rExpr
-					+ "to" + funcRet, expr);
-		if (IS_DEBUG)
-			System.out.println("return check: " + rExpr);
-		icObject retExp = env.getObjByName(rExpr.type);
-		if (retExp == null) {
-			if (!funcRet.type.equals(rExpr.type)) {
-				error("Type mismatch: cannot convert from" + retExp.getAssignType()
-						+ "to" + env.lastFunc.getAssignType(), expr);
-			}
-		} else {
-			// assuming retExp is some sort of class type - need to fix
-			if (((icClass) retExp).checkIfSubType(func, env)) {
-
-			}
-		}
+		VarType funcRet = env.lastFunc.getAssignType();
+		validateAssign(funcRet, rExpr, expr, env);
 		return null;
 	}
 
@@ -617,8 +572,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		int length;
 
 		String id = expr.id;
-		String exp1;
-		String exp2;
+		VarType exp1;
+		VarType exp2;
 		icObject ident = env.getObjByName(id);
 
 		// only a variable name
@@ -631,29 +586,33 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("return 1: " + ident.getAssignType());
 			return ident.getAssignType();
 		}
-		exp1 = expr.e1.accept(this, env);
 		
+		exp1 = expr.e1.accept(this, env);		
 		if (expr.type == 1) {
 			if (IS_DEBUG)
 				System.out.println("entered loop");
-			icObject clss = env.getObjByName(exp1);
-			// checking if the class has been declared
-			
-			if (clss == null) {
-				error(id + " cannot be resolved!", expr);
-			}
-			
-			// e1 is a name of a class
-			if (clss instanceof icClass) {
-				// checking if exp1 is a valid field inside of class
-				if (((icClass) clss).hasObject(id) == false) {
-					error(id + " cannot be resolved or is not a field of class " + exp1, expr);
-				} else {
-					
-					VarType res = ((icClass) clss).lastSubObject.getAssignType();
-					if (IS_DEBUG)
-						System.out.println("return 2 " + res);
-					return res;
+			if (run_num == 1)
+			{
+				//TODO - handle arrays!!!
+				icObject clss = env.getObjByName(exp1.type);
+				// checking if the class has been declared
+				
+				if (clss == null) {
+					error(id + " cannot be resolved!", expr);
+				}
+				
+				// e1 is a name of a class
+				if (clss instanceof icClass) {
+					// checking if exp1 is a valid field inside of class
+					if (((icClass) clss).hasObject(id) == false) {
+						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
+					} else {
+						
+						VarType res = ((icClass) clss).lastSubObject.getAssignType();
+						if (IS_DEBUG)
+							System.out.println("return 2 " + res);
+						return res;
+					}
 				}
 			}
 
@@ -662,21 +621,20 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		// e1 is an array
 		if (expr.type == 2) {
 
-			length = exp1.length();
-			if (!(exp1.charAt(length - 1) == ']')) { // the variable is not an
-														// array
+			if (exp1.num_arrays == 0) 
+			{ // the variable is not an array
 				error("The type of the expression must be an array type but it resolved to" + exp1, expr);
 			}
 
-			if (!exp2.equals("int")) { // checking if the parameter inside the
-										// array is an integer
-
+			if (!exp2.isBaseType("int")) 
+			{ // checking if the parameter inside the array is an integer
 				error("Type mismatch: cannot convert from" + exp2 + "to int", expr);
 			}
+					
+			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1);
 			if (IS_DEBUG)
-				System.out.println("returning exp1:" + exp1.indexOf("[")); // need
-								
-			return exp1.substring(0, exp1.indexOf("["));
+				System.out.println("returning exp1: " + out_type); // need
+			return out_type;
 		}
 		if (IS_DEBUG)
 			System.out.println("returning null");
