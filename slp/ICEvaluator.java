@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -607,7 +607,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					} 
 					else 
 					{
-						VarType res = ((icClass) clss).lastSubObject.getAssignType();
+						VarType res = ((icClass) clss).getFieldType(id, env);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
 						return res;

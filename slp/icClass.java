@@ -84,6 +84,11 @@ public class icClass extends icObject {
 		}
 		return false;		
 	}
+
+
+	public VarType getFieldType(String id, Environment env) {
+		return getObject(id, env).getAssignType();
+	}
 	
 
 }
