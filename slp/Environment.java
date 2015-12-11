@@ -13,55 +13,42 @@ public class Environment {
 	 * way of ensuring we a consistent mapping for each variable.
 	 */
 
-	private Map<String, Queue<icObject>> varToValue = new HashMap<String, Queue<icObject>>();
+	private Map<String, Stack<icObject>> varToValue = new HashMap<String, Stack<icObject>>();
+	private Stack<icObject> popStack = new Stack<icObject>();
 	public icClass lastClass = null;
 	public icFunction lastFunc = null;
 	public boolean loopScope = false;
+	public int run_num = 0;
 
 	public void add(icObject obj) {
+		if (obj.scope == 0 && run_num == 1)
+			return; // should already appear int the table
 		String name = obj.getName();
-		Queue<icObject> expSet = varToValue.get(name);
-		if (expSet != null) {
-			for (icObject icObj : expSet) {
-				/*
-				if (icObj.getScope() == obj.getScope()) {
-					throw new RuntimeException("Duplicate items with same name: " + name);
-					
-				}
-				*/
-
-			}
+		Stack<icObject> expSet = varToValue.get(name);
+		if (expSet == null) {
+			expSet = new Stack<icObject>();
+			expSet.push(obj);
+			varToValue.put(obj.name, expSet);
 		}
-
-		update(name, obj);
+		else
+		{
+			icObject last = expSet.peek();
+			if (last.scope >= obj.scope)
+				ICEvaluator.error("object " + obj.name + " redefenition", null);
+			expSet.push(obj);
+		}
+		if (obj.scope != 0)
+			popStack.push(obj);
 
 	}
 
 	public icObject getObjByName(String name) {
-		Queue<icObject> expSet = varToValue.get(name);
+		Stack<icObject> expSet = varToValue.get(name);
 		if (expSet == null)
 			return null;
 		return expSet.peek();
 	}
 
-	/**
-	 * Updates the value of a variable.
-	 * 
-	 * @param v
-	 *            A variable expression.
-	 * @param newValue
-	 *            The updated value.
-	 */
-	public void update(String name, icObject obj) {
-		Queue<icObject> expSet = varToValue.get(name);
-		if (expSet == null) { // if the set is not initialized create it
-			expSet = new ArrayDeque<icObject>();
-			varToValue.put(name, expSet);
-		}
-		
-		varToValue.get(name).offer(obj);
-
-	}
 
 	/**
 	 * Retrieves the value of the given variable. If the variable has not been
@@ -78,29 +65,14 @@ public class Environment {
 	 */
 
 	public void destroyScope(int scope) {
-	
-		for (Entry<String, Queue<icObject>> entry : varToValue.entrySet()) {
-
-			icObject obj = entry.getValue().peek();
-			/*
-			System.out.println("entry: " + entry);
-			*/
-			if (obj == null) {
-				continue;
-			}
-			/*
-			System.out.println("checking: " + obj.name + " scope " + obj.getScope());
-			 */
-			if (obj.getScope() == scope) {
-				/*
-				System.out.println("destroying: " + obj.name);
-				/*
-				 entry.getValue().poll();
-				 */
-
-			}
+		while (!popStack.isEmpty() && popStack.peek().scope == scope)
+		{
+			String name = popStack.pop().name;
+			Stack<icObject> expSet = varToValue.get(name);
+			expSet.pop();
+			if (expSet.isEmpty())
+				varToValue.remove(name);
 		}
-
 	}
 
 	public boolean validateType(VarType type) {

@@ -25,16 +25,18 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	 */
 	public void evaluate() {
 		Environment env = new Environment();
+		env.run_num = 0;
 		if (IS_DEBUG)
 			System.out.println("starting first itteration");
 		root.accept(this, env);
 		++run_num;
+		++env.run_num;
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
 		root.accept(this, env);
 	}
 
-	private void error(String str, ASTNode n) {
+	public static void error(String str, ASTNode n) {
 		if (n != null)
 		{
 			throw new RuntimeException("\nLine " + n.line + ": " + str);
@@ -480,8 +482,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 		}
 
-		icVariable newVar = new icVariable(id, ASTNode.scope, type);
-		env.add(newVar);
 
 		return type;
 	}
@@ -546,7 +546,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						"boolean", stmt);
 		}
 		++ASTNode.scope;
-		VarType ifStmt = stmt.stmt.accept(this, env);
+		stmt.stmt.accept(this, env);
 		
 		env.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
@@ -591,7 +591,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("entered loop");
 			if (run_num == 1)
 			{
-				//TODO - handle arrays!!!
 				icObject clss = env.getObjByName(exp1.type);
 				// checking if the class has been declared
 				
@@ -653,7 +652,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		icObject f = env.getObjByName(vc.id);
 		if (f==null)
 		{
-			env.lastClass.getObject(vc.id, env);
+			f = env.lastClass.getObject(vc.id, env);
 		}
 		// check vc is a valid method:
 		if (!(f instanceof icFunction))
