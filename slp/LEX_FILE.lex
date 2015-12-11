@@ -1,4 +1,4 @@
-/***************************/
+ /***************************/
 /* FILE NAME: LEX_FILE.lex */
 /***************************/
 
@@ -17,7 +17,7 @@ import java_cup.runtime.*;
 /******************************/
       
 %%
-   
+
 /************************************/
 /* OPTIONS AND DECLARATIONS SECTION */
 /************************************/
@@ -143,7 +143,7 @@ QUOTE			= \" {StringCharacter}* \"
 "=="				{ return printToken("EQUAL",sym.EQUAL);}
 "extends"			{ return printToken("EXTENDS",sym.EXTENDS);}
 "else"				{ return printToken("ELSE",sym.ELSE);}
-"FALSE"				{ return printToken("FALSE",sym.FALSE);}
+"false"				{ return printToken("FALSE",sym.FALSE);}  
 ">"					{ return printToken("GT",sym.GT);}
 ">="				{ return printToken("GTE",sym.GTE);}
 "if"				{ return printToken("IF",sym.IF);}
@@ -172,7 +172,7 @@ QUOTE			= \" {StringCharacter}* \"
 "static"			{ return printToken("STATIC",sym.STATIC);}
 "string"			{ return printToken("STRING",sym.STRING);}
 "this"				{ return printToken("THIS",sym.THIS);}
-"TRUE"				{ return printToken("TRUE",sym.TRUE);}
+"true"				{ return printToken("TRUE",sym.TRUE);}
 "void"				{ return printToken("VOID",sym.VOID);}
 "while"				{ return printToken("WHILE",sym.WHILE);}
 "/*" 				{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }

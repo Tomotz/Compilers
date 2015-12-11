@@ -5,7 +5,7 @@ public abstract class icObject {
 	String name;
 	int scope;
 	
-	abstract public String getAssignType();
+	abstract public VarType getAssignType();
 	
 	public icObject(String name, int scope)
 	{

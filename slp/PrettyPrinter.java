@@ -212,7 +212,8 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		printstrln("Return statement, with return value");
-		ret.exp.accept(this);	
+		if (ret.exp != null)
+			ret.exp.accept(this);	
 		ASTNode.indent--;
 		}
 	
@@ -320,6 +321,7 @@ public class PrettyPrinter implements Visitor {
 			printstrln("Integer literal: "+l.s);
 			break;
 		case 1:
+			
 			printstrln("String literal: "+l.s);
 			break;
 		case 2:

@@ -1,35 +1,17 @@
 package slp;
 
+
 public class icVariable extends icObject {
-	
-	String type; //basic type of variable (i.e. int ,String...) or 'object type' 
-	boolean isArray; // states whether the regular array or an array
-	int arrSize = 0;
-	//int size;
-	// int value;
+	VarType type;
 
-	public icVariable(String name, int scope, String type, boolean isArray) {
+	public icVariable(String name, int scope, VarType type) {
 		super(name, scope);
 		this.type = type;
-		this.isArray = isArray;
-		
-	}
-
-	public icVariable(String name, int scope, String type) {
-		super(name, scope);
-		this.type = type;
-		
 	}
 	
-	public icVariable(String name, int scope, String type, boolean isArray, int arrSize) {
-		super(name, scope);
-		this.type = type;
-		this.isArray = isArray;
-		this.arrSize = arrSize;
-	}
-
 	@Override
-	public String getAssignType() {
+	public VarType getAssignType() {
 		return this.type;
 	}
+	
 }

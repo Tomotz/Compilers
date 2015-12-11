@@ -46,8 +46,8 @@ public enum Keyword
 		case THIS: return "this";
 		case NEW: return "new";
 		case LENGTH: return "length";
-		case TRUE: return "TRUE";
-		case FALSE: return "FALSE";
+		case TRUE: return "true";
+		case FALSE: return "false";
 		case NULL: return "null";
 	
 	

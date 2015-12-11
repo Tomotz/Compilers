@@ -5,9 +5,9 @@ import java.util.List;
 /**
  * Evaluates straight line programs.
  */
-public class ICEvaluator implements PropagatingVisitor<Environment, String> {
+public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -25,208 +25,263 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	 */
 	public void evaluate() {
 		Environment env = new Environment();
-		// TODO: add Library!!!!!!!!!!
+		env.run_num = 0;
 		if (IS_DEBUG)
 			System.out.println("starting first itteration");
 		root.accept(this, env);
 		++run_num;
+		++env.run_num;
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
 		root.accept(this, env);
 	}
 
-	private void error(String str, ASTNode n) {
-		throw new RuntimeException(str + " at line: " + Integer.toString(n.line));
+	public static void error(String str, ASTNode n) {
+		if (n != null)
+		{
+			throw new RuntimeException("\nLine " + n.line + ": " + str);
+			//System.out.println("\nLine " + n.line + ": " + str);
+		}
+		else
+		{
+			throw new RuntimeException(str);
+			//System.out.println(str);
+		}
+			
 	}
-	public String visit(ASTStmtList stmts, Environment env) {
+
+	public void validateAssign(VarType lhs, VarType rhs, ASTNode curNode, Environment env)
+	{
+		if (run_num != 1)
+			return;
+		if (lhs.num_arrays != rhs.num_arrays)
+			error("Type mismatch: cannot convert from " + rhs
+					+ " to " + lhs, curNode);
+		icObject rhsClass = env.getObjByName(rhs.type);
+		if (rhsClass == null) {
+			error("cannot find class: " + rhs.type, curNode);
+		} 
+		if (!(rhsClass instanceof icClass))
+		{
+			error(rhs.type + "is not a class", curNode);
+			
+		}
+		icObject lhsClass = env.getObjByName(lhs.type);
+
+		if (lhsClass == null) {
+			error("cannot find class: " + lhs.type, curNode);
+		} 
+		if (!(lhsClass instanceof icClass))
+		{
+			error(lhs.type + "is not a class", curNode);
+			
+		}
+		if (!((icClass) rhsClass).checkIfSubType(lhsClass, env)) {
+				error("Type mismatch: cannot convert from " + rhs.type
+						+ " to " + lhs.type, curNode);
+		}
+	}
+	
+	public VarType visit(ASTStmtList stmts, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTStmtList at line: " + stmts.line);
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
 		return null;
 	}
 
-	public String visit(ASTStmt stmt, Environment env) {
-		throw new UnsupportedOperationException("Unexpected visit of Stmt!");
+	public VarType visit(ASTStmt stmt, Environment env) {
+		error("Unexpected visit of Stmt!", stmt);
+		return null;
 	}
 
 	// if object is array its range is expected to be checked before
 	// handle basic variables
-	public String visit(ASTAssignStmt stmt, Environment env) {
+	public VarType visit(ASTAssignStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 
-		int flag = 0;
-		String varExpr = stmt.varExpr.accept(this, env);
-		icObject var = env.getObjByName(varExpr);
-		String rhs = stmt.rhs.accept(this, env);
-		icObject value = env.getObjByName(rhs);
-
-		// value is a number or a string
-		if (value == null) {
-			if (rhs.equals("integer") || rhs.equals("string") || rhs.equals("boolean")) {
-				flag = 1;
-			} else if (utility.isInteger(varExpr) && var.getAssignType().equals("integer")) {
-				flag = 1;
-			} else if ((rhs.equals("true") || rhs.equals("false")) && var.getAssignType().equals("boolean")) {
-				flag = 1;
-			}
-
-		}
-
-		else if (var instanceof icClass) {
-			if (((icClass) var).checkIfSubType(value, var, env) == true) {
-				flag = 1;
-			}
-		} else {
-			if (var.getAssignType().equals(value.getAssignType())) {
-				flag = 1;
-			}
-
-			if (flag == 0) {
-				throw new UnsupportedOperationException(
-						"Type mismatch: cannot convert from" + value.getAssignType() + "to" + var.getAssignType());
-			} else {
-				// assign value to variable
-			}
-		}
-		// Integer expressionValue = rhs.accept(this, env);
-		// ASTVarExpr var = stmt.varExpr;
-		// env.update(var, expressionValue);
+		VarType varExpr_type = stmt.varExpr.accept(this, env);
+		VarType rhs_type = stmt.rhs.accept(this, env);
+		validateAssign(varExpr_type, rhs_type, stmt, env);
 		return null;
 	}
 
-	public String visit(ASTExpr expr, Environment env) {
-		throw new UnsupportedOperationException("Unexpected visit of Expr!");
+	public VarType visit(ASTExpr expr, Environment env) {
+		error("Unexpected visit of Expr!", expr);
+		return null;
 	}
 
-	public String visit(ASTVarExpr expr, Environment env) {
-		if (expr.name.equals("this")) return env.lastClass.name;
-		else 
-			throw new RuntimeException("Error!!! should never reach this code. parser at line " + expr.line);
-	}
-	
-	
-	public String visit(ASTNumberExpr expr, Environment env) {
-		throw new RuntimeException("Error!!! should never reach this code. parser at line " + expr.line);
+	public VarType visit(ASTVarExpr expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVarExpr at line: " + expr.line);
 
+		if (expr.name.equals("this"))
+			return new VarType(env.lastClass.name);
+		else
+			error("Error!!! should never reach this code", expr);
+		return null;
 	}
-	
-	
-	public String visit(ASTUnaryOpExpr expr, Environment env) {
+
+	public VarType visit(ASTNumberExpr expr, Environment env) {
+		error("Error!!! should never reach this code", expr);
+		return null;
+	}
+
+	public VarType visit(ASTUnaryOpExpr expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTUnaryOpExpr at line: " + expr.line);
 		Operator op = expr.op;
 		ASTExpr rhs = expr.operand;
-		String rhsType = rhs.accept(this, env);	
-		if (op == Operator.MINUS){
-			if (rhsType.equals("int")) return "int";
-			else throw new RuntimeException("Line " + expr.line + ": Expected an Integer after '-' ");
+		VarType rhsType_type = rhs.accept(this, env);
+		if (rhsType_type.num_arrays != 0)
+		{
+			error ("cannot evaluate unary op on array type", expr);
 		}
-		if(op == Operator.LNEG){
-			if (rhsType.equals("boolean")) return "boolean"; 
-			else throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression after '!' ");
+		String rhsType = rhsType_type.type;
+		if (op == Operator.MINUS) {
+			if (rhsType.equals("int"))
+				return new VarType("int");
+			else
+				error ("Expected an Integer after '-' ", expr);
 		}
-		else
-			throw new RuntimeException("Line " + expr.line + ": Encountered unexpected operator " + op);
-		//Integer value = expr.operand.accept(this, env);
+		if (op == Operator.LNEG) {
+			if (rhsType.equals("boolean"))
+				return new VarType("boolean");
+			else
+				error("Expected a Boolean expression after '!' ", expr);
+		} else
+			error("Encountered unexpected operator " + op, expr);
+		// Integer value = expr.operand.accept(this, env);
 		// new Integer(- value.intValue());
+		return null;
 	}
 
-	public String visit(ASTBinaryOpExpr expr, Environment env) {
+	public VarType visit(ASTBinaryOpExpr expr, Environment env)
+	{
+		if (IS_DEBUG)
+			System.out.println("accepting ASTBinaryOpExpr at line: " + expr.line);
 		Operator op = expr.op;
 		ASTExpr lhs = expr.lhs;
 		ASTExpr rhs = expr.rhs;
-		String lhsType = lhs.accept(this, env);
-		String rhsType = rhs.accept(this, env);
-		if (op == Operator.LAND || op == Operator.LOR){
+		VarType lhsType_type = lhs.accept(this, env);
+		VarType rhsType_type = rhs.accept(this, env);
+		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
+		{
+			error ("cannot evaluate binary op on array type", expr);
+		}
+		String rhsType = rhsType_type.type;
+		String lhsType = lhsType_type.type;
+		
+		if (op == Operator.LAND || op == Operator.LOR) 
+		{
 			if (!lhsType.equals("boolean"))
-				throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression before " + op);
+				error("Expected a Boolean expression before " + op, expr);
 			if (!rhsType.equals("boolean"))
-				throw new RuntimeException("Line " + expr.line + ": Expected a Boolean expression after " + op);
+				error("Expected a Boolean expression after " + op, expr);
 			else
-				return "boolean";
+				return new VarType("boolean");
 		}
-		if (op == Operator.PLUS){
-			if (lhsType.equals("string") || lhsType.equals("int")){
-				if (lhsType.equals(rhsType))return lhsType;
-				else 
-					throw new RuntimeException("Line " + expr.line + 
-							": Expected operands of same type for the binary operator " + op);
-			} else
-				throw new RuntimeException("Line " + expr.line + 
-						": The binary operator '+' accepts only Integer or String types as operands");
-		}
-		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD){
-			if (!(lhsType.equals("int") && rhsType.equals("int")))
-				throw new RuntimeException("Line " + expr.line + 
-						": The binary operator '" + op + "' accepts only Integer types as operands");
+		if (op == Operator.PLUS)
+		{
+			if (IS_DEBUG)
+				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
+			if (lhsType.equals("string") || lhsType.equals("int")) 
+			{
+				if (lhsType.equals(rhsType))
+					return new VarType(lhsType);
+				else
+					error("Expected operands of same type for the binary operator " + op +
+							"got lhs: " + lhsType + ". rhs: " + rhsType, expr);
+			} 
 			else
-				return "int";
+				error("The binary operator '+' accepts only Integer or String types as operands"+
+						"got lhs: " + lhsType + ". rhs: " + rhsType, expr);
 		}
-		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE){
+		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD)
+		{
 			if (!(lhsType.equals("int") && rhsType.equals("int")))
-				throw new RuntimeException("Line " + expr.line + 
-						": The binary operator '" + op + "' accepts only Integer types as operands");
-			else 
-				return "boolean";
+				error("The binary operator '" + op
+						+ "' accepts only Integer types as operands. got lhs: " 
+						+ lhsType + ". rhs: " + rhsType, expr);
+			else
+				return new VarType("int");
 		}
-		if (op == Operator.EQUAL || op == Operator.NEQUAL){
-			if (run_num == 0) return "boolean";
-			if (run_num == 1){
+		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE)
+		{
+			if (!(lhsType.equals("int") && rhsType.equals("int")))
+				error("The binary operator '" + op
+						+ "' accepts only Integer types as operands. got lhs: " +
+						lhsType + ". rhs: " + rhsType, expr);
+			else
+				return new VarType("boolean");
+		}
+		if (op == Operator.EQUAL || op == Operator.NEQUAL) 
+		{
+			if (run_num == 0)
+				return new VarType("boolean");
+			if (run_num == 1) 
+			{
 				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null"))
-					return "boolean";
+					return new VarType("boolean");
 				// if reached here - lhsType != rhsType
-				if (lhsType.equals("string")|| lhsType.equals("int") || lhsType.equals("boolean") || 
-						rhsType.equals("string")|| rhsType.equals("int") || rhsType.equals("boolean"))
-					throw new RuntimeException("Line " + expr.line + 
-							": Type mismatch for the operands of '" + op + "'");
-				//if reached here - lhsType and rhsType are not primitive types
+				if (lhsType.equals("string") || lhsType.equals("int") || lhsType.equals("boolean")
+						|| rhsType.equals("string") || rhsType.equals("int") || rhsType.equals("boolean"))
+					error("Type mismatch for the operands of '" + op + "'. got lhs: "
+							+ lhsType + ". rhs: " + rhsType , expr);
+				// if reached here - lhsType and rhsType are not primitive types
 				//
-				//check if lhsType extends rhsType:
-				icObject lhsClass = env.getObjByName(lhsType);	
-				if (!(lhsClass instanceof icClass)) 
-					throw new RuntimeException("Line " + expr.line + 
-							": Undefined type: " + lhsType);
-				String parent = ((icClass)lhsClass).ext;
+				// check if lhsType extends rhsType:
+				icObject lhsClass = env.getObjByName(lhsType);
+				if (!(lhsClass instanceof icClass))
+					error("Undefined type: " + lhsType, expr);
+				String parent = ((icClass) lhsClass).ext;
 				icObject parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass)) 
-					throw new RuntimeException("Line " + expr.line + 
-							": Unexpected error!!! undefined parent class - should have catched this before");
-				while (parent != null){
-					if (rhsType.equals(parent)) return "boolean";
+				if (!(parentClass instanceof icClass))
+					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
+				while (parent != null) 
+				{
+					if (rhsType.equals(parent))
+						return new VarType("boolean");
 					else
-						parent = ((icClass)parentClass).ext;
+						parent = ((icClass) parentClass).ext;
 				}
 				// if reached here - lhsType doesn't extend rhsType
 				//
-				//check if rhsType extends lhsType
-				icObject rhsClass = env.getObjByName(rhsType);	
-				if (!(rhsClass instanceof icClass)) 
-					throw new RuntimeException("Line " + expr.line + 
-							": Undefined type: " + rhsType);
-				parent = ((icClass)rhsClass).ext;
+				// check if rhsType extends lhsType
+				icObject rhsClass = env.getObjByName(rhsType);
+				if (!(rhsClass instanceof icClass))
+					error("Undefined type: " + rhsType, expr);
+				parent = ((icClass) rhsClass).ext;
 				parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass)) 
-					throw new RuntimeException("Line " + expr.line + 
-							": Unexpected error!!! undefined parent class - should have catched this before");
-				while (parent != null){
-					if (lhsType.equals(parent)) return "boolean";
+				if (!(parentClass instanceof icClass))
+					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
+				while (parent != null) 
+				{
+					if (lhsType.equals(parent))
+						return new VarType("boolean");
 					else
-						parent = ((icClass)parentClass).ext;
+						parent = ((icClass) parentClass).ext;
 				}
-				//if reached here - rhsType doesn't extend lhsType
-				throw new RuntimeException("Line " + expr.line + 
-						": Type mismatch for operands of '" + op +"'");
-			}
-			else throw new RuntimeException("Error!!!! should never reach this line of code");
+				// if reached here - rhsType doesn't extend lhsType
+				error("Type mismatch for operands of '" + op + "'. got lhs: " + 
+						lhsType + ". rhs: " + rhsType, expr);
+			} 
+			else
+				error("Error!!!! should never reach this line of code", expr);
 		}
 		else
-			throw new RuntimeException("Error!!!! should never reach this line of code");
-
+			error("Error!!!! should never reach this line of code", expr);
+		return null;
+		
+		
 	}
 
-
-
 	@Override
-	public String visit(ASTClassList astClassList, Environment d) {
+	public VarType visit(ASTClassList astClassList, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting classList");
+			System.out.println("accepting classList at line: " + astClassList.line);
 		for (ASTClassDecl cls : astClassList.lst) {
 			cls.accept(this, d);
 		}
@@ -234,17 +289,22 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTIdList astIdList, Environment d) {
+	public VarType visit(ASTIdList astIdList, Environment d) {
 		/* should not be called. do nothing */
 		return null;
 	}
 
 	@Override
-	public String visit(ASTField astField, Environment d) {
+	public VarType visit(ASTField astField, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting fields: " + astField.ids.lst);
+
+			System.out.println("accepting fields: " + astField.ids.lst + " at line: " + astField.line);
+
 		for (String field : astField.ids.lst) {
-			icVariable o = new icVariable(field, ASTNode.scope, astField.type);
+			if (IS_DEBUG)
+				System.out.println("field type: " + astField.type);
+			icVariable o = new icVariable(field, ASTNode.scope, 
+					new VarType(astField.type));
 			d.add(o);
 			d.lastClass.addObject(o, d, false);
 		}
@@ -252,41 +312,44 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTExtend astExtend, Environment d) {
+	public VarType visit(ASTExtend astExtend, Environment d) {
 		/* should not be called. do nothing */
 		return null;
 	}
 
 	@Override
-	public String visit(ASTfmList fmList, Environment d) {
+	public VarType visit(ASTfmList fmList, Environment d) {
 		/* should not be called. do nothing */
 		return null;
 	}
 
 	@Override
-	public String visit(ASTRoot root, Environment d) {
+	public VarType visit(ASTRoot root, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting root at line: " + root.line);
 		root.child.accept(this, d);
 		return null;
 	}
 
 	@Override
-	public String visit(ASTFormalList astFormalList, Environment d) {
+	public VarType visit(ASTFormalList astFormalList, Environment d) {
 		/* should not be called. do nothing */
 		return null;
 	}
 
 	@Override
-	public String visit(ASTStatType astStatType, Environment d) {
+	public VarType visit(ASTStatType astStatType, Environment d) {
 		/* should not be called. do nothing */
 		return null;
 	}
 
 	@Override
-	public String visit(ASTMethod meth, Environment d) {
+	public VarType visit(ASTMethod meth, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting method: " + meth.id);
-		String classType = d.lastClass.name;
-		icFunction func = new icFunction(meth.id, ASTNode.scope, meth.type, classType, meth.isStatic);
+			System.out.println("accepting method: " + meth.id + " at line: " + meth.line);
+
+		icFunction func = new icFunction(meth.id, ASTNode.scope, 
+				new VarType(meth.type), meth.isStatic);
 		d.lastFunc = func;
 		if (meth.isStatic)
 			d.lastClass.addObject(func, d, true);
@@ -298,6 +361,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 		for (Formal formal : meth.formals.lst) {
 			d.lastFunc.arg_types.add(formal.type);
 			icVariable v = new icVariable(formal.id, ASTNode.scope, formal.type);
+			if (IS_DEBUG)
+				System.out.println("adding new variable: " + v.name + " scope " + v.scope);
 			d.add(v);
 		}
 
@@ -310,9 +375,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTClassDecl cls, Environment d) {
+	public VarType visit(ASTClassDecl cls, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting classDecl: " + cls.class_id);
+			System.out.println("accepting classDecl: " + cls.class_id + " at line: " + cls.line);
+
 		icClass c = new icClass(cls.class_id, ASTNode.scope);
 		c.ext = cls.extend.name;
 		if (run_num == 1 && cls.extend.name != null && cls.extend.name != "") {
@@ -333,12 +399,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTDotLength expr, Environment d) {
+	public VarType visit(ASTDotLength expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting expr.length");
-		String e = expr.e.accept(this, d);
-		if (e.endsWith("[]"))
-			return "int";
+			System.out.println("accepting expr.length at line: " + expr.line);
+		VarType e = expr.e.accept(this, d);
+		if (e.num_arrays != 0)
+			return new VarType("int");
 		else {
 			error("tried accessing length field of non array expression: " + e, expr);
 		}
@@ -346,221 +412,372 @@ public class ICEvaluator implements PropagatingVisitor<Environment, String> {
 	}
 
 	@Override
-	public String visit(ASTNewArray expr, Environment d) {
+	public VarType visit(ASTNewArray expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting new array");
-		String index_type = expr.expr.accept(this, d);
-		if ("int" != index_type)
+			System.out.println("accepting new array at line: " + expr.line);
+		VarType index_type = expr.expr.accept(this, d);
+		if ("int" != index_type.type || index_type.num_arrays != 0)
 			error("bad indexer type. expected int, got: " + index_type, expr);
 		if (run_num == 1) {
-			d.validateType(expr.type);
+			if (!(d.validateType(new VarType(expr.type))))
+			{
+				error("unknown type: " + expr.type, expr);
+			}
 		}
-		return expr.type;
+		return new VarType(expr.type +"[]");
 	}
 
 	@Override
-	public String visit(ASTNewObject expr, Environment d) {
+	public VarType visit(ASTNewObject expr, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting new object");
+			System.out.println("accepting new object at line: " + expr.line);
 		if (run_num == 1) {
-			d.validateType(expr.type);
+			d.validateType(new VarType(expr.type));
 		}
-		return expr.type;
+		return new VarType(expr.type);
 	}
 
 	@Override
-	public String visit(ASTElseStmt stmt, Environment d) {
-		// TODO Auto-generated method stub
+	public VarType visit(ASTElseStmt elseStmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting elseStmt at line: " + elseStmt.line);
+
+		++ASTNode.scope;
+		elseStmt.stmt.accept(this, env);
+		env.destroyScope(ASTNode.scope);
+		--ASTNode.scope;
+
 		return null;
 	}
 
 	@Override
-	public String visit(ASTAssignFormals stmt, Environment env) {
-		String type = stmt.form.type;
+	public VarType visit(ASTAssignFormals stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTAssignFormals at line: " + stmt.line);
+		VarType type = stmt.form.type;
 		String id = stmt.form.id;
-		String rhs = stmt.rhs.accept(this,env);
-		icVariable var = new icVariable(id,ASTNode.scope,type);
+		if (IS_DEBUG)
+			System.out.println("type: " + type + " id: " + id);
+
+		VarType rhs = null;
+
+		// defining a new variable
+		icVariable var = new icVariable(id, ASTNode.scope, type);
 		env.add(var);
-		if (var != null){
-			//
-		}
-		return null;
-	}
 
-	@Override
-	public String visit(ASTWhileStmt stm, Environment env) {
-		ASTExpr expr = stm.expr;
-		String ExprType = expr.accept(this, env);
-		if (!ExprType.equals("boolean"))
-			throw new RuntimeException("Line " + expr.line + 
-					": Expected boolean expression after 'while'");
-		stm.stmt.accept(this, env);
-		return null;
 		
+		// validating the the declared variable has been defined
+		if (run_num == 1) {
+			icObject type_classo = env.getObjByName(type.type);
+			if (type_classo == null) {
+				error(type + " cannot be resolved to a type", stmt);
+			}
+			else if (!(type_classo instanceof icClass))
+				error(type +" is not a class name", stmt);
+
+			// case of assignment
+			if (stmt.rhs != null) {
+				rhs = stmt.rhs.accept(this, env);
+				validateAssign(type, rhs, stmt, env);
+			}
+		}
+
+
+		return type;
 	}
 
 	@Override
-	public String visit(ASTVarStmt stmt, Environment env) {
+	public VarType visit(ASTWhileStmt stm, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
+		ASTExpr expr = stm.expr;
+
+		int nestFlag;
+		VarType exprType = expr.accept(this, env);
+		if (!exprType.type.equals("boolean") || exprType.num_arrays != 0)
+			error("Expected boolean expression after 'while'", expr);
+		++ASTNode.scope;
+		// while loop might be nested
+		if (env.loopScope == true) {
+			nestFlag = 0;
+		} else {
+			env.loopScope = true;
+			nestFlag = 1;
+		}
+		stm.stmt.accept(this, env);
+		if (nestFlag == 1) {
+			env.loopScope = false;
+		}
+		env.destroyScope(ASTNode.scope);
+
+		--ASTNode.scope;
+		return null;
+
+	}
+
+	@Override
+	public VarType visit(ASTVarStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVarStmt at line: " + stmt.line);
 		if (env.loopScope == false) {
-			throw new UnsupportedOperationException(stmt.name + "cannot be used outside of a loop");
+			error(stmt.name + "cannot be used outside of a loop", stmt);
 		}
 		return null;
 	}
 
 	@Override
 	// handle non-simple objects
-	public String visit(ASTRetExp expr, Environment env) {
-		String rExpr = expr.exp.accept(this, env);
-		icObject retExp = env.getObjByName(rExpr);
-		if (!env.lastFunc.getAssignType().equals(retExp.getAssignType())) {
-			throw new UnsupportedOperationException("Type mismatch: cannot convert from" + retExp.getAssignType() + "to"
-					+ env.lastFunc.getAssignType());
+	public VarType visit(ASTRetExp expr, Environment env) {
+		VarType rExpr = expr.exp.accept(this, env);
+		VarType funcRet = env.lastFunc.getAssignType();
+		validateAssign(funcRet, rExpr, expr, env);
+		return null;
+	}
+
+	@Override
+	public VarType visit(ASTIfElseStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTIfElseStmt at line: " + stmt.line);
+		VarType cond = stmt.expr.accept(this, env);
+
+
+		if (!cond.type.equals("boolean") || cond.num_arrays != 0) {
+			error("Type mismatch: cannot convert from" + cond + "to" +
+						"boolean", stmt);
 		}
+		++ASTNode.scope;
+		stmt.stmt.accept(this, env);
+		
+		env.destroyScope(ASTNode.scope);
+		--ASTNode.scope;
 		return null;
 	}
 
 	@Override
-	public String visit(ASTIfElseStmt stmt, Environment env) {
-		String cond = stmt.expr.accept(this, env);
-		String ifStmt = stmt.stmt.accept(this, env);
-		icObject body = env.getObjByName(ifStmt);
-		if (!cond.equals("boolean")) {
-			throw new UnsupportedOperationException("Type mismatch: cannot convert from" + cond + "to" + "boolean");
-		}
+	public VarType visit(ASTCallStmt stmt, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTCallStmt at line: " + stmt.line);
 
-		return null;
+		return stmt.call.accept(this, env);
 	}
 
 	@Override
-	public String visit(ASTCallStmt stmt, Environment d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public VarType visit(ASTLocation expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTLocation at line: " + expr.line);
 
-	@Override
-	public String visit(ASTLocation expr, Environment env) {
-		String exp1 = expr.e1.accept(this, env);
-		String exp2 = expr.e2.accept(this, env);
+		if (IS_DEBUG)
+			System.out.println("id: " + expr.id + " type " + expr.type );
+
 		String id = expr.id;
+		VarType exp1;
+		VarType exp2;
 		icObject ident = env.getObjByName(id);
+
+		// only a variable name
+		if (expr.type == 0) {
+			// checking if the variables has been declared
+			if (ident == null) {
+				error(id + " cannot be resolved! ", expr);
+			}
+			if (IS_DEBUG)
+				System.out.println("return 1: " + ident.getAssignType());
+			return ident.getAssignType();
+		}
 		
-		if(expr.type == 0){
-			if (ident == null){
-				throw new UnsupportedOperationException(id + "cannot be resolved!");
-			}
-			return id;
-		}
-		else if(expr.type ==1){
-			
-			if (ident == null){
-				throw new UnsupportedOperationException(id + "cannot be resolved!");
-			}
-			
-			// e1 is a name of a class
-			if (ident instanceof icClass ){
-				if(((icClass) ident).hasObject(exp1) == false) {
-					throw new UnsupportedOperationException(exp1 + "cannot be resolved or is not a field");
+		exp1 = expr.e1.accept(this, env);		
+		if (expr.type == 1) {
+			if (IS_DEBUG)
+				System.out.println("entered loop");
+			if (run_num == 1)
+			{
+				icObject clss = env.getObjByName(exp1.type);
+				// checking if the class has been declared
+				
+				if (clss == null) {
+					error(exp1.type + " cannot be resolved to a type", expr);
 				}
-				else{
-					return ((icClass) ident).lastSubObject.name;
-				}
-			}
-			
-		}
-		else if (expr.type == 2){
-			icVariable var =  (icVariable) env.getObjByName(exp1);
-			icObject inVar =  env.getObjByName(exp2);
-			
-			
-			if (var == null){                           // the variable doesn't exist
-				throw new UnsupportedOperationException(exp1 + "cannot be resolved to a variable");
-			}
-			
-			if (var.isArray == false){                  // the variable is not an array
-				throw new UnsupportedOperationException("The type of the expression must be an array type but it resolved to" + var.getAssignType());
-			}
-			
-			
-			if (inVar == null){
-				if (!exp2.equals("integer") || !utility.isInteger(exp2)){   // checking if ext2 has a value or a representation of an integer
-				throw new UnsupportedOperationException(id + "cannot be resolved to a variable");
+				
+				// e1 is a name of a class
+				if (clss instanceof icClass) {
+					// checking if exp1 is a valid field inside of class
+					if (((icClass) clss).hasObject(id, env) == false)
+					{
+						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
+					} 
+					else 
+					{
+						VarType res = ((icClass) clss).lastSubObject.getAssignType();
+						if (IS_DEBUG)
+							System.out.println("return 2 " + res);
+						return res;
+					}
 				}
 			}
-			
-			if (!inVar.getAssignType().equals("integer")){  // checking if ext is a name of variable of type integer
-				throw new UnsupportedOperationException("Type mismatch: cannot convert from" + inVar.getAssignType() +  "to int");
-			}
-			
-			return exp1;
-			
-			
+			else
+				return exp1;
+
 		}
-		return null;
+		// e1 is an array
+		if (expr.type == 2) {
+			exp2 = expr.e2.accept(this, env);
+
+			if (exp1.num_arrays == 0) 
+			{ // the variable is not an array
+				error("The type of the expression must be an array type but it resolved to" + exp1, expr);
+			}
+
+			if (!exp2.isBaseType("int")) 
+			{ // checking if the parameter inside the array is an integer
+				error("Type mismatch: cannot convert from " + exp2 + " to int", expr);
+			}
+					
+			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1);
+			if (IS_DEBUG)
+				System.out.println("returning exp1: " + out_type); // need
+			return out_type;
+		}
+		if (IS_DEBUG)
+			System.out.println("returning null");
+
+		return new VarType("null");
 	}
 
 	@Override
-	public String visit(ASTVirtualCall vc, Environment env) {
+	public VarType visit(ASTVirtualCall vc, Environment env) {
+		if (run_num != 1)
+			return null;
+		if (IS_DEBUG)
+			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
-		//check vc is a valid method:
-		if (!(f instanceof icFunction))
-			throw new RuntimeException("Line " + vc.line + 
-					": The method '" + vc.id + "' has not been declared");
-		List<String> formal_params = ((icFunction)f).arg_types;
-		List<ASTExpr> exprList = vc.exprList.lst;
-		
-		//check number of arguments:
-		if (formal_params.size() != exprList.size())
-			throw new RuntimeException("Line " + vc.line + 
-					": Wrong number of arguments for the method '"+ vc.id + "'");
-		
-		//check argument types
-		for (int i = 0; i<formal_params.size(); i++){
-			String formal = formal_params.get(i);
-			String found = exprList.get(i).accept(this, env);
-			if (!formal.equals(found))
-				throw new RuntimeException("Line " + vc.line + 
-						": Wrong argument types for the method '"+ vc.id + "'");
+		if (f==null)
+		{
+			f = env.lastClass.getObject(vc.id, env);
 		}
-		return ((icFunction)f).retType;
+		// check vc is a valid method:
+		if (!(f instanceof icFunction))
+			error("The method '" + vc.id + "' has not been declared", vc);
+		List<VarType> formal_params = ((icFunction) f).arg_types;
+		List<ASTExpr> exprList = vc.exprList.lst;
+
+		// check number of arguments:
+		if (formal_params.size() != exprList.size())
+			error("Wrong number of arguments for the method '" + vc.id + "'", vc);
+
+		// check argument types
+		for (int i = 0; i < formal_params.size(); i++) {
+			VarType formal = formal_params.get(i);
+			VarType found = exprList.get(i).accept(this, env);
+			if (formal.num_arrays != found.num_arrays)
+			{
+				error("Wrong argument types for the method '" + vc.id + 
+						"'. expected: " + formal + ", got: " + found, vc);				
+			}
+			if (run_num==1 && !formal.type.equals(found.type)) 
+			{
+				icObject argClass = env.getObjByName(formal.type);
+				icObject expClass = env.getObjByName(found.type);
+				if (!(argClass instanceof icClass))
+					error("Undefined type: " + argClass, vc);
+				if (!(expClass instanceof icClass))
+					error("Undefined type: " + expClass, vc);
+				if (!((icClass)expClass).checkIfSubType( argClass, env))
+				{
+					error("Wrong argument types for the method '" + vc.id + 
+							"'. expected: " + formal + ", got: " + found, vc);	
+				}
+			}
+			
+			
+		}
+		if (IS_DEBUG)
+			System.out.println("virtual call check ended");
+		return ((icFunction) f).retType;
 	}
-	
-	
 
 	@Override
-	public String visit(ASTStaticCall expr, Environment env) {
-		String expLst = expr.exprList.accept(this, env);
-		
+	public VarType visit(ASTStaticCall expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTStaticCall at line: " + expr.line);
+		/*
+		 * String expLst = expr.exprList.accept(this, env);
+		 */
+
+		List<ASTExpr> expLst = expr.exprList.lst;
+		VarType exp;
+		VarType funcArg;
 		String classId = expr.classId;
+
 		icClass className = (icClass) env.getObjByName(classId);
 		String funcId = expr.id;
-		
-		if (className == null){                           // the class doesn't exist
-			throw new UnsupportedOperationException(className + "cannot be resolved to a variable");
+
+		if (className == null) { // the class doesn't exist
+			error(className + " cannot be resolved to a variable", expr);
 		}
-		
-		if (!className.hasObject(funcId)){
-			throw new UnsupportedOperationException(funcId + "cannot be resolved or is not a function");
+
+		if (!className.hasObject(funcId, env)) {
+			error(funcId + " cannot be resolved or is not a function", expr);
 		}
 		icFunction func = (icFunction) env.getObjByName(funcId);
-		
-		if (expr.exprList.lst.size() != func.getNumofArg()){
-			throw new UnsupportedOperationException("The method" + funcId + "in the type" +  classId + "is not applicable for the arguments");
+
+		if (expLst.size() != func.getNumofArg()) {
+			error("The method " + funcId + "in the type"
+					+ classId + " is not applicable for the arguments", expr);
 		}
-		for (int i =0; i<expLst.length();i++){
-			// have to figure a solution to check if the cariables are valid
+		for (int i = 0; i < expr.exprList.lst.size(); i++) {
+			exp = expLst.get(i).accept(this, env);
+			funcArg = func.arg_types.get(i);
+			if (exp.num_arrays != funcArg.num_arrays)
+			{
+				error("Wrong argument types for the method '" + func.name + 
+						"'. expected: " + funcArg + ", got: " + exp, expr);				
+			}
+			
+			if (run_num==1 &&!funcArg.type.equals(exp.type)) 
+			{
+				icObject argClass = env.getObjByName(funcArg.type);
+				icObject expClass = env.getObjByName(exp.type);
+				if (!(argClass instanceof icClass))
+					error("Undefined type: " + argClass, expr);
+				if (!(expClass instanceof icClass))
+					error("Undefined type: " + expClass, expr);
+				if (!((icClass)expClass).checkIfSubType( argClass, env))
+				{
+					error("Wrong argument types for the method '" + func.name + 
+							"'. expected: " + funcArg + ", got: " + exp, expr);	
+				}
+			}
 		}
-		return null;
+		if (IS_DEBUG)
+			System.out.println("return static " + func.getAssignType());
+		return func.getAssignType();
+
 	}
 
 	@Override
-	public String visit(ASTLiteral expr, Environment d) {
-		// TODO Auto-generated method stub
-		return null;
+	public VarType visit(ASTLiteral expr, Environment d) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTLiteral at line: " + expr.line);
+		if (IS_DEBUG)
+			System.out.println(expr.s);
+		String lit = expr.s;
+		if (lit.equals("true") || lit.equals("false")) {
+			return new VarType("boolean");
+		} else if (lit.equals("null")) {
+			return new VarType("null");
+		} else if (lit.equals("int")) {
+			return new VarType("int");
+		} else {
+			return new VarType("string");
+		}
+
 	}
 
 	@Override
-	public String visit(ASTExprList expr, Environment d) {
-		throw new RuntimeException("error!!! should never reach this part of code");
+	public VarType visit(ASTExprList expr, Environment d) {
+		error("error!!! should never reach this part of code", expr);
+		return null;
 	}
+
 
 }

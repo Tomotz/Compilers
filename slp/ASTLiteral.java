@@ -17,9 +17,28 @@ public class ASTLiteral extends ASTExpr {
 	public ASTLiteral(String s, int i, int line){
 		this.literalType=i;
 		this.s = s;
+		determineType(this.literalType);
 		this.line = line;
 	}
-
+	
+	public void determineType(int type){
+		if (type ==0){
+			this.s = "int";
+		}
+		else if (type ==1){
+			this.s = "string";
+		}
+		else if (type ==2){
+			this.s = "true";
+		}
+		else if (type ==3){
+			this.s = "false";
+		}
+		else if (type ==4){
+			this.s = "null";
+		}
+		
+	}
 
 	/** Accepts a visitor object as part of the visitor pattern.
 	 * @param visitor A visitor.

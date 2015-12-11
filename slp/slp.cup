@@ -48,10 +48,10 @@ terminal String		INT, DOT, WHILE,  STATIC,
 terminal Integer	INTEGER;
 terminal 			BOOLEAN;
  
-non terminal ASTExpr 		expr, maby_expr, literal,
+non terminal ASTExpr 		expr, maby_expr, literal,assign_exp,
 						 	location;
 non terminal ASTExprList	expr_list;
-non terminal ASTStmt 		stmt, else_stmnt, call, assign_exp, virtualCall, staticCall;
+non terminal ASTStmt 		stmt, else_stmnt, call, virtualCall, staticCall;
 non terminal Operator		binmul, unop, bincomp, binplus,binequal;
 non terminal ASTStmtList 	stmt_list;
 non terminal ASTfmList		field_meth_list;
@@ -62,9 +62,11 @@ non terminal ASTClassDecl 	classDecl;
 non terminal ASTIdList		id_list; 
 non terminal ASTExtend		extend;
 non terminal ASTStatType	stat_type_void;
-non terminal String 	type;
-non terminal ASTNode 	method, field_meth, field;
+non terminal String 		type;
+non terminal ASTNode 		method, field_meth, field;
 
+
+precedence left CLASS;
 precedence right ASSIGN; 
 precedence left LOR;
 precedence left LAND;
@@ -90,6 +92,7 @@ classDecl_list ::= classDecl_list:cl1 classDecl:c1
 		{:  RESULT = new ASTClassList(parser.getLine());
 		Parser.print_rule("classDecl_list-> 'empty'"); :}
 ; 
+
 
 classDecl ::= CLASS CLASS_ID:c1 extend:e1 LCBR field_meth_list:fml RCBR
 		{: RESULT = new ASTClassDecl(c1, e1, fml, parser.getLine());
@@ -193,7 +196,7 @@ stmt_list ::= /*empty*/
 ;
  
 stmt ::= location:v ASSIGN expr:e SEMI
-	{: RESULT = new ASTAssignStmt(v, e, parser.getLine());
+	{: RESULT = new ASTAssignStmt(v, e, e.line);
 	Parser.print_rule("stmt -> 'v=e;' for v: " + v + "and e :" + e); :}
 	| call:cl SEMI
 	{: RESULT = cl; :}
@@ -216,7 +219,7 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	{:RESULT = st;:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
 	{: Formal f1 = new Formal(t1, i1, parser.getLine());
-	   RESULT = new ASTAssignFormals(f1,e1, parser.getLine());
+	   RESULT = new ASTAssignFormals(f1, e1, e1.line);
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
@@ -228,7 +231,7 @@ else_stmnt ::= /*empty*/ {: RESULT = null;:} |
 assign_exp ::= /*empty*/  
 		{: RESULT = null;:} 
 		| ASSIGN expr:e1
-		{: RESULT = new ASTAssignStmt(e1, parser.getLine());
+		{: RESULT = e1;
 		   Parser.print_rule("assign_exp-> '=e1' for e1="+e1); :} 
 ;
 

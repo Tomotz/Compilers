@@ -20,4 +20,10 @@ public class utility {
 		return true;
 		
 	}
+	
+	// if the variable is of type array returns only the basic type
+	public static String trimArray(String var){
+		return var.replace("[]", "");
+	}
 }
+

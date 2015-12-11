@@ -19,7 +19,7 @@ public class icClass extends icObject {
 	
 	
 	void addObject (icObject o, Environment d, boolean isStatic){
-		if (this.hasObject(o.name))
+		if (this.hasObject(o.name, d))
 		{
 			throw new RuntimeException(
 					"multiple declerations of object: " + o.name);
@@ -27,7 +27,7 @@ public class icClass extends icObject {
 		if (ICEvaluator.run_num == 1 && ext != null && ext != "")
 		{
 			icClass father = (icClass)d.getObjByName(ext);
-			if (father.hasObject(o.name))
+			if (father.hasObject(o.name, d))
 			{
 				throw new RuntimeException(
 						"multiple declerations of object: " + o.name);
@@ -37,42 +37,50 @@ public class icClass extends icObject {
 			statScope.add((icFunction)o);
 		else
 			instScope.add(o);
+		this.lastSubObject = o;
 	}
 	
 	/*returns true if class already has an object with the given object name.
 	 * otherwise returns 1
 	 */
-	Boolean hasObject(String objectName)
+	Boolean hasObject(String objectName, Environment env)
 	{
-		for (icObject o : instScope) {
-			if (o.name == objectName){
-				lastSubObject = o;
-				return true;
-			}
-		}
-		for (icFunction f : statScope) {
-			if (f.name == objectName){
-				lastSubObject = f;
-				return true;
-			}
-		}
-		return false;
+		return getObject(objectName, env) != null ;
 	}
 
+	icObject getObject(String objectName, Environment env)
+	{
+		icClass cur = this;
+		while (cur != null)
+		{
+			for (icObject o : cur.instScope) {
+				if (o.name.equals(objectName)){
+					return o;
+				}
+			}
+			for (icFunction f : cur.statScope) {
+				if (f.name.equals(objectName)){
+					return f;
+				}
+			}
+			cur = (icClass)env.getObjByName(cur.ext);
+		}
+		return null;
+	}
 
 	@Override
-	public String getAssignType() {
-		return ext;
+	public VarType getAssignType() {
+		return new VarType(this.name);
 	}
 	
 	
-	public boolean checkIfSubType(icObject value,icObject var, Environment env){
-		icObject father = value;
-		while (father != null){
-			if (father.getName().equals(var.getName())){
+	public boolean checkIfSubType(icObject parent, Environment env){
+		icClass cur = this;
+		while (cur != null){
+			if (cur.getName().equals(parent.getName())){
 				return true;
 			}
-			father =  env.getObjByName(father.getAssignType());
+			cur = (icClass) env.getObjByName(cur.ext);
 		}
 		return false;		
 	}
