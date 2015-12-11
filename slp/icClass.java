@@ -18,9 +18,9 @@ public class icClass extends icObject {
 	}
 	
 	
-	void addObject (icObject o, Environment d, boolean isStatic){
+	void addObject(icObject o, Environment d, boolean isStatic){
 		if (this.hasObject(o.name, d))
-		{
+		{ //there is already an object with this name in current scope
 			throw new RuntimeException(
 					"multiple declerations of object: " + o.name);
 		}
@@ -28,7 +28,7 @@ public class icClass extends icObject {
 		{
 			icClass father = (icClass)d.getObjByName(ext);
 			if (father.hasObject(o.name, d))
-			{
+			{ //father class already has an object with that name
 				throw new RuntimeException(
 						"multiple declerations of object: " + o.name);
 			}

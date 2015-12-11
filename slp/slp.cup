@@ -218,8 +218,8 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	| LCBR stmt_list:st RCBR 
 	{:RESULT = st;:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
-	{: Formal f1 = new Formal(t1, i1, parser.getLine());
-	   RESULT = new ASTAssignFormals(f1, e1, e1.line);
+	{: Formal f1 = new Formal(t1, i1, parser.getLine()-1);
+	   RESULT = new ASTAssignFormals(f1, e1, parser.getLine()-1);
 	 Parser.print_rule("stmt -> t1 i1 = e1  for t1: " + t1 + ", i1: " + i1 + ", e1: " + e1);:}
 ;
 
@@ -236,7 +236,6 @@ assign_exp ::= /*empty*/
 ;
 
 maby_expr ::= /*empty*/ 
-
 		{: RESULT = null;:} 
 		| expr:e1
 		{: RESULT = e1; :}

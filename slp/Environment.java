@@ -1,7 +1,6 @@
 package slp;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Represents a state during the evaluation of a program.

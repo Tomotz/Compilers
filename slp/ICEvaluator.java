@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 
 	/**
