@@ -67,12 +67,12 @@ public class icClass extends icObject {
 	
 	
 	public boolean checkIfSubType(icObject parent, Environment env){
-		icObject cur = this;
+		icClass cur = this;
 		while (cur != null){
 			if (cur.getName().equals(parent.getName())){
 				return true;
 			}
-			cur =  env.getObjByName(cur.getAssignType().type);
+			cur = (icClass) env.getObjByName(cur.ext);
 		}
 		return false;		
 	}
