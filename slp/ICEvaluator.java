@@ -54,13 +54,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	{
 		if (run_num != 1)
 			return;
-		if (lhs.type == "void" && rhs.type != null) {
-			error("Type mismatch: cannot convert from " + rhs.type
-					+ " to " + lhs.type, curNode);
+		if (lhs.type == "void" ) {
+			if (rhs.type != null && rhs.type != "null")
+				error("Type mismatch: cannot convert from " + rhs.type
+						+ " to " + lhs.type, curNode);
+			else
+				return;
 		}
-		if (rhs.type == "void" && lhs.type != null) {
-			error("Type mismatch: cannot convert from " + lhs.type
-					+ " to " + rhs.type, curNode);
+		if (rhs.type == "void") {
+			if ( lhs.type != null && lhs.type != "null")
+				error("Type mismatch: cannot convert from " + lhs.type
+						+ " to " + rhs.type, curNode);
+			else
+				return;
 		}
 		if (lhs.num_arrays != rhs.num_arrays)
 			error("Type mismatch: cannot convert from " + rhs
