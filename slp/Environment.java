@@ -87,6 +87,8 @@ public class Environment {
 		this.add(baseType);
 		baseType = new icClass("boolean", 0);
 		this.add(baseType);
+		baseType = new icClass("void", 0);
+		this.add(baseType);
 		
 		icClass library = new icClass("Library", 0);
 
