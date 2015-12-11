@@ -23,12 +23,7 @@ public class utility {
 	
 	// if the variable is of type array returns only the basic type
 	public static String trimArray(String var){
-		if (var.indexOf("[") != -1){
-		 return var.substring(0, var.indexOf("["));
-		}
-		else{
-			return var;
-		}
+		return var.replace("[]", "");
 	}
 }
 

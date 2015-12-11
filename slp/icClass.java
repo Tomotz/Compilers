@@ -61,19 +61,18 @@ public class icClass extends icObject {
 
 
 	@Override
-	public String getAssignType() {
-		return ext;
+	public VarType getAssignType() {
+		return new VarType(this.name);
 	}
 	
 	
-	public boolean checkIfSubType(icObject value,icObject var, Environment env){
-		icObject father = value;
-		while (father != null){
-			System.out.println("child: " + father.getName() + "father: " + var.getName() );
-			if (father.getName().equals(var.getName())){
+	public boolean checkIfSubType(icObject parent, Environment env){
+		icObject cur = this;
+		while (cur != null){
+			if (cur.getName().equals(parent.getName())){
 				return true;
 			}
-			father =  env.getObjByName(father.getAssignType());
+			cur =  env.getObjByName(cur.getAssignType().type);
 		}
 		return false;		
 	}

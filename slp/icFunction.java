@@ -9,13 +9,13 @@ import slp.icObject;
 
 public class icFunction extends icObject {
 
-	String retType;
+	VarType retType;
 	//String classType;              // the father class of the function
 	boolean isStatic;              // states whether the function is static
-	List<String> arg_types = new ArrayList<String>();  //  list of function argument types
+	List<VarType> arg_types = new ArrayList<VarType>();  //  list of function argument types
 
 	
-	public icFunction(String name,int scope, String retType,
+	public icFunction(String name,int scope, VarType retType,
 			boolean isStatic ) {
 		super(name, scope);
 		this.retType = retType;
@@ -24,7 +24,7 @@ public class icFunction extends icObject {
 
 
 	@Override
-	public String getAssignType() {
+	public VarType getAssignType() {
 		return this.retType;
 	}
 	

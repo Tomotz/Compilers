@@ -212,7 +212,8 @@ public class PrettyPrinter implements Visitor {
 		ASTNode.indent++;
 		lineStart();
 		printstrln("Return statement, with return value");
-		ret.exp.accept(this);	
+		if (ret.exp != null)
+			ret.exp.accept(this);	
 		ASTNode.indent--;
 		}
 	
