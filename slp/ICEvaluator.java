@@ -37,16 +37,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	}
 
 	public static void error(String str, ASTNode n) {
-		if (run_num > 0) {
-			if (n != null) {
-				throw new RuntimeException("\nLine " + n.line + ": " + str);
-				// System.out.println("\nLine " + n.line + ": " + str);
-			} else {
-				throw new RuntimeException(str);
-				// System.out.println(str);
-			}
+
+		if (run_num == 0) return;
+		
+		if (n != null)
+		{
+			throw new RuntimeException("\nLine " + n.line + ": " + str);
+			//System.out.println("\nLine " + n.line + ": " + str);
 		}
-		else { return;}
+		else
+		{
+			throw new RuntimeException(str);
+			//System.out.println(str);
+		}
 
 	}
 
@@ -142,27 +145,29 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		Operator op = expr.op;
 		ASTExpr rhs = expr.operand;
 		VarType rhsType_type = rhs.accept(this, env);
-		System.out.println("var type: " + op);
-		if (rhsType_type.num_arrays != 0) {
-			error("cannot evaluate unary op on array type", expr);
+
+		if (rhsType_type.num_arrays != 0)
+		{
+			if (run_num == 1) error ("cannot evaluate unary op on array type", expr);
+
 		}
 		String rhsType = rhsType_type.type;
 		if (op == Operator.MINUS) {
 			if (rhsType.equals("int"))
 				return new VarType("int");
 			else
-				error("Expected an Integer after '-' ", expr);
+				if (run_num == 1) error ("Expected an Integer after '-' ", expr);
 		}
 		if (op == Operator.LNEG) {
 			if (rhsType.equals("boolean"))
 				return new VarType("boolean");
 			else
-				error("Expected a Boolean expression after '!' ", expr);
+				if (run_num == 1) error("Expected a Boolean expression after '!' ", expr);
 		} else
-			error("Encountered unexpected operator " + op, expr);
+			if (run_num == 1) error("Encountered unexpected operator " + op, expr);
 		// Integer value = expr.operand.accept(this, env);
 		// new Integer(- value.intValue());
-		return null;
+		return new VarType("int");
 	}
 
 	public VarType visit(ASTBinaryOpExpr expr, Environment env) {
@@ -173,16 +178,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr rhs = expr.rhs;
 		VarType lhsType_type = lhs.accept(this, env);
 		VarType rhsType_type = rhs.accept(this, env);
-		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0) {
-			error("cannot evaluate binary op on array type", expr);
+
+		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
+		{
+			if (run_num == 1) error ("cannot evaluate binary op on array type", expr);
 		}
 		String rhsType = rhsType_type.type;
 		String lhsType = lhsType_type.type;
-
-		if (op == Operator.LAND || op == Operator.LOR) {
-			if (!lhsType.equals("boolean"))
+		
+		if (op == Operator.LAND || op == Operator.LOR) 
+		{
+			if ((!lhsType.equals("boolean")) && run_num == 1)
 				error("Expected a Boolean expression before " + op, expr);
-			if (!rhsType.equals("boolean"))
+			if ((!rhsType.equals("boolean")) && run_num == 1)
 				error("Expected a Boolean expression after " + op, expr);
 			else
 				return new VarType("boolean");
@@ -194,23 +202,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (lhsType.equals(rhsType))
 					return new VarType(lhsType);
 				else
-					error("Expected operands of same type for the binary operator " + op + "got lhs: " + lhsType
-							+ ". rhs: " + rhsType, expr);
-			} else
-				error("The binary operator '+' accepts only Integer or String types as operands" + "got lhs: " + lhsType
-						+ ". rhs: " + rhsType, expr);
+					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
+							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
+			} 
+			else
+				if (run_num == 1) error("The binary operator '+' accepts only Integer or String types as operands "+
+						"got lhs: " + lhsType + ". rhs: " + rhsType, expr);
 		}
-		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD) {
-			if (!(lhsType.equals("int") && rhsType.equals("int")))
-				error("The binary operator '" + op + "' accepts only Integer types as operands. got lhs: " + lhsType
-						+ ". rhs: " + rhsType, expr);
+		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD)
+		{
+			if (!(lhsType.equals("int") && rhsType.equals("int"))){
+				if (run_num == 1) error("The binary operator '" + op
+						+ "' accepts only Integer types as operands. got lhs: " 
+						+ lhsType + ". rhs: " + rhsType, expr);
+			}
 			else
 				return new VarType("int");
 		}
-		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE) {
-			if (!(lhsType.equals("int") && rhsType.equals("int")))
-				error("The binary operator '" + op + "' accepts only Integer types as operands. got lhs: " + lhsType
-						+ ". rhs: " + rhsType, expr);
+		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE)
+		{
+			if (!(lhsType.equals("int") && rhsType.equals("int"))){
+				if (run_num == 1) error("The binary operator '" + op
+						+ "' accepts only Integer types as operands. got lhs: " +
+						lhsType + ". rhs: " + rhsType, expr);
+			}
 			else
 				return new VarType("boolean");
 		}
@@ -258,12 +273,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						parent = ((icClass) parentClass).ext;
 				}
 				// if reached here - rhsType doesn't extend lhsType
-				error("Type mismatch for operands of '" + op + "'. got lhs: " + lhsType + ". rhs: " + rhsType, expr);
-			} else
-				error("Error!!!! should never reach this line of code", expr);
-		} else
-			error("Error!!!! should never reach this line of code", expr);
-		return null;
+				error("Type mismatch for operands of '" + op + "'. got lhs: " + 
+						lhsType + ". rhs: " + rhsType, expr);
+			} 
+			else
+				if (run_num == 1) error("Error!!!! should never reach this line of code", expr);
+		}
+		else
+			if (run_num == 1) error("Error!!!! should never reach this line of code", expr);
+		return new VarType("null"); // default value for rum_num == 0
 
 	}
 
@@ -531,7 +549,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType cond = stmt.expr.accept(this, env);
 
 		if (!cond.type.equals("boolean") || cond.num_arrays != 0) {
-			error("Type mismatch: cannot convert from" + cond + "to" + "boolean", stmt);
+
+			error("Type mismatch: cannot convert from " + cond + " to " +
+						"boolean ", stmt);
 		}
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);

@@ -215,7 +215,7 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	| CONTINUE SEMI
 	{: RESULT = new ASTVarStmt(Keyword.CONTINUE.toString(), parser.getLine());
 		Parser.print_rule("stmt -> 'continue;'");:}	
-	| LCBR stmt_list:st RCBR 
+	| LCBR stmt_list:st RCBR  
 	{:RESULT = st;:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
 	{: Formal f1 = new Formal(t1, i1, parser.getLine()-1);
@@ -257,13 +257,13 @@ expr ::= location:l
 			{:  RESULT = new ASTDotLength(e1, parser.getLine()); :}
 		| LNEG:l expr:e 
 		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG, parser.getLine()); :} 
+		| MINUS expr:e 
+		{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS, parser.getLine()); :} %prec UMINUS	
 		| literal:l
 		{: RESULT = l;
 		:}
 		| LP expr:e RP
 		{: RESULT = e; :}
-		| unop:u expr:e 
-			{: RESULT = new ASTUnaryOpExpr(e,u, parser.getLine()); :} %prec UMINUS
 		| expr:e1 binmul:b expr:e2
 			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec MULTIPLY
 		| expr:e1 LAND expr:e2
