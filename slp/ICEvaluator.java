@@ -600,6 +600,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				}
 				
 			}
+			
+			if (ident instanceof icFunction){
+				error(id + " cannot be resolved! ", expr);
+			}
+			
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
 			return ident.getAssignType();
