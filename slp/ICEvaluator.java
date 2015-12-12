@@ -178,10 +178,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr rhs = expr.rhs;
 		VarType lhsType_type = lhs.accept(this, env);
 		VarType rhsType_type = rhs.accept(this, env);
-
+		if (run_num == 0)
+			return new VarType("null");
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
-			if (run_num == 1) error ("cannot evaluate binary op on array type", expr);
+			error("cannot evaluate binary op on array type", expr);
 		}
 		String rhsType = rhsType_type.type;
 		String lhsType = lhsType_type.type;
@@ -588,12 +589,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			ident = env.lastClass.getObject(id, env);
 		}
 
+		if (run_num ==0){
+			return new VarType("null");
+		}
 		// only a variable name
 		if (expr.type == 0)
 			{
-			if (run_num ==0){
-				return null;
-			}
 			// checking if the variables has been declared
 			if (ident == null) {
 				
