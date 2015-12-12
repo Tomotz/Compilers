@@ -21,16 +21,14 @@ public class icClass extends icObject {
 	void addObject(icObject o, Environment d, boolean isStatic){
 		if (this.hasObject(o.name, d) && ICEvaluator.run_num == 0 )
 		{ //there is already an object with this name in current scope
-			throw new RuntimeException(
-					"multiple declerations of object: " + o.name);
+			ICEvaluator.error("multiple declerations of object: " + o.name, null);
 		}
 		if (ICEvaluator.run_num == 1 && ext != null && ext != "")
 		{
 			icClass father = (icClass)d.getObjByName(ext);
 			if (father.hasObject(o.name, d))
 			{ //father class already has an object with that name
-				throw new RuntimeException(
-						"multiple declerations of object: " + o.name);
+				ICEvaluator.error("multiple declerations of object: " + o.name, null);
 			}
 		}
 		if (ICEvaluator.run_num == 0){

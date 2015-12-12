@@ -47,7 +47,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		else
 		{
-			throw new RuntimeException(str);
+			throw new RuntimeException("\n" + str);
 			//System.out.println(str);
 		}
 
@@ -95,6 +95,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
+		
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
@@ -683,7 +684,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		else{
-			System.out.println("method outside of class");
 			VarType obj = vc.expr.accept(this, env);
 			
 			f = ((icClass) env.getObjByName(obj.type)).getObject(vc.id, env);
@@ -807,6 +807,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTExprList expr, Environment d) {
 		error("error!!! should never reach this part of code", expr);
 		return null;
+	}
+
+	@Override
+	public VarType visit(ASTScope sc, Environment d) {
+		ASTNode.scope++;
+		VarType out = sc.s.accept(this, d);
+		d.destroyScope(ASTNode.scope);
+		ASTNode.scope--;
+		
+		return out;
 	}
 
 }

@@ -3,6 +3,7 @@ package slp;
 /** An interface for AST visitors.
  */
 public interface Visitor {
+	public void visit(ASTScope stmts);
 	public void visit(ASTStmtList stmts);
 	public void visit(ASTAssignStmt stmt);
 	public void visit(ASTVarExpr expr);
