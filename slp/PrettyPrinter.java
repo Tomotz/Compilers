@@ -393,6 +393,11 @@ public class PrettyPrinter implements Visitor {
 	public void visit(ASTCallStmt astCallStmt) {
 		
 	}
+	@Override
+	public void visit(ASTScope stmts) {
+		stmts.s.accept(this);
+		
+	}
 
 
 	
