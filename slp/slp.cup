@@ -264,7 +264,6 @@ expr ::= location:l
 		:}
 		| LP expr:e RP
 		{: RESULT = e; :}
-	
 		| expr:e1 binmul:b expr:e2
 			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec MULTIPLY
 		| expr:e1 LAND expr:e2

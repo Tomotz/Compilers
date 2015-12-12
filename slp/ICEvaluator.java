@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 
 	/**
@@ -37,6 +37,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	}
 
 	public static void error(String str, ASTNode n) {
+
 		if (run_num == 0) return;
 		
 		if (n != null)
@@ -49,55 +50,48 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			throw new RuntimeException(str);
 			//System.out.println(str);
 		}
-			
+
 	}
 
-	public void validateAssign(VarType lhs, VarType rhs, ASTNode curNode, Environment env)
-	{
+	public void validateAssign(VarType lhs, VarType rhs, ASTNode curNode, Environment env) {
 		if (run_num != 1)
 			return;
-		if (lhs.type == "void" ) {
+		if (lhs.type == "void") {
 			if (rhs.type != null && rhs.type != "null")
-				error("Type mismatch: cannot convert from " + rhs.type
-						+ " to " + lhs.type, curNode);
+				error("Type mismatch: cannot convert from " + rhs.type + " to " + lhs.type, curNode);
 			else
 				return;
 		}
 		if (rhs.type == "void") {
-			if ( lhs.type != null && lhs.type != "null")
-				error("Type mismatch: cannot convert from " + lhs.type
-						+ " to " + rhs.type, curNode);
+			if (lhs.type != null && lhs.type != "null")
+				error("Type mismatch: cannot convert from " + lhs.type + " to " + rhs.type, curNode);
 			else
 				return;
 		}
 		if (lhs.num_arrays != rhs.num_arrays)
-			error("Type mismatch: cannot convert from " + rhs
-					+ " to " + lhs, curNode);
+			error("Type mismatch: cannot convert from " + rhs + " to " + lhs, curNode);
 		icObject rhsClass = env.getObjByName(rhs.type);
 		if (rhsClass == null) {
 			error("cannot find class: " + rhs.type, curNode);
-		} 
-		if (!(rhsClass instanceof icClass))
-		{
+		}
+		if (!(rhsClass instanceof icClass)) {
 			error(rhs.type + "is not a class", curNode);
-			
+
 		}
 		icObject lhsClass = env.getObjByName(lhs.type);
 
 		if (lhsClass == null) {
 			error("cannot find class: " + lhs.type, curNode);
-		} 
-		if (!(lhsClass instanceof icClass))
-		{
+		}
+		if (!(lhsClass instanceof icClass)) {
 			error(lhs.type + "is not a class", curNode);
-			
+
 		}
 		if (!((icClass) rhsClass).checkIfSubType(lhsClass, env)) {
-				error("Type mismatch: cannot convert from " + rhs.type
-						+ " to " + lhs.type, curNode);
+			error("Type mismatch: cannot convert from " + rhs.type + " to " + lhs.type, curNode);
 		}
 	}
-	
+
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
@@ -151,9 +145,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		Operator op = expr.op;
 		ASTExpr rhs = expr.operand;
 		VarType rhsType_type = rhs.accept(this, env);
+
 		if (rhsType_type.num_arrays != 0)
 		{
 			if (run_num == 1) error ("cannot evaluate unary op on array type", expr);
+
 		}
 		String rhsType = rhsType_type.type;
 		if (op == Operator.MINUS) {
@@ -174,8 +170,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		return new VarType("int");
 	}
 
-	public VarType visit(ASTBinaryOpExpr expr, Environment env)
-	{
+	public VarType visit(ASTBinaryOpExpr expr, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTBinaryOpExpr at line: " + expr.line);
 		Operator op = expr.op;
@@ -183,6 +178,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr rhs = expr.rhs;
 		VarType lhsType_type = lhs.accept(this, env);
 		VarType rhsType_type = rhs.accept(this, env);
+
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			if (run_num == 1) error ("cannot evaluate binary op on array type", expr);
@@ -199,12 +195,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			else
 				return new VarType("boolean");
 		}
-		if (op == Operator.PLUS)
-		{
+		if (op == Operator.PLUS) {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
-			if (lhsType.equals("string") || lhsType.equals("int")) 
-			{
+			if (lhsType.equals("string") || lhsType.equals("int")) {
 				if (lhsType.equals(rhsType))
 					return new VarType(lhsType);
 				else
@@ -235,19 +229,17 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			else
 				return new VarType("boolean");
 		}
-		if (op == Operator.EQUAL || op == Operator.NEQUAL) 
-		{
+		if (op == Operator.EQUAL || op == Operator.NEQUAL) {
 			if (run_num == 0)
 				return new VarType("boolean");
-			if (run_num == 1) 
-			{
+			if (run_num == 1) {
 				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null"))
 					return new VarType("boolean");
 				// if reached here - lhsType != rhsType
 				if (lhsType.equals("string") || lhsType.equals("int") || lhsType.equals("boolean")
 						|| rhsType.equals("string") || rhsType.equals("int") || rhsType.equals("boolean"))
-					error("Type mismatch for the operands of '" + op + "'. got lhs: "
-							+ lhsType + ". rhs: " + rhsType , expr);
+					error("Type mismatch for the operands of '" + op + "'. got lhs: " + lhsType + ". rhs: " + rhsType,
+							expr);
 				// if reached here - lhsType and rhsType are not primitive types
 				//
 				// check if lhsType extends rhsType:
@@ -258,8 +250,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				icObject parentClass = env.getObjByName(parent);
 				if (!(parentClass instanceof icClass))
 					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parent != null) 
-				{
+				while (parent != null) {
 					if (rhsType.equals(parent))
 						return new VarType("boolean");
 					else
@@ -275,8 +266,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				parentClass = env.getObjByName(parent);
 				if (!(parentClass instanceof icClass))
 					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parent != null) 
-				{
+				while (parent != null) {
 					if (lhsType.equals(parent))
 						return new VarType("boolean");
 					else
@@ -292,8 +282,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		else
 			if (run_num == 1) error("Error!!!! should never reach this line of code", expr);
 		return new VarType("null"); // default value for rum_num == 0
-		
-		
+
 	}
 
 	@Override
@@ -321,9 +310,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (String field : astField.ids.lst) {
 			if (IS_DEBUG)
 				System.out.println("field type: " + astField.type);
-			icVariable o = new icVariable(field, ASTNode.scope, 
-					new VarType(astField.type));
+			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type));
 			d.add(o);
+			
 			d.lastClass.addObject(o, d, false);
 		}
 		return null;
@@ -364,10 +353,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	public VarType visit(ASTMethod meth, Environment d) {
 		if (IS_DEBUG)
-			System.out.println("accepting method: " + meth.id + " at line: " + meth.line);
+			System.out.println("accepting method: " + meth.id + " at line: " + meth.line + " scope: " + ASTNode.scope);
 
-		icFunction func = new icFunction(meth.id, ASTNode.scope, 
-				new VarType(meth.type), meth.isStatic);
+		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type), meth.isStatic);
 		d.lastFunc = func;
 		if (meth.isStatic)
 			d.lastClass.addObject(func, d, true);
@@ -406,7 +394,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 		}
 		d.add(c);
+		if (run_num == 0){
 		d.lastClass = c;
+		}
+		else{
+			// in the second run-through we want the class that contains all the methods and fields scanned in the first run
+			d.lastClass = (icClass) d.getObjByName(c.name);
+		}
 		++ASTNode.scope;
 		for (ASTNode fm : cls.fieldmeths.lst) {
 			fm.accept(this, d);
@@ -437,12 +431,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if ("int" != index_type.type || index_type.num_arrays != 0)
 			error("bad indexer type. expected int, got: " + index_type, expr);
 		if (run_num == 1) {
-			if (!(d.validateType(new VarType(expr.type))))
-			{
+			if (!(d.validateType(new VarType(expr.type)))) {
 				error("unknown type: " + expr.type, expr);
 			}
 		}
-		return new VarType(expr.type +"[]");
+		return new VarType(expr.type + "[]");
 	}
 
 	@Override
@@ -483,15 +476,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		icVariable var = new icVariable(id, ASTNode.scope, type);
 		env.add(var);
 
-		
 		// validating the the declared variable has been defined
 		if (run_num == 1) {
 			icObject type_classo = env.getObjByName(type.type);
 			if (type_classo == null) {
 				error(type + " cannot be resolved to a type", stmt);
-			}
-			else if (!(type_classo instanceof icClass))
-				error(type +" is not a class name", stmt);
+			} else if (!(type_classo instanceof icClass))
+				error(type + " is not a class name", stmt);
 
 			// case of assignment
 			if (stmt.rhs != null) {
@@ -499,7 +490,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				validateAssign(type, rhs, stmt, env);
 			}
 		}
-
 
 		return type;
 	}
@@ -558,14 +548,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTIfElseStmt at line: " + stmt.line);
 		VarType cond = stmt.expr.accept(this, env);
 
-
 		if (!cond.type.equals("boolean") || cond.num_arrays != 0) {
+
 			error("Type mismatch: cannot convert from " + cond + " to " +
 						"boolean ", stmt);
 		}
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
-		
+
 		env.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
 		return null;
@@ -585,7 +575,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTLocation at line: " + expr.line);
 
 		if (IS_DEBUG)
-			System.out.println("id: " + expr.id + " type " + expr.type );
+			System.out.println("id: " + expr.id + " type " + expr.type);
 
 		String id = expr.id;
 		VarType exp1;
@@ -596,43 +586,51 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (expr.type == 0) {
 			// checking if the variables has been declared
 			if (ident == null) {
-				error(id + " cannot be resolved! ", expr);
+				/*
+				if (run_num ==0){
+					return null;
+				}
+				else{
+				ident = env.lastClass.getObject(id, env);
+				*/
+					
+					if (ident == null){
+					error(id + " cannot be resolved! ", expr);
+					}
+				/*
+				}
+				*/
 			}
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
 			return ident.getAssignType();
 		}
-		
-		exp1 = expr.e1.accept(this, env);		
+
+		exp1 = expr.e1.accept(this, env);
 		if (expr.type == 1) {
 			if (IS_DEBUG)
 				System.out.println("entered loop");
-			if (run_num == 1)
-			{
+			if (run_num == 1) {
 				icObject clss = env.getObjByName(exp1.type);
 				// checking if the class has been declared
-				
+
 				if (clss == null) {
 					error(exp1.type + " cannot be resolved to a type", expr);
 				}
-				
+
 				// e1 is a name of a class
 				if (clss instanceof icClass) {
 					// checking if exp1 is a valid field inside of class
-					if (((icClass) clss).hasObject(id, env) == false)
-					{
+					if (((icClass) clss).hasObject(id, env) == false) {
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
-					} 
-					else 
-					{
+					} else {
 						VarType res = ((icClass) clss).getFieldType(id, env);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
 						return res;
 					}
 				}
-			}
-			else
+			} else
 				return exp1;
 
 		}
@@ -640,16 +638,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (expr.type == 2) {
 			exp2 = expr.e2.accept(this, env);
 
-			if (exp1.num_arrays == 0) 
-			{ // the variable is not an array
+			if (exp1.num_arrays == 0) { // the variable is not an array
 				error("The type of the expression must be an array type but it resolved to" + exp1, expr);
 			}
 
-			if (!exp2.isBaseType("int")) 
-			{ // checking if the parameter inside the array is an integer
+			if (!exp2.isBaseType("int")) { // checking if the parameter inside
+											// the array is an integer
 				error("Type mismatch: cannot convert from " + exp2 + " to int", expr);
 			}
-					
+
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
@@ -668,10 +665,24 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
-		if (f==null)
-		{
+		
+		// using a method inside a class directly
+		if (vc.expr == null) {
+			if (IS_DEBUG)
+			System.out.println("searching in class: " + env.lastClass.name );
+			
 			f = env.lastClass.getObject(vc.id, env);
 		}
+		
+		else{
+			System.out.println("method outside of class");
+			VarType obj = vc.expr.accept(this, env);
+			
+			f = ((icClass) env.getObjByName(obj.type)).getObject(vc.id, env);
+		}
+		
+		if (IS_DEBUG)
+		System.out.println("func name: " + f.name);
 		// check vc is a valid method:
 		if (!(f instanceof icFunction))
 			error("The method '" + vc.id + "' has not been declared", vc);
@@ -686,27 +697,23 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (int i = 0; i < formal_params.size(); i++) {
 			VarType formal = formal_params.get(i);
 			VarType found = exprList.get(i).accept(this, env);
-			if (formal.num_arrays != found.num_arrays)
-			{
-				error("Wrong argument types for the method '" + vc.id + 
-						"'. expected: " + formal + ", got: " + found, vc);				
+			if (formal.num_arrays != found.num_arrays) {
+				error("Wrong argument types for the method '" + vc.id + "'. expected: " + formal + ", got: " + found,
+						vc);
 			}
-			if (run_num==1 && !formal.type.equals(found.type)) 
-			{
+			if (run_num == 1 && !formal.type.equals(found.type)) {
 				icObject argClass = env.getObjByName(formal.type);
 				icObject expClass = env.getObjByName(found.type);
 				if (!(argClass instanceof icClass))
 					error("Undefined type: " + argClass, vc);
 				if (!(expClass instanceof icClass))
 					error("Undefined type: " + expClass, vc);
-				if (!((icClass)expClass).checkIfSubType( argClass, env))
-				{
-					error("Wrong argument types for the method '" + vc.id + 
-							"'. expected: " + formal + ", got: " + found, vc);	
+				if (!((icClass) expClass).checkIfSubType(argClass, env)) {
+					error("Wrong argument types for the method '" + vc.id + "'. expected: " + formal + ", got: "
+							+ found, vc);
 				}
 			}
-			
-			
+
 		}
 		if (IS_DEBUG)
 			System.out.println("virtual call check ended");
@@ -736,33 +743,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (!className.hasObject(funcId, env)) {
 			error(funcId + " cannot be resolved or is not a function", expr);
 		}
-		icFunction func = (icFunction) env.getObjByName(funcId);
-
+		icFunction func = (icFunction) className.getObject(funcId, env);
+		if (IS_DEBUG)
+			System.out.println("static func " + func.name);
 		if (expLst.size() != func.getNumofArg()) {
-			error("The method " + funcId + "in the type"
-					+ classId + " is not applicable for the arguments", expr);
+			error("The method " + funcId + "in the type" + classId + " is not applicable for the arguments", expr);
 		}
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
 			funcArg = func.arg_types.get(i);
-			if (exp.num_arrays != funcArg.num_arrays)
-			{
-				error("Wrong argument types for the method '" + func.name + 
-						"'. expected: " + funcArg + ", got: " + exp, expr);				
+			if (exp.num_arrays != funcArg.num_arrays) {
+				error("Wrong argument types for the method '" + func.name + "'. expected: " + funcArg + ", got: " + exp,
+						expr);
 			}
-			
-			if (run_num==1 &&!funcArg.type.equals(exp.type)) 
-			{
+
+			if (run_num == 1 && !funcArg.type.equals(exp.type)) {
 				icObject argClass = env.getObjByName(funcArg.type);
 				icObject expClass = env.getObjByName(exp.type);
 				if (!(argClass instanceof icClass))
 					error("Undefined type: " + argClass, expr);
 				if (!(expClass instanceof icClass))
 					error("Undefined type: " + expClass, expr);
-				if (!((icClass)expClass).checkIfSubType( argClass, env))
-				{
-					error("Wrong argument types for the method '" + func.name + 
-							"'. expected: " + funcArg + ", got: " + exp, expr);	
+				if (!((icClass) expClass).checkIfSubType(argClass, env)) {
+					error("Wrong argument types for the method '" + func.name + "'. expected: " + funcArg + ", got: "
+							+ exp, expr);
 				}
 			}
 		}
@@ -796,6 +800,5 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		error("error!!! should never reach this part of code", expr);
 		return null;
 	}
-
 
 }

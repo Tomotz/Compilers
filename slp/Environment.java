@@ -21,7 +21,7 @@ public class Environment {
 
 	public void add(icObject obj) {
 		if (obj.scope == 0 && run_num == 1)
-			return; // should already appear int the table
+			return; // should already appear in the table
 		String name = obj.getName();
 		Stack<icObject> expSet = varToValue.get(name);
 		if (expSet == null) {
@@ -65,7 +65,8 @@ public class Environment {
 
 	public void destroyScope(int scope) {
 		while (!popStack.isEmpty() && popStack.peek().scope == scope)
-		{
+		{	
+			
 			String name = popStack.pop().name;
 			Stack<icObject> expSet = varToValue.get(name);
 			expSet.pop();
