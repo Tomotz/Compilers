@@ -19,7 +19,7 @@ public class icClass extends icObject {
 	
 	
 	void addObject(icObject o, Environment d, boolean isStatic){
-		if (this.hasObject(o.name, d))
+		if (this.hasObject(o.name, d) && ICEvaluator.run_num == 0 )
 		{ //there is already an object with this name in current scope
 			throw new RuntimeException(
 					"multiple declerations of object: " + o.name);
@@ -33,10 +33,12 @@ public class icClass extends icObject {
 						"multiple declerations of object: " + o.name);
 			}
 		}
-		if (isStatic)
-			statScope.add((icFunction)o);
-		else
-			instScope.add(o);
+		if (ICEvaluator.run_num == 0){
+			if (isStatic)
+				statScope.add((icFunction)o);
+			else
+				instScope.add(o);
+		}
 	}
 	
 	/*returns true if class already has an object with the given object name.

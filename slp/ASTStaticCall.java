@@ -4,6 +4,7 @@ public class ASTStaticCall extends ASTStmt {
 	public String classId;
 	public String id;
 	public ASTExprList exprList;
+	
 	public ASTStaticCall(String classId, String id, ASTExprList exprList, int line){
 		this.classId = classId;
 		this.id = id;
