@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -581,9 +581,17 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType exp1;
 		VarType exp2;
 		icObject ident = env.getObjByName(id);
+		if (ident == null)
+		{
+			ident = env.lastClass.getObject(id, env);
+		}
 
 		// only a variable name
-		if (expr.type == 0) {
+		if (expr.type == 0)
+			{
+			if (run_num ==0){
+				return null;
+			}
 			// checking if the variables has been declared
 			if (ident == null) {
 				/*
