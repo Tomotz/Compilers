@@ -9,7 +9,11 @@ package slp;
 import java_cup.runtime.*;
 
 /** CUP v0.11a beta 20060608 generated parser.
+<<<<<<< Updated upstream
   * @version Sat Dec 12 22:03:14 IST 2015
+=======
+  * @version Sat Dec 12 15:19:21 IST 2015
+>>>>>>> Stashed changes
   */
 public class Parser extends java_cup.runtime.lr_parser {
 
