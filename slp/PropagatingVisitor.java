@@ -5,6 +5,7 @@ package slp;
  * and propagates up objects of type <code>UpType</code>.
  */
 public interface PropagatingVisitor<DownType,UpType> {
+	public UpType visit(ASTScope sc, DownType d);
 	public UpType visit(ASTFormalList astFormalList, DownType d);
 	public UpType visit(ASTStatType astStatType, DownType d);
 	public UpType visit(ASTMethod astMethod, DownType d);

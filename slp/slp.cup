@@ -216,7 +216,7 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	{: RESULT = new ASTVarStmt(Keyword.CONTINUE.toString(), parser.getLine());
 		Parser.print_rule("stmt -> 'continue;'");:}	
 	| LCBR stmt_list:st RCBR  
-	{:RESULT = st;:}  
+	{:RESULT = new ASTScope(st, parser.getLine());:}  
 	| type:t1 ID:i1 assign_exp:e1 SEMI 
 	{: Formal f1 = new Formal(t1, i1, parser.getLine()-1);
 	   RESULT = new ASTAssignFormals(f1, e1, parser.getLine()-1);

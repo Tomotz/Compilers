@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 
 	/**
@@ -47,7 +47,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		else
 		{
-			throw new RuntimeException(str);
+			throw new RuntimeException("\n" + str);
 			//System.out.println(str);
 		}
 
@@ -95,6 +95,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
+		
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
@@ -539,7 +540,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	// handle non-simple objects
 	public VarType visit(ASTRetExp expr, Environment env) {
-		VarType rExpr = expr.exp.accept(this, env);
+		if (IS_DEBUG)
+			System.out.println("accepting ASTRetExp at line: " + expr.line);
+		VarType rExpr;
+		if (expr.exp == null){
+			 rExpr = new VarType("null");
+		}
+		else{
+			 rExpr = expr.exp.accept(this, env);
+		}
 		VarType funcRet = env.lastFunc.getAssignType();
 		validateAssign(funcRet, rExpr, expr, env);
 		return null;
@@ -611,6 +620,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				}
 				
 			}
+			
+			if (ident instanceof icFunction){
+				error(id + " cannot be resolved! ", expr);
+			}
+			
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
 			if (run_num == 1) return ident.getAssignType();
@@ -687,7 +701,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		else{
-			System.out.println("method outside of class");
 			VarType obj = vc.expr.accept(this, env);
 			
 			f = ((icClass) env.getObjByName(obj.type)).getObject(vc.id, env);
@@ -812,6 +825,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTExprList expr, Environment d) {
 		error("error!!! should never reach this part of code", expr);
 		return null;
+	}
+
+	@Override
+	public VarType visit(ASTScope sc, Environment d) {
+		ASTNode.scope++;
+		VarType out = sc.s.accept(this, d);
+		d.destroyScope(ASTNode.scope);
+		ASTNode.scope--;
+		
+		return out;
 	}
 
 }
