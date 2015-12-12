@@ -8,15 +8,15 @@ public class PrettyPrinter implements Visitor {
 
 	void printstr(Object str)
 	{
-		System.out.print(str);
+		//System.out.print(str);
 	}
 	void printstrln(Object str)
 	{
-		System.out.println(str);
+		//System.out.println(str);
 	}
 	void printstrln()
 	{
-		System.out.println();
+		//System.out.println();
 	}
 	/** Constructs a printin visitor from an AST.
 	 * 
