@@ -257,13 +257,14 @@ expr ::= location:l
 			{:  RESULT = new ASTDotLength(e1, parser.getLine()); :}
 		| LNEG:l expr:e 
 		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG, parser.getLine()); :} 
+		| UMINUS expr:e 
+		{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS, parser.getLine()); :} %prec UMINUS	
 		| literal:l
 		{: RESULT = l;
 		:}
 		| LP expr:e RP
 		{: RESULT = e; :}
-		| unop expr:e 
-			{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS, parser.getLine()); :} %prec UMINUS
+	
 		| expr:e1 binmul:b expr:e2
 			{: RESULT = new ASTBinaryOpExpr(e1, e2, b, parser.getLine()); :} %prec MULTIPLY
 		| expr:e1 LAND expr:e2

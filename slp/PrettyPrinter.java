@@ -63,7 +63,8 @@ public class PrettyPrinter implements Visitor {
 	
 	public void visit(ASTUnaryOpExpr expr) {
 		ASTNode.indent++;
-		printstr(expr.op);
+		lineStart();
+		printstrln("unary operator: "+expr.op);
 		expr.operand.accept(this);
 		ASTNode.indent--;
 	}
