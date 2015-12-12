@@ -257,7 +257,7 @@ expr ::= location:l
 			{:  RESULT = new ASTDotLength(e1, parser.getLine()); :}
 		| LNEG:l expr:e 
 		{: RESULT = new ASTUnaryOpExpr(e,Operator.LNEG, parser.getLine()); :} 
-		| UMINUS expr:e 
+		| MINUS expr:e 
 		{: RESULT = new ASTUnaryOpExpr(e,Operator.MINUS, parser.getLine()); :} %prec UMINUS	
 		| literal:l
 		{: RESULT = l;
