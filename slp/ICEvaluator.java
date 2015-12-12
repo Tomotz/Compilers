@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 
 	/**
@@ -537,7 +537,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	// handle non-simple objects
 	public VarType visit(ASTRetExp expr, Environment env) {
-		VarType rExpr = expr.exp.accept(this, env);
+		if (IS_DEBUG)
+			System.out.println("accepting ASTRetExp at line: " + expr.line);
+		VarType rExpr;
+		if (expr.exp == null){
+			 rExpr = new VarType("null");
+		}
+		else{
+			 rExpr = expr.exp.accept(this, env);
+		}
 		VarType funcRet = env.lastFunc.getAssignType();
 		validateAssign(funcRet, rExpr, expr, env);
 		return null;
