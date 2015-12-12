@@ -594,20 +594,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 			// checking if the variables has been declared
 			if (ident == null) {
-				/*
+				
 				if (run_num ==0){
-					return null;
+					return new VarType("null");
+					
 				}
 				else{
 				ident = env.lastClass.getObject(id, env);
-				*/
 					
 					if (ident == null){
 					error(id + " cannot be resolved! ", expr);
 					}
-				/*
 				}
-				*/
+				
 			}
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
