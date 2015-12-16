@@ -180,7 +180,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType lhsType_type = lhs.accept(this, env);
 		VarType rhsType_type = rhs.accept(this, env);
 		if (run_num == 0)
-			return new VarType("null");
+			return new VarType("null","");
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
@@ -202,7 +202,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
 				if (lhsType.equals(rhsType))
-					return new VarType(lhsType);
+				{
+					String reg = IR.op_add(lhsType_type.ir_val, rhsType_type.ir_val);
+					return new VarType(lhsType, reg);
+				}
 				else
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);

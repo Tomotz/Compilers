@@ -3,16 +3,18 @@ package slp;
 public class VarType {
 	String type; //basic type of variable (i.e. int ,String...) or 'object type' 
 	int num_arrays = 0; // the number of array dimentions in this variable. 0 means not an array
+	String ir_val;
 
-
-	public VarType(String Type)
+	public VarType(String Type, String ir_val)
 	{
 		this.type = Type.replace("[]", "");
+		this.ir_val = ir_val;
 		setArray(Type);
 	}
 
-	public VarType(String baseType, int num_arrays)
+	public VarType(String baseType, int num_arrays, String ir_val)
 	{
+		this.ir_val = ir_val;
 		this.type = baseType;
 		this.num_arrays = num_arrays;
 	}
