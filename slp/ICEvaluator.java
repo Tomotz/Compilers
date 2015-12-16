@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 
 	/**
@@ -201,7 +201,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
-				if (lhsType.equals(rhsType))
+				if (lhsType.equals(rhsType) && run_num==1))
 				{
 					String reg = IR.op_add(lhsType_type.ir_val, rhsType_type.ir_val);
 					return new VarType(lhsType, reg);
@@ -209,6 +209,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				else
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
+					else return new VarType("null", "");
+				}
 			} 
 			else
 				if (run_num == 1) error("The binary operator '+' accepts only Integer or String types as operands "+
@@ -541,7 +543,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	// handle non-simple objects
 	public VarType visit(ASTRetExp expr, Environment env) {
-		VarType rExpr = expr.exp.accept(this, env);
+		if (IS_DEBUG)
+			System.out.println("accepting ASTRetExp at line: " + expr.line);
+		VarType rExpr;
+		if (expr.exp == null){
+			 rExpr = new VarType("null");
+		}
+		else{
+			 rExpr = expr.exp.accept(this, env);
+		}
 		VarType funcRet = env.lastFunc.getAssignType();
 		validateAssign(funcRet, rExpr, expr, env);
 		return null;
@@ -613,9 +623,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				}
 				
 			}
+			
+			if (ident instanceof icFunction){
+				error(id + " cannot be resolved! ", expr);
+			}
+			
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
-			return ident.getAssignType();
+			if (run_num == 1) return ident.getAssignType();
+			else return new VarType("null");
 		}
 
 		exp1 = expr.e1.accept(this, env);
@@ -639,11 +655,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						VarType res = ((icClass) clss).getFieldType(id, env);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
-						return res;
+						if (run_num == 1) return res;
 					}
 				}
 			} else
-				return exp1;
+				return new VarType("null");
 
 		}
 		// e1 is an array
@@ -673,7 +689,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	public VarType visit(ASTVirtualCall vc, Environment env) {
 		if (run_num != 1)
-			return null;
+			return new VarType("null");
+		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
@@ -728,6 +745,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		if (IS_DEBUG)
 			System.out.println("virtual call check ended");
+		
 		return ((icFunction) f).retType;
 	}
 
