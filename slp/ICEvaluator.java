@@ -252,9 +252,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					error("Undefined type: " + lhsType, expr);
 				String parent = ((icClass) lhsClass).ext;
 				icObject parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass))
+				if ((!(parentClass instanceof icClass)) && (parentClass!=null))
 					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parent != null) {
+				while (parentClass != null) {
 					if (rhsType.equals(parent))
 						return new VarType("boolean");
 					else
@@ -268,9 +268,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					error("Undefined type: " + rhsType, expr);
 				parent = ((icClass) rhsClass).ext;
 				parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass))
+				if (!(parentClass instanceof icClass) && (parentClass != null))
 					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parent != null) {
+				while (parentClass != null) {
 					if (lhsType.equals(parent))
 						return new VarType("boolean");
 					else
