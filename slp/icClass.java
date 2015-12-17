@@ -10,14 +10,17 @@ public class icClass extends icObject {
 	List<icFunction> statFuncs = new ArrayList<icFunction>();  // list of names for static methods
 	List <icFunction> instFuncs = new ArrayList<icFunction>(); // list of names for dynamic methods
 	List <icVariable> instVars = new ArrayList<icVariable>(); // list of names for dynamic fields
-	icClass ext;  // the class type that the method extends (null if the class is a base class)
+	icClass ext = null;  // the class type that the method extends (null if the class is a base class)
 	int size = 0; //number of fields in class
 
 	
 	public icClass(String name, int scope, icClass ext) {
 		super(name, scope);
 		this.ext = ext;
-		this.size = this.ext.size;
+		if (ext == null)
+			this.size = 0;
+		else
+			this.size = ext.size;
 		
 	}
 	
@@ -27,30 +30,32 @@ public class icClass extends icObject {
 		{ //there is already an object with this name in current scope
 			ICEvaluator.error("multiple declerations of object: " + f.name, null);
 		}
-		if (ICEvaluator.run_num == 1 && ext != null)
+		if (ICEvaluator.run_num == 0)
 		{
-			if (ext.hasObject(f.name, d))
+			if (ext != null && ext.hasObject(f.name, d))
 			{ //father class already has an object with that name.
 				if (!(ext.getObject(f.name, d) instanceof icFunction))
 				{
 					ICEvaluator.error("multiple declerations of object: " + f.name, null);
 				}				
 			}
-		}
-		if (ICEvaluator.run_num == 0)
-		{
+			f.label = IR.get_label(d.lastClass.name + "_" + f.name);
 			if (isStatic)
 			{
-				((icFunction)f).label = IR.get_label(f.name);
 				statFuncs.add(f);
 			}
 			else
 			{
-				f.label = IR.get_label(f.name);
 				f.offset = this.size;
 				this.size++;
 				instFuncs.add(f);
 			}
+		}
+		else
+		{
+			f = (icFunction)d.lastClass.getObject(f.name, d);
+			IR.put_label_comment(d.lastClass.name, f.name);
+			IR.put_label(f.label);
 		}
 	}
 
@@ -94,6 +99,11 @@ public class icClass extends icObject {
 			for (icFunction f : cur.statFuncs) {
 				if (f.name.equals(objectName)){
 					return f;
+				}
+			}
+			for (icVariable v : cur.instVars) {
+				if (v.name.equals(objectName)){
+					return v;
 				}
 			}
 			cur = cur.ext;

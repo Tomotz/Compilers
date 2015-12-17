@@ -12,30 +12,29 @@ public class ASTLiteral extends ASTExpr {
 		
  * */	
 	public int literalType = 0;
-	public String s = null;
+	public String value = null;
 	
-	public ASTLiteral(String s, int i, int line){
-		this.literalType=i;
-		this.s = s;
-		determineType(this.literalType);
+	public ASTLiteral(String value, int literalType, int line){
+		this.literalType=literalType;
+		this.value = value;
 		this.line = line;
 	}
 	
-	public void determineType(int type){
-		if (type ==0){
-			this.s = "int";
-		}
-		else if (type ==1){
-			this.s = "string";
-		}
-		else if (type ==2){
-			this.s = "true";
-		}
-		else if (type ==3){
-			this.s = "false";
-		}
-		else if (type ==4){
-			this.s = "null";
+	public String getType(){
+		switch (this.literalType)
+		{
+		case 0:
+			return "int";
+		case 1:
+			return "string";
+		case 2:
+			return "true";
+		case 3:
+			return "false";
+		case 4:
+			return "null";
+		default:
+			return "";
 		}
 		
 	}

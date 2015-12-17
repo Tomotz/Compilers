@@ -94,6 +94,7 @@ public class Environment {
 		this.add(baseType);
 		
 		icClass library = new icClass("Library", 0, null);
+		this.lastClass = library;
 
 		icFunction f = new icFunction("println", 0, new VarType("void", ""), true);
 		f.arg_types.add(new VarType("string", ""));
