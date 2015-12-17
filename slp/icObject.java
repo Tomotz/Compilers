@@ -4,6 +4,7 @@ public abstract class icObject {
 	
 	String name;
 	int scope;
+	public int offset = -1;//offset of current var in class. when not relevant, will be -1 
 	
 	abstract public VarType getAssignType();
 	

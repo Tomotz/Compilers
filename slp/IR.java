@@ -5,6 +5,13 @@ public class IR {
 	static String dispatch_tables = "";
 	static String code = "";
 	static int temp_counter = 0;
+	static int label_num = 0;
+	
+	static String get_label(String text)
+	{
+		++label_num;
+		return (text + "_" + Integer.toString(label_num));
+	}
 	
 	static void add_line(String content)
 	{
@@ -16,6 +23,27 @@ public class IR {
 	{
 		++temp_counter;
 		return "R" + Integer.toString(temp_counter - 1);
+	}
+	
+	static void class_dec(icClass cls)
+	{
+		//add dispatch list name
+		dispatch_tables.concat("_DV_" + cls.name.toUpperCase() + ": [");
+		boolean is_first = true;
+		for (icObject element : cls.statFuncs) {
+			//should be ordered by offset
+			if (element instanceof icFunction)
+			{
+				if (!is_first)
+				{
+					dispatch_tables.concat(",");
+					is_first = false;
+				}
+				dispatch_tables.concat(((icFunction)element).label);
+			}
+		}
+		dispatch_tables.concat("]\n");
+		
 	}
 
 	static String op_add(String src1, String src2)

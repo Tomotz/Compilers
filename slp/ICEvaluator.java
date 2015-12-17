@@ -201,12 +201,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
-				if (lhsType.equals(rhsType) && run_num==1))
+				if (lhsType.equals(rhsType) && run_num==1)
 				{
 					String reg = IR.op_add(lhsType_type.ir_val, rhsType_type.ir_val);
 					return new VarType(lhsType, reg);
 				}
 				else
+				{
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
 					else return new VarType("null", "");
@@ -253,15 +254,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				icObject lhsClass = env.getObjByName(lhsType);
 				if (!(lhsClass instanceof icClass))
 					error("Undefined type: " + lhsType, expr);
-				String parent = ((icClass) lhsClass).ext;
-				icObject parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass))
-					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
+				icClass parent = ((icClass) lhsClass).ext;
 				while (parent != null) {
-					if (rhsType.equals(parent))
+					if (rhsType.equals(parent.name))
 						return new VarType("boolean");
 					else
-						parent = ((icClass) parentClass).ext;
+						parent = parent.ext;
 				}
 				// if reached here - lhsType doesn't extend rhsType
 				//
@@ -270,14 +268,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (!(rhsClass instanceof icClass))
 					error("Undefined type: " + rhsType, expr);
 				parent = ((icClass) rhsClass).ext;
-				parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass))
-					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
 				while (parent != null) {
 					if (lhsType.equals(parent))
 						return new VarType("boolean");
 					else
-						parent = ((icClass) parentClass).ext;
+						parent = parent.ext;
 				}
 				// if reached here - rhsType doesn't extend lhsType
 				error("Type mismatch for operands of '" + op + "'. got lhs: " + 
@@ -320,7 +315,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type));
 			d.add(o);
 			
-			d.lastClass.addObject(o, d, false);
+			d.lastClass.addVar(o, d);
 		}
 		return null;
 	}
@@ -364,10 +359,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type), meth.isStatic);
 		d.lastFunc = func;
-		if (meth.isStatic)
-			d.lastClass.addObject(func, d, true);
-		else
-			d.lastClass.addObject(func, d, false);
+		d.lastClass.addFunc(func, d, meth.isStatic);
 		d.add(func);
 
 		++ASTNode.scope;
@@ -391,23 +383,23 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTClassDecl cls, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting classDecl: " + cls.class_id + " at line: " + cls.line);
-
-		icClass c = new icClass(cls.class_id, ASTNode.scope);
-		c.ext = cls.extend.name;
-		if (run_num == 1 && cls.extend.name != null && cls.extend.name != "") {
-			icObject father = d.getObjByName(cls.extend.name);
+		icObject father = null;
+		if (run_num == 0 && cls.extend.name != null && cls.extend.name != "") {
+			father = d.getObjByName(cls.extend.name);
 			if (!(father instanceof icClass)) {
 				error("unknown parent class", cls.extend);
 			}
 		}
+		icClass c = new icClass(cls.class_id, ASTNode.scope, (icClass)father);
 		d.add(c);
 		if (run_num == 0){
-		d.lastClass = c;
+			d.lastClass = c;
 		}
 		else{
 			// in the second run-through we want the class that contains all the methods and fields scanned in the first run
 			d.lastClass = (icClass) d.getObjByName(c.name);
 		}
+		
 		++ASTNode.scope;
 		for (ASTNode fm : cls.fieldmeths.lst) {
 			fm.accept(this, d);
