@@ -95,72 +95,72 @@ public class Environment {
 		
 		icClass library = new icClass("Library", 0);
 
-		icFunction f = new icFunction("println", 0, new VarType("void"), true);
-		f.arg_types.add(new VarType("string"));
+		icFunction f = new icFunction("println", 0, new VarType("void", ""), true);
+		f.arg_types.add(new VarType("string", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("print", 0,  new VarType("void"), true);
-		f.arg_types.add(new VarType("string"));
+		f = new icFunction("print", 0,  new VarType("void", ""), true);
+		f.arg_types.add(new VarType("string", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("printi", 0,  new VarType("void"), true);
-		f.arg_types.add(new VarType("int"));
+		f = new icFunction("printi", 0,  new VarType("void", ""), true);
+		f.arg_types.add(new VarType("int", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("printb", 0,  new VarType("void"), true);
-		f.arg_types.add(new VarType("boolean"));
+		f = new icFunction("printb", 0,  new VarType("void", ""), true);
+		f.arg_types.add(new VarType("boolean", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("readi", 0,  new VarType("int"), true);
+		f = new icFunction("readi", 0,  new VarType("int", ""), true);
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("readln", 0,  new VarType("string"), true);
+		f = new icFunction("readln", 0,  new VarType("string", ""), true);
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("eof", 0,  new VarType("boolean"), true);
+		f = new icFunction("eof", 0,  new VarType("boolean", ""), true);
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("stoi", 0,  new VarType("int"), true);
-		f.arg_types.add(new VarType("string"));
-		f.arg_types.add(new VarType("int"));
+		f = new icFunction("stoi", 0,  new VarType("int", ""), true);
+		f.arg_types.add(new VarType("string", ""));
+		f.arg_types.add(new VarType("int", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("itos", 0,  new VarType("string"), true);
-		f.arg_types.add(new VarType("int"));
+		f = new icFunction("itos", 0,  new VarType("string", ""), true);
+		f.arg_types.add(new VarType("int", ""));
 		library.addObject(f, this, true);
 		add(f);
 
-		f = new icFunction("stoa", 0,  new VarType("int[]"), true);
-		f.arg_types.add(new VarType("string"));
-		library.addObject(f, this, true);
-		add(f);
-
-
-		f = new icFunction("atos", 0,  new VarType("string"), true);
-		f.arg_types.add(new VarType("int[]"));
-		library.addObject(f, this, true);
-		add(f);
-
-		f = new icFunction("random", 0,  new VarType("int"), true);
-		f.arg_types.add(new VarType("int"));
-		library.addObject(f, this, true);
-		add(f);
-
-		f = new icFunction("time", 0,  new VarType("int"), true);
+		f = new icFunction("stoa", 0,  new VarType("int[]", ""), true);
+		f.arg_types.add(new VarType("string", ""));
 		library.addObject(f, this, true);
 		add(f);
 
 
-		f = new icFunction("exit", 0,  new VarType("void"), true);
-		f.arg_types.add(new VarType("int"));
+		f = new icFunction("atos", 0,  new VarType("string", ""), true);
+		f.arg_types.add(new VarType("int[]", ""));
+		library.addObject(f, this, true);
+		add(f);
+
+		f = new icFunction("random", 0,  new VarType("int", ""), true);
+		f.arg_types.add(new VarType("int", ""));
+		library.addObject(f, this, true);
+		add(f);
+
+		f = new icFunction("time", 0,  new VarType("int", ""), true);
+		library.addObject(f, this, true);
+		add(f);
+
+
+		f = new icFunction("exit", 0,  new VarType("void", ""), true);
+		f.arg_types.add(new VarType("int", ""));
 		library.addObject(f, this, true);
 		add(f);
 		add(library);

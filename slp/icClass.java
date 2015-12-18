@@ -69,7 +69,7 @@ public class icClass extends icObject {
 
 	@Override
 	public VarType getAssignType() {
-		return new VarType(this.name);
+		return new VarType(this.name, this.name);
 	}
 	
 	

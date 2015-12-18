@@ -6,7 +6,7 @@ public class Formal {
 	public int line;
 	
 	public Formal(String type, String id, int line){
-		this.type = new VarType(type);
+		this.type = new VarType(type, id);
 		this.id = id;
 		this.line = line;
 	}

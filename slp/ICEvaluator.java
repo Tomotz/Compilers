@@ -179,8 +179,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr rhs = expr.rhs;
 		VarType lhsType_type = lhs.accept(this, env);
 		VarType rhsType_type = rhs.accept(this, env);
+		String IRop;
+		String reg;
 		if (run_num == 0)
-			return new VarType("null");
+			return new VarType("null","");
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
@@ -195,18 +197,21 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if ((!rhsType.equals("boolean")) && run_num == 1)
 				error("Expected a Boolean expression after " + op, expr);
 			else
-				return new VarType("boolean");
+				return new VarType("boolean","");
 		}
 		if (op == Operator.PLUS) {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
 				if (lhsType.equals(rhsType) && run_num==1)
-					return new VarType(lhsType);
+				{
+					reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, "Add");
+					return new VarType(lhsType, reg);
+				}
 				else{
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
-					else return new VarType("null");
+					else return new VarType("null", "");
 				}
 			} 
 			else
@@ -220,8 +225,21 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ "' accepts only Integer types as operands. got lhs: " 
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
-			else
-				return new VarType("int");
+			else{
+				
+				switch(op){
+					case MINUS: 
+						IRop = "Sub";
+					case DIV:
+						IRop = "Div";
+					case MULTIPLY:
+						IRop = "Mul";
+					case MOD:
+						IRop = "Mod";
+				}
+				reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, IRop);
+				return new VarType("int", reg);
+			}
 		}
 		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE)
 		{
