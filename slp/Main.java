@@ -63,7 +63,7 @@ public class Main {
 			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
 			
-			
+			System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
 		} catch (FileNotFoundException e) {//(Exception e) {
 			System.out.print(e);
 		}

@@ -7,35 +7,74 @@ import slp.icObject;
 
 
 public class icClass extends icObject {
-	List<icFunction> statScope = new ArrayList<icFunction>();  // list of names for static methods
-	List <icObject> instScope = new ArrayList<icObject>(); // list of names for dynamic methods and fields
-	String ext;  // the class type that the method extends (null if the class is a base class)
-
+	List<icFunction> statFuncs = new ArrayList<icFunction>();  // list of names for static methods
+	List <icFunction> instFuncs = new ArrayList<icFunction>(); // list of names for dynamic methods
+	List <icVariable> instVars = new ArrayList<icVariable>(); // list of names for dynamic fields
+	icClass ext = null;  // the class type that the method extends (null if the class is a base class)
+	int size = 0; //number of fields in class
 
 	
-	public icClass(String name, int scope) {
+	public icClass(String name, int scope, icClass ext) {
 		super(name, scope);
+		this.ext = ext;
+		if (ext == null)
+			this.size = 0;
+		else
+			this.size = ext.size;
+		
 	}
 	
-	
-	void addObject(icObject o, Environment d, boolean isStatic){
-		if (this.hasObject(o.name, d) && ICEvaluator.run_num == 0 )
+
+	void addFunc(icFunction f, Environment d, boolean isStatic){
+		if (this.hasObject(f.name, d) && ICEvaluator.run_num == 0 )
 		{ //there is already an object with this name in current scope
-			ICEvaluator.error("multiple declerations of object: " + o.name, null);
+			ICEvaluator.error("multiple declerations of object: " + f.name, null);
 		}
-		if (ICEvaluator.run_num == 1 && ext != null && ext != "")
+		if (ICEvaluator.run_num == 0)
 		{
-			icClass father = (icClass)d.getObjByName(ext);
-			if (father.hasObject(o.name, d))
+			if (ext != null && ext.hasObject(f.name, d))
+			{ //father class already has an object with that name.
+				if (!(ext.getObject(f.name, d) instanceof icFunction))
+				{
+					ICEvaluator.error("multiple declerations of object: " + f.name, null);
+				}				
+			}
+			f.label = IR.get_label(d.lastClass.name + "_" + f.name);
+			if (isStatic)
+			{
+				statFuncs.add(f);
+			}
+			else
+			{
+				f.offset = this.size;
+				this.size++;
+				instFuncs.add(f);
+			}
+		}
+		else
+		{
+			f = (icFunction)d.lastClass.getObject(f.name, d);
+			IR.put_label_comment(d.lastClass.name, f.name);
+			IR.put_label(f.label);
+		}
+	}
+
+	void addVar(icVariable v, Environment d){
+		if (this.hasObject(v.name, d) && ICEvaluator.run_num == 0 )
+		{ //there is already an object with this name in current scope
+			ICEvaluator.error("multiple declerations of object: " + v.name, null);
+		}
+		if (ICEvaluator.run_num == 1 && ext != null)
+		{
+			if (ext.hasObject(v.name, d))
 			{ //father class already has an object with that name
-				ICEvaluator.error("multiple declerations of object: " + o.name, null);
+				ICEvaluator.error("multiple declerations of object: " + v.name, null);
 			}
 		}
 		if (ICEvaluator.run_num == 0){
-			if (isStatic)
-				statScope.add((icFunction)o);
-			else
-				instScope.add(o);
+			v.offset = this.size;
+			this.size++;
+			instVars.add(v);
 		}
 	}
 	
@@ -52,17 +91,22 @@ public class icClass extends icObject {
 		icClass cur = this;
 		while (cur != null)
 		{
-			for (icObject o : cur.instScope) {
+			for (icObject o : cur.instFuncs) {
 				if (o.name.equals(objectName)){
 					return o;
 				}
 			}
-			for (icFunction f : cur.statScope) {
+			for (icFunction f : cur.statFuncs) {
 				if (f.name.equals(objectName)){
 					return f;
 				}
 			}
-			cur = (icClass)env.getObjByName(cur.ext);
+			for (icVariable v : cur.instVars) {
+				if (v.name.equals(objectName)){
+					return v;
+				}
+			}
+			cur = cur.ext;
 		}
 		return null;
 	}
@@ -79,7 +123,7 @@ public class icClass extends icObject {
 			if (cur.getName().equals(parent.getName())){
 				return true;
 			}
-			cur = (icClass) env.getObjByName(cur.ext);
+			cur = cur.ext;
 		}
 		return false;		
 	}

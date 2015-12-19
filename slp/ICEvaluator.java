@@ -1,5 +1,8 @@
 package slp;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -7,7 +10,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -34,6 +37,31 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
 		root.accept(this, env);
+		write_ir();
+	}
+	
+	public void write_ir()
+	{
+		String file_text = "\n######################\n" +
+				"# String literals\n" + 
+				IR.str_table + 
+				"######################\n\n" +
+				"############################################\n" +
+				"# Dispatch vectors\n" +
+				IR.dispatch_tables +
+				"############################################\n\n" +
+				IR.code;
+		
+		FileWriter IR_file;
+		try {
+			IR_file = new FileWriter("output.lir");
+			IR_file.write(file_text);
+			IR_file.close();
+		} catch (IOException e) {
+			System.out.println("could not open lir file");
+			e.printStackTrace();
+			return;
+		}
 	}
 
 	public static void error(String str, ASTNode n) {
@@ -172,43 +200,80 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	}
 
 	public VarType visit(ASTBinaryOpExpr expr, Environment env) {
+		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTBinaryOpExpr at line: " + expr.line);
+		
 		Operator op = expr.op;
 		ASTExpr lhs = expr.lhs;
 		ASTExpr rhs = expr.rhs;
-		VarType lhsType_type = lhs.accept(this, env);
-		VarType rhsType_type = rhs.accept(this, env);
 		String IRop;
 		String reg;
-		if (run_num == 0)
-			return new VarType("null","");
+		VarType lhsType_type = lhs.accept(this, env);
+		
+		if (op == Operator.LOR || op == Operator.LAND){
+			if (run_num == 0)
+				return new VarType("null","");
+			String lhs_reg = lhsType_type.ir_val;
+			String temp1 = IR.new_temp();
+			String temp2 = IR.new_temp();
+			String result = IR.new_temp();
+			String end_label = IR.get_label("end");
+			if (op==Operator.LOR){
+				IR.add_line("Move 1,"+result); //result=1
+				IR.add_line("Move "+lhs_reg+","+temp1);
+				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
+				IR.add_line("JumpFalse "+end_label); //jump to end_label if lhs != 0
+				
+				VarType rhsType_type = rhs.accept(this, env);
+				String rhs_reg = rhsType_type.ir_val;
+				IR.add_line("Move "+rhs_reg+","+temp2);
+				IR.add_line("Compare 0,"+temp2); //now compare=rhs-0
+				IR.add_line("JumpFalse "+end_label); //jump to end_label if rhs != 0
+				
+				IR.add_line("Move 0,"+result); // if reached here: the whole expression is false
+			}else{ //op==LAND
+				IR.add_line("Move 0,"+result); //result=1
+				IR.add_line("Move "+lhs_reg+","+temp1);
+				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
+				IR.add_line("JumpTrue "+end_label); //jump to end_label if lhs == 0
+				
+				VarType rhsType_type = rhs.accept(this, env);
+				String rhs_reg = rhsType_type.ir_val;
+				IR.add_line("Move "+rhs_reg+","+temp2);
+				IR.add_line("Compare 0,"+temp2); //now compare=rhs-0
+				IR.add_line("JumpTrue "+end_label); //jump to end_label if rhs == 0
+				
+				IR.add_line("Move 1,"+result); // if reached here: the whole expression is true
+			}
+
+			IR.add_line(end_label); //control will jump here if expression is true
+			return new VarType("boolean", result);
+		}
+		
+		VarType rhsType_type = rhs.accept(this, env);
+		
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
 		}
 		String rhsType = rhsType_type.type;
 		String lhsType = lhsType_type.type;
-		
-		if (op == Operator.LAND || op == Operator.LOR) 
-		{
-			if ((!lhsType.equals("boolean")) && run_num == 1)
-				error("Expected a Boolean expression before " + op, expr);
-			if ((!rhsType.equals("boolean")) && run_num == 1)
-				error("Expected a Boolean expression after " + op, expr);
-			else
-				return new VarType("boolean","");
-		}
+
 		if (op == Operator.PLUS) {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
 				if (lhsType.equals(rhsType) && run_num==1)
 				{
-					reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, "Add");
+					if (lhsType.equals("int")) 
+						reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, "Add");
+					else 
+						reg = IR.op_add_string(lhsType_type.ir_val, rhsType_type.ir_val);
 					return new VarType(lhsType, reg);
 				}
 				else{
+
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
 					else return new VarType("null", "");
@@ -236,6 +301,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						IRop = "Mul";
 					case MOD:
 						IRop = "Mod";
+					default:
+						IRop = "";
 				}
 				reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, IRop);
 				return new VarType("int", reg);
@@ -248,15 +315,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ "' accepts only Integer types as operands. got lhs: " +
 						lhsType + ". rhs: " + rhsType, expr);
 			}
-			else
-				return new VarType("boolean");
+			else{
+				reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+				return new VarType("boolean",reg);
+			}
 		}
 		if (op == Operator.EQUAL || op == Operator.NEQUAL) {
 			if (run_num == 0)
-				return new VarType("boolean");
+				return new VarType("boolean","");
 			if (run_num == 1) {
-				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null"))
-					return new VarType("boolean");
+				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null")){
+					reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+					return new VarType("boolean",reg);
+				}
 				// if reached here - lhsType != rhsType
 				if (lhsType.equals("string") || lhsType.equals("int") || lhsType.equals("boolean")
 						|| rhsType.equals("string") || rhsType.equals("int") || rhsType.equals("boolean"))
@@ -268,15 +339,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				icObject lhsClass = env.getObjByName(lhsType);
 				if (!(lhsClass instanceof icClass))
 					error("Undefined type: " + lhsType, expr);
-				String parent = ((icClass) lhsClass).ext;
-				icObject parentClass = env.getObjByName(parent);
-				if ((!(parentClass instanceof icClass)) && (parentClass!=null))
-					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parentClass != null) {
-					if (rhsType.equals(parent))
-						return new VarType("boolean");
+
+				icClass parent = ((icClass) lhsClass).ext;
+				while (parent != null) {
+					if (rhsType.equals(parent.name)){
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						return new VarType("boolean",reg);
+					}
 					else
-						parent = ((icClass) parentClass).ext;
+						parent = parent.ext;
 				}
 				// if reached here - lhsType doesn't extend rhsType
 				//
@@ -285,14 +356,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (!(rhsClass instanceof icClass))
 					error("Undefined type: " + rhsType, expr);
 				parent = ((icClass) rhsClass).ext;
-				parentClass = env.getObjByName(parent);
-				if (!(parentClass instanceof icClass) && (parentClass != null))
-					error("Unexpected error!!! undefined parent class - should have catched this before", expr);
-				while (parentClass != null) {
-					if (lhsType.equals(parent))
-						return new VarType("boolean");
+
+				while (parent != null) {
+					if (lhsType.equals(parent)){
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						return new VarType("boolean",reg);
+					}
 					else
-						parent = ((icClass) parentClass).ext;
+						parent = parent.ext;
 				}
 				// if reached here - rhsType doesn't extend lhsType
 				error("Type mismatch for operands of '" + op + "'. got lhs: " + 
@@ -303,7 +374,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		else
 			if (run_num == 1) error("Error!!!! should never reach this line of code", expr);
-		return new VarType("null"); // default value for rum_num == 0
+		return new VarType("null",""); // default value for rum_num == 0
 
 	}
 
@@ -335,7 +406,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type));
 			d.add(o);
 			
-			d.lastClass.addObject(o, d, false);
+			d.lastClass.addVar(o, d);
 		}
 		return null;
 	}
@@ -379,10 +450,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type), meth.isStatic);
 		d.lastFunc = func;
-		if (meth.isStatic)
-			d.lastClass.addObject(func, d, true);
-		else
-			d.lastClass.addObject(func, d, false);
+		d.lastClass.addFunc(func, d, meth.isStatic);
 		d.add(func);
 
 		++ASTNode.scope;
@@ -406,29 +474,35 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTClassDecl cls, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting classDecl: " + cls.class_id + " at line: " + cls.line);
-
-		icClass c = new icClass(cls.class_id, ASTNode.scope);
-		c.ext = cls.extend.name;
-		if (run_num == 1 && cls.extend.name != null && cls.extend.name != "") {
-			icObject father = d.getObjByName(cls.extend.name);
-			if (!(father instanceof icClass)) {
-				error("unknown parent class", cls.extend);
+		if (run_num == 0)
+		{
+			icObject father = null;
+			if (cls.extend.name != null && cls.extend.name != "") 
+			{
+				father = d.getObjByName(cls.extend.name);
+				if (!(father instanceof icClass))
+				{
+					error("unknown parent class", cls.extend);
+				}
 			}
+			icClass c = new icClass(cls.class_id, ASTNode.scope, (icClass)father);
+			d.add(c);
+			d.lastClass = c;
 		}
-		d.add(c);
-		if (run_num == 0){
-		d.lastClass = c;
-		}
-		else{
+		else
+		{
 			// in the second run-through we want the class that contains all the methods and fields scanned in the first run
-			d.lastClass = (icClass) d.getObjByName(c.name);
+			d.lastClass = (icClass) d.getObjByName(cls.class_id);
 		}
+		
 		++ASTNode.scope;
 		for (ASTNode fm : cls.fieldmeths.lst) {
 			fm.accept(this, d);
 		}
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
+		if (run_num == 1)
+			IR.class_dec(d.lastClass);
 		return null;
 	}
 
@@ -438,8 +512,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting expr.length at line: " + expr.line);
 		VarType e = expr.e.accept(this, d);
 		if (e.num_arrays != 0)
-			return new VarType("int");
-		else {
+		{
+			return new VarType("int", IR.dot_len(e.ir_val));
+		}
+		else 
+		{
 			error("tried accessing length field of non array expression: " + e, expr);
 		}
 		return null;
@@ -449,25 +526,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTNewArray expr, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting new array at line: " + expr.line);
-		VarType index_type = expr.expr.accept(this, d);
-		if ("int" != index_type.type || index_type.num_arrays != 0)
-			error("bad indexer type. expected int, got: " + index_type, expr);
+		VarType index = expr.expr.accept(this, d);
+		if ("int" != index.type || index.num_arrays != 0)
+			error("bad indexer type. expected int, got: " + index, expr);
+		String ir_rep = "";
 		if (run_num == 1) {
 			if (!(d.validateType(new VarType(expr.type)))) {
 				error("unknown type: " + expr.type, expr);
 			}
+			ir_rep = IR.new_arr(index.ir_val, expr.type);
 		}
-		return new VarType(expr.type + "[]");
+		return new VarType(expr.type + "[]", ir_rep);
 	}
 
 	@Override
 	public VarType visit(ASTNewObject expr, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting new object at line: " + expr.line);
+		String ir_rep = "";
 		if (run_num == 1) {
 			d.validateType(new VarType(expr.type));
+			icClass type_class = (icClass)d.getObjByName(expr.type);
+			ir_rep = IR.new_obj(Integer.toString(type_class.size + 1), expr.type);
 		}
-		return new VarType(expr.type);
+		return new VarType(expr.type, ir_rep);
 	}
 
 	@Override
@@ -673,6 +755,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						if (run_num == 1) return res;
 					}
 				}
+				else
+				{
+					error(exp1.type + " is not a class", expr);					
+				}
 			} else
 				return new VarType("null");
 
@@ -825,16 +911,28 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTLiteral at line: " + expr.line);
 		if (IS_DEBUG)
-			System.out.println(expr.s);
-		String lit = expr.s;
-		if (lit.equals("true") || lit.equals("false")) {
-			return new VarType("boolean");
-		} else if (lit.equals("null")) {
-			return new VarType("null");
-		} else if (lit.equals("int")) {
-			return new VarType("int");
-		} else {
-			return new VarType("string");
+			System.out.println(expr.literalType);
+		String lit = expr.getType();
+		if (lit.equals("true"))
+		{
+			return new VarType("boolean", "1");
+		} 
+		else if (lit.equals("false"))
+		{
+			return new VarType("boolean", "0");
+		}
+		else if (lit.equals("null")) 
+		{
+			return new VarType("null", "0");
+		} 
+		else if (lit.equals("int")) 
+		{
+			return new VarType("int", expr.value);
+		}
+		else 
+		{
+			String str_name = IR.add_str(expr.value);
+			return new VarType("string", str_name);
 		}
 
 	}

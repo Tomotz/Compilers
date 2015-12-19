@@ -5,29 +5,132 @@ public class IR {
 	static String dispatch_tables = "";
 	static String code = "";
 	static int temp_counter = 0;
-	
+	static int label_num = 0;
+	static int str_num = 0;
+
+	static String get_label(String text)
+	{
+		if (ICEvaluator.run_num != 0)
+			return "";
+		++label_num;
+		return (text + "_" + Integer.toString(label_num));
+	}
+
+	static String new_str()
+	{
+		if (ICEvaluator.run_num != 1)
+			return "";
+		++str_num;
+		return "str" + Integer.toString(str_num - 1);
+	}
+
 	static void add_line(String content)
 	{
-		if (ICEvaluator.run_num == 1)
-			code.concat(content + "\n");
+		if (ICEvaluator.run_num != 1)
+			return;
+		code += content + "\n";
+	}
+	static void add_comment(String content)
+	{
+		add_line("#" + content);
 	}
 	
 	static String new_temp()
 	{
+		if (ICEvaluator.run_num != 1)
+			return "";
 		++temp_counter;
 		return "R" + Integer.toString(temp_counter - 1);
+	}
+
+	public static String add_str(String value) 
+	{
+		if (ICEvaluator.run_num != 1)
+			return "";
+		String str_id = new_str();
+		str_table += str_id + ": " + value + "\n";
+		return str_id;
+		
+	}
+	static void class_dec(icClass cls)
+	{
+		//add dispatch list name
+		dispatch_tables += "_DV_" + cls.name.toUpperCase() + ": [";
+		boolean is_first = true;
+		for (icFunction element : cls.statFuncs) {
+			//should be ordered by offset
+			if (!is_first)
+			{
+				dispatch_tables += ",";
+				is_first = false;
+			}
+			dispatch_tables += element.label;
+		}
+		dispatch_tables += "]\n";
 	}
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
 		add_line("#" + src1 + op + src2);
 		String reg = new_temp();
-		add_line("Move " + src2 + "," + reg);
-		add_line(op +" " + src1 + "," + reg);
+		add_line("Move " + src1 + "," + reg);
+		add_line(op +" " + src2 + "," + reg);
 		return reg;
 		
 	}
+	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
+		add_line("#" + src1 + op.toString() + src2);
+		
+		String result = new_temp();
+		String temp1 = new_temp();
+		String temp2 = new_temp();
+		String end = get_label("end");
+		
+		add_line("Move 0, " + result);
+		add_line("Move "+src1+","+ temp1);
+		add_line("Move "+src2+","+ temp2);
+		add_line("Compare " + temp2 + "," + temp1); // Compare = temp1 - temp2
+		
+		if (op==Operator.GT) add_line("JumpLTE "+ end);
+		if (op==Operator.GTE) add_line("JumpLT "+ end);
+		if (op==Operator.LT) add_line("JumpGTE "+ end);
+		if (op==Operator.LTE) add_line("JumpLE "+ end);
+		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
+		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
+		else throw new RuntimeException("third argument must be one of the following:"
+				+ " GT, GTE, LT, LTE, EQ, NEQ");
+		add_line("Move 1,"+result);
+		add_line(end); //label _end (if jumped here then result=0) 
+		return result;
+	}
 	
+	static String LAND_op(String src1, String src2){
+		//deals with LAND , LOR
+		add_line("#" + src1 + " && " + src2);
+		String result = new_temp();
+		String temp1 = new_temp();
+		String temp2 = new_temp();
+		String end = get_label("end");
+
+		add_line("Move 0, " + result);
+		add_line("Move "+src1+","+ temp1);
+		add_line("Move "+src2+","+ temp2);
+
+
+		return null;//TODO
+	}
+	
+	static String make_jump(String reg){ 
+		//helper method for cases of ( lhs || rhs )
+		//checks if content of reg (lhs) is true (!=0). if so - creates a new label and jumps to it.
+		//returns the label created - this will be inserted by the caller after the IR code of rhs.
+		String temp = new_temp();
+		String end_label = get_label("end");
+		add_line("Move "+reg+","+temp);
+		add_line("Compare 0,"+temp); //now compare=reg-0
+		add_line("JumpFalse "+end_label); //jump if reg != 0
+		return end_label;
+	}
 
 	static String evaluate_int(int src)
 	{
@@ -36,10 +139,44 @@ public class IR {
 	}
 	static String op_add_string(String src1, String src2)
 	{
-		add_line("#" + src1 + "+" + src2);
+		add_comment(src1 + "+" + src2);
 		String reg = new_temp();
 		add_line("Library __stringCat(" + src1 + "," + src2 + ")," + reg);
 		return reg;
 	}
+	
+	static String dot_len(String src)
+	{
+		add_comment(src + ".length");
+		String reg = new_temp();
+		add_line("ArrayLength " + src + "," + reg);
+		return reg;
+	}
+
+	public static void put_label_comment(String cls, String func) {
+		add_line("");
+		add_line("########## " + cls + "." + func + " ##########");
+	}
+	
+	public static void put_label(String label) {
+		add_line(label + ":");		
+	}
+
+	static String new_arr(String len, String type)
+	{
+		add_comment("new " + type + "[" + len + "]");
+		String reg = new_temp();
+		add_line("Library __allocateArray(" + len + ")," + reg);
+		return reg;
+	}
+
+	static String new_obj(String len, String type)
+	{
+		add_comment("new " + type + "()");
+		String reg = new_temp();
+		add_line("Library __allocateObject(" + len + ")," + reg);
+		return reg;
+	}
+
 
 }

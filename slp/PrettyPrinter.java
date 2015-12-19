@@ -319,17 +319,17 @@ public class PrettyPrinter implements Visitor {
 		lineStart();
 		switch (l.literalType){
 		case 0:
-			printstrln("Integer literal: "+l.s);
+			printstrln("Integer literal: "+l.value);
 			break;
 		case 1:
 			
-			printstrln("String literal: "+l.s);
+			printstrln("String literal: "+l.value);
 			break;
 		case 2:
-			printstrln("Boolean literal: "+l.s);
+			printstrln("Boolean literal: "+l.value);
 			break;
 		case 3:
-			printstrln("Boolean literal: "+l.s);
+			printstrln("Boolean literal: "+l.value);
 			break;
 		case 4:
 			printstrln("Null literal");
