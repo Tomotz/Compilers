@@ -10,8 +10,8 @@ public class IR {
 
 	static String get_label(String text)
 	{
-		if (ICEvaluator.run_num != 0)
-			return "";
+		//if (ICEvaluator.run_num != 0)
+			//return "";
 		++label_num;
 		return (text + "_" + Integer.toString(label_num));
 	}
@@ -71,7 +71,7 @@ public class IR {
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
-		add_line("#" + src1 + op + src2);
+		add_comment(src1 + op + src2);
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
 		add_line(op +" " + src2 + "," + reg);
@@ -79,7 +79,7 @@ public class IR {
 		
 	}
 	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
-		add_line("#" + src1 + op.toString() + src2);
+		add_comment(src1 + op.toString() + src2);
 		
 		String result = new_temp();
 		String temp1 = new_temp();
@@ -97,42 +97,13 @@ public class IR {
 		if (op==Operator.LTE) add_line("JumpLE "+ end);
 		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
 		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
-		else throw new RuntimeException("third argument must be one of the following:"
-				+ " GT, GTE, LT, LTE, EQ, NEQ");
+
 		add_line("Move 1,"+result);
 		add_line(end); //label _end (if jumped here then result=0) 
 		return result;
 	}
 	
-	static String LAND_op(String src1, String src2){
-		//deals with LAND , LOR
-		add_line("#" + src1 + " && " + src2);
-		String result = new_temp();
-		String temp1 = new_temp();
-		String temp2 = new_temp();
-		String end = get_label("end");
-
-		add_line("Move 0, " + result);
-		add_line("Move "+src1+","+ temp1);
-		add_line("Move "+src2+","+ temp2);
-
-
-		return null;//TODO
-	}
-	
-	static String make_jump(String reg){ 
-		//helper method for cases of ( lhs || rhs )
-		//checks if content of reg (lhs) is true (!=0). if so - creates a new label and jumps to it.
-		//returns the label created - this will be inserted by the caller after the IR code of rhs.
-		String temp = new_temp();
-		String end_label = get_label("end");
-		add_line("Move "+reg+","+temp);
-		add_line("Compare 0,"+temp); //now compare=reg-0
-		add_line("JumpFalse "+end_label); //jump if reg != 0
-		return end_label;
-	}
-
-	static String evaluate_int(int src)
+		static String evaluate_int(int src)
 	{
 		return Integer.toString(src);
 		

@@ -220,6 +220,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			String result = IR.new_temp();
 			String end_label = IR.get_label("end");
 			if (op==Operator.LOR){
+				IR.add_comment(lhs_reg+" || ...");
 				IR.add_line("Move 1,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
@@ -233,6 +234,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				
 				IR.add_line("Move 0,"+result); // if reached here: the whole expression is false
 			}else{ //op==LAND
+				IR.add_comment(lhs_reg+" && ...");
 				IR.add_line("Move 0,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
