@@ -97,22 +97,22 @@ public class Environment {
 		this.lastClass = library;
 
 		icFunction f = new icFunction("println", 0, new VarType("void", ""), true);
-		f.arg_types.add(new VarType("string", ""));
+		f.arg_types.add(new VarType("string", "s"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("print", 0,  new VarType("void", ""), true);
-		f.arg_types.add(new VarType("string", ""));
+		f.arg_types.add(new VarType("string", "s"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("printi", 0,  new VarType("void", ""), true);
-		f.arg_types.add(new VarType("int", ""));
+		f.arg_types.add(new VarType("int", "i"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("printb", 0,  new VarType("void", ""), true);
-		f.arg_types.add(new VarType("boolean", ""));
+		f.arg_types.add(new VarType("boolean", "b"));
 		library.addFunc(f, this, true);
 		add(f);
 
@@ -129,29 +129,29 @@ public class Environment {
 		add(f);
 
 		f = new icFunction("stoi", 0,  new VarType("int", ""), true);
-		f.arg_types.add(new VarType("string", ""));
-		f.arg_types.add(new VarType("int", ""));
+		f.arg_types.add(new VarType("string", "s"));
+		f.arg_types.add(new VarType("int", "n"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("itos", 0,  new VarType("string", ""), true);
-		f.arg_types.add(new VarType("int", ""));
+		f.arg_types.add(new VarType("int", "i"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("stoa", 0,  new VarType("int[]", ""), true);
-		f.arg_types.add(new VarType("string", ""));
+		f.arg_types.add(new VarType("string", "s"));
 		library.addFunc(f, this, true);
 		add(f);
 
 
 		f = new icFunction("atos", 0,  new VarType("string", ""), true);
-		f.arg_types.add(new VarType("int[]", ""));
+		f.arg_types.add(new VarType("int[]", "a"));
 		library.addFunc(f, this, true);
 		add(f);
 
 		f = new icFunction("random", 0,  new VarType("int", ""), true);
-		f.arg_types.add(new VarType("int", ""));
+		f.arg_types.add(new VarType("int", "i"));
 		library.addFunc(f, this, true);
 		add(f);
 
@@ -161,7 +161,7 @@ public class Environment {
 
 
 		f = new icFunction("exit", 0,  new VarType("void", ""), true);
-		f.arg_types.add(new VarType("int", ""));
+		f.arg_types.add(new VarType("int", "i"));
 		library.addFunc(f, this, true);
 		add(f);
 		add(library);
