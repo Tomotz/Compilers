@@ -181,15 +181,20 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		}
 		String rhsType = rhsType_type.type;
+		String result_reg;
 		if (op == Operator.MINUS) {
-			if (rhsType.equals("int"))
-				return new VarType("int");
+			if (rhsType.equals("int")){
+				result_reg = IR.arithmetic_op("0",rhsType_type.ir_val,"Sub");
+				return new VarType("int",result_reg);
+			}
 			else
 				if (run_num == 1) error ("Expected an Integer after '-' ", expr);
 		}
 		if (op == Operator.LNEG) {
-			if (rhsType.equals("boolean"))
+			if (rhsType.equals("boolean")){
+				result_reg = IR.unary_LNEG_op(rhsType_type.ir_val);
 				return new VarType("boolean");
+			}
 			else
 				if (run_num == 1) error("Expected a Boolean expression after '!' ", expr);
 		} else
