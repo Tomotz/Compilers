@@ -8,9 +8,11 @@ public class IR {
 	static int label_num = 0;
 	static int str_num = 0;
 
-	static String get_label(String text) {
-		if (ICEvaluator.run_num != 0)
-			return "";
+
+	static String get_label(String text)
+	{
+		//if (ICEvaluator.run_num != 0)
+		//return "";
 		++label_num;
 		return (text + "_" + Integer.toString(label_num));
 	}
@@ -63,16 +65,57 @@ public class IR {
 		dispatch_tables += "]\n";
 	}
 
-	static String op_add(String src1, String src2) {
-		add_comment(src1 + "+" + src2);
+
+	static String arithmetic_op(String src1, String src2, String op)
+	{
+		add_comment(src1 + op + src2);
 		String reg = new_temp();
-		add_line("Move " + src2 + "," + reg);
-		add_line("Add " + src1 + "," + reg);
+		add_line("Move " + src1 + "," + reg);
+		add_line(op +" " + src2 + "," + reg);
 		return reg;
 
 	}
 
-	static String evaluate_int(int src) {
+	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
+		add_comment(src1 + op.toString() + src2);
+		
+		String result = new_temp();
+		String temp1 = new_temp();
+		String temp2 = new_temp();
+		String end = get_label("end");
+		
+		add_line("Move 0, " + result);
+		add_line("Move "+src1+","+ temp1);
+		add_line("Move "+src2+","+ temp2);
+		add_line("Compare " + temp2 + "," + temp1); // Compare = temp1 - temp2
+		
+		if (op==Operator.GT) add_line("JumpLTE "+ end);
+		if (op==Operator.GTE) add_line("JumpLT "+ end);
+		if (op==Operator.LT) add_line("JumpGTE "+ end);
+		if (op==Operator.LTE) add_line("JumpLE "+ end);
+		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
+		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
+		add_line("Move 1,"+result);
+		add_line(end); //label _end (if jumped here then result=0) 
+		return result;
+	}
+	
+	static String unary_LNEG_op(String src){
+		add_comment("!"+src);
+		String result = new_temp();
+		String temp = new_temp();
+		String end_label = get_label("end");
+		add_line("Move 0,"+result);
+		add_line("Move "+src+","+temp);
+		add_line("Compare 0,"+temp);
+		add_line("JumpTrue "+end_label);	//jump to end if true (src==0)
+		add_line("Move 1, "+result);
+		add_line(end_label);
+		return result;
+	}
+
+	static String evaluate_int(int src)
+	{
 		return Integer.toString(src);
 
 	}

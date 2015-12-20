@@ -184,15 +184,20 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		}
 		String rhsType = rhsType_type.type;
+		String result_reg;
 		if (op == Operator.MINUS) {
-			if (rhsType.equals("int"))
-				return new VarType("int");
+			if (rhsType.equals("int")){
+				result_reg = IR.arithmetic_op("0",rhsType_type.ir_val,"Sub");
+				return new VarType("int",result_reg);
+			}
 			else
 				if (run_num == 1) error ("Expected an Integer after '-' ", expr);
 		}
 		if (op == Operator.LNEG) {
-			if (rhsType.equals("boolean"))
+			if (rhsType.equals("boolean")){
+				result_reg = IR.unary_LNEG_op(rhsType_type.ir_val);
 				return new VarType("boolean");
+			}
 			else
 				if (run_num == 1) error("Expected a Boolean expression after '!' ", expr);
 		} else
@@ -203,42 +208,82 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	}
 
 	public VarType visit(ASTBinaryOpExpr expr, Environment env) {
+		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTBinaryOpExpr at line: " + expr.line);
+		
 		Operator op = expr.op;
 		ASTExpr lhs = expr.lhs;
 		ASTExpr rhs = expr.rhs;
+		String IRop;
+		String reg;
 		VarType lhsType_type = lhs.accept(this, env);
+		
+		if (op == Operator.LOR || op == Operator.LAND){
+			if (run_num == 0)
+				return new VarType("null","");
+			String lhs_reg = lhsType_type.ir_val;
+			String temp1 = IR.new_temp();
+			String temp2 = IR.new_temp();
+			String result = IR.new_temp();
+			String end_label = IR.get_label("end");
+			if (op==Operator.LOR){
+				IR.add_comment(lhs_reg+" || ...");
+				IR.add_line("Move 1,"+result); //result=1
+				IR.add_line("Move "+lhs_reg+","+temp1);
+				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
+				IR.add_line("JumpFalse "+end_label); //jump to end_label if lhs != 0
+				
+				VarType rhsType_type = rhs.accept(this, env);
+				String rhs_reg = rhsType_type.ir_val;
+				IR.add_line("Move "+rhs_reg+","+temp2);
+				IR.add_line("Compare 0,"+temp2); //now compare=rhs-0
+				IR.add_line("JumpFalse "+end_label); //jump to end_label if rhs != 0
+				
+				IR.add_line("Move 0,"+result); // if reached here: the whole expression is false
+			}else{ //op==LAND
+				IR.add_comment(lhs_reg+" && ...");
+				IR.add_line("Move 0,"+result); //result=1
+				IR.add_line("Move "+lhs_reg+","+temp1);
+				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
+				IR.add_line("JumpTrue "+end_label); //jump to end_label if lhs == 0
+				
+				VarType rhsType_type = rhs.accept(this, env);
+				String rhs_reg = rhsType_type.ir_val;
+				IR.add_line("Move "+rhs_reg+","+temp2);
+				IR.add_line("Compare 0,"+temp2); //now compare=rhs-0
+				IR.add_line("JumpTrue "+end_label); //jump to end_label if rhs == 0
+				
+				IR.add_line("Move 1,"+result); // if reached here: the whole expression is true
+			}
+
+			IR.add_line(end_label); //control will jump here if expression is true
+			return new VarType("boolean", result);
+		}
+		
 		VarType rhsType_type = rhs.accept(this, env);
-		if (run_num == 0)
-			return new VarType("null","");
+		
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
 		}
 		String rhsType = rhsType_type.type;
 		String lhsType = lhsType_type.type;
-		
-		if (op == Operator.LAND || op == Operator.LOR) 
-		{
-			if ((!lhsType.equals("boolean")) && run_num == 1)
-				error("Expected a Boolean expression before " + op, expr);
-			if ((!rhsType.equals("boolean")) && run_num == 1)
-				error("Expected a Boolean expression after " + op, expr);
-			else
-				return new VarType("boolean");
-		}
+
 		if (op == Operator.PLUS) {
 			if (IS_DEBUG)
 				System.out.println("check: lhs " + lhsType + " rhs " + rhsType);
 			if (lhsType.equals("string") || lhsType.equals("int")) {
 				if (lhsType.equals(rhsType) && run_num==1)
 				{
-					String reg = IR.op_add(lhsType_type.ir_val, rhsType_type.ir_val);
+					if (lhsType.equals("int")) 
+						reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, "Add");
+					else 
+						reg = IR.op_add_string(lhsType_type.ir_val, rhsType_type.ir_val);
 					return new VarType(lhsType, reg);
 				}
-				else
-				{
+				else{
+
 					if (run_num == 1) error("Expected operands of same type for the binary operator " + op +
 							" got lhs: " + lhsType + ", rhs: " + rhsType, expr);
 					else return new VarType("null", "");
@@ -255,8 +300,23 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ "' accepts only Integer types as operands. got lhs: " 
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
-			else
-				return new VarType("int");
+			else{
+				
+				switch(op){
+					case MINUS: 
+						IRop = "Sub";
+					case DIV:
+						IRop = "Div";
+					case MULTIPLY:
+						IRop = "Mul";
+					case MOD:
+						IRop = "Mod";
+					default:
+						IRop = "";
+				}
+				reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, IRop);
+				return new VarType("int", reg);
+			}
 		}
 		if (op == Operator.GT || op == Operator.GTE || op == Operator.LT || op == Operator.LTE)
 		{
@@ -265,15 +325,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ "' accepts only Integer types as operands. got lhs: " +
 						lhsType + ". rhs: " + rhsType, expr);
 			}
-			else
-				return new VarType("boolean");
+			else{
+				reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+				return new VarType("boolean",reg);
+			}
 		}
 		if (op == Operator.EQUAL || op == Operator.NEQUAL) {
 			if (run_num == 0)
-				return new VarType("boolean");
+				return new VarType("boolean","");
 			if (run_num == 1) {
-				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null"))
-					return new VarType("boolean");
+				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null")){
+					reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+					return new VarType("boolean",reg);
+				}
 				// if reached here - lhsType != rhsType
 				if (lhsType.equals("string") || lhsType.equals("int") || lhsType.equals("boolean")
 						|| rhsType.equals("string") || rhsType.equals("int") || rhsType.equals("boolean"))
@@ -285,10 +349,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				icObject lhsClass = env.getObjByName(lhsType);
 				if (!(lhsClass instanceof icClass))
 					error("Undefined type: " + lhsType, expr);
+
 				icClass parent = ((icClass) lhsClass).ext;
 				while (parent != null) {
-					if (rhsType.equals(parent.name))
-						return new VarType("boolean");
+					if (rhsType.equals(parent.name)){
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						return new VarType("boolean",reg);
+					}
 					else
 						parent = parent.ext;
 				}
@@ -299,9 +366,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (!(rhsClass instanceof icClass))
 					error("Undefined type: " + rhsType, expr);
 				parent = ((icClass) rhsClass).ext;
+
 				while (parent != null) {
-					if (lhsType.equals(parent))
-						return new VarType("boolean");
+					if (lhsType.equals(parent)){
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						return new VarType("boolean",reg);
+					}
 					else
 						parent = parent.ext;
 				}
@@ -314,7 +384,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		else
 			if (run_num == 1) error("Error!!!! should never reach this line of code", expr);
-		return new VarType("null"); // default value for rum_num == 0
+		return new VarType("null",""); // default value for rum_num == 0
 
 	}
 
