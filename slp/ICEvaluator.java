@@ -1,6 +1,5 @@
 package slp;
 
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -262,7 +261,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		VarType rhsType_type = rhs.accept(this, env);
-		
+		//System.out.println(expr.line);
+		if (run_num == 0)
+			return new VarType("null", "");
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
@@ -301,19 +302,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
 			else{
-				
-				switch(op){
-					case MINUS: 
-						IRop = "Sub";
-					case DIV:
-						IRop = "Div";
-					case MULTIPLY:
-						IRop = "Mul";
-					case MOD:
-						IRop = "Mod";
-					default:
-						IRop = "";
-				}
+				if (op == Operator.MINUS)
+					IRop = "Sub";
+				else if (op == Operator.DIV)
+					IRop = "Div";
+				else if (op == Operator.MULTIPLY)
+					IRop = "Mul";
+				else if (op == Operator.MOD)
+					IRop = "Mod";
+				else
+					IRop = "";
 				reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, IRop);
 				return new VarType("int", reg);
 			}
@@ -967,11 +965,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (expLst.size() != func.getNumofArg()) {
 			error("The method " + funcId + "in the type" + classId + " is not applicable for the arguments", expr);
 		}
-		IR.add_comment("StaticCall _C_" + funcId +"(");
+		String args = "";
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
 			funcArg = func.arg_types.get(i);
-			IR.add_comment(funcArg.ir_val + "=" + exp.ir_val + ",");
+			args += funcArg.ir_val + "=" + exp.ir_val;
+			if (i!= expr.exprList.lst.size() - 1)
+				args += ",";
 			if (exp.num_arrays != funcArg.num_arrays) {
 				error("Wrong argument types for the method '" + func.name + "'. expected: " + funcArg + ", got: " + exp,
 						expr);
@@ -992,7 +992,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 		}
 		String reg = IR.new_temp();
-		IR.add_comment(")"+ reg);
+		args += "),"+ reg;
+		IR.staticCall(funcId, args);
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
 		func.getAssignType().ir_val = reg;
