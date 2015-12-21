@@ -7,6 +7,8 @@ public class IR {
 	static int temp_counter = 0;
 	static int label_num = 0;
 	static int str_num = 0;
+	static String whLblStrt;   // labels for the use of break and continue in a while loop
+	static String whLblEnd;
 
 
 	static String get_label(String text)
@@ -157,6 +159,7 @@ public class IR {
 		return reg;
 	}
 
+	// should probably use only the second case (new object should be allocated in astNew...)
 	static String move(String objName, String ir_rep, int allType) {
 
 		if (allType == 0) {

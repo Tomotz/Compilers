@@ -629,14 +629,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 	@Override
 	public VarType visit(ASTWhileStmt stm, Environment env) {
+		
+		String whlStrt;
+		String whlEnd;
+		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
+		
 		ASTExpr expr = stm.expr;
 
 		int nestFlag;
+		whlStrt = IR.get_label("startWhile");;
+		whlEnd = IR.get_label("endWhile");
+		IR.whLblEnd = whlEnd;
+		IR.whLblStrt = whlStrt;
+		
+		IR.add_line(whlStrt);
+		
 		VarType exprType = expr.accept(this, env);
 		if (!exprType.type.equals("boolean") || exprType.num_arrays != 0)
 			error("Expected boolean expression after 'while'", expr);
+		
+		IR.add_line("Compare 0," + exprType.ir_val);
+		IR.add_line("JumpLE " + whlEnd );
+		
 		++ASTNode.scope;
 		// while loop might be nested
 		if (env.loopScope == true) {
@@ -646,9 +662,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			nestFlag = 1;
 		}
 		stm.stmt.accept(this, env);
+		
 		if (nestFlag == 1) {
 			env.loopScope = false;
 		}
+		
+		IR.add_line("Jump " + whlStrt );
+		IR.add_line(whlEnd);
 		env.destroyScope(ASTNode.scope);
 
 		--ASTNode.scope;
@@ -663,6 +683,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (env.loopScope == false) {
 			error(stmt.name + "cannot be used outside of a loop", stmt);
 		}
+		
+		if (stmt.name.equals("continue")){
+			IR.add_line("jump " + IR.whLblStrt );
+		}
+		else if(stmt.name.equals("break")){
+			IR.add_line("jump " + IR.whLblEnd );
+		}
+		
 		return null;
 	}
 
@@ -697,12 +725,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			error("Type mismatch: cannot convert from " + cond + " to " +
 						"boolean ", stmt);
 		}
+		
 		IR.add_line("Compare 0," + cond.ir_val);
 		ifTrueLabel = IR.get_label("_trueIfCond");
+		
 		IR.add_line("jumpFalse" + ifTrueLabel);
 		ifFalseLabel = IR.get_label("_falseIfCond");
 		IR.add_line(ifFalseLabel);
 		IR.add_line(ifTrueLabel);
+		
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
 
