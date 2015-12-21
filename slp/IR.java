@@ -54,7 +54,11 @@ public class IR {
 
 	static void class_dec(icClass cls) {
 		// add dispatch list name
-		dispatch_tables += "_DV_" + cls.name.toUpperCase() + ": [";
+		cls.dv = "_DV_" + cls.name.toUpperCase();
+		if (ICEvaluator.run_num == 0)
+			return;
+		dispatch_tables += cls.dv + ": [";
+		
 		boolean is_first = true;
 		for (icFunction element : cls.instFuncs) {
 			// should be ordered by offset
@@ -150,23 +154,19 @@ public class IR {
 		return reg;
 	}
 
-	static String new_obj(String len, String type) {
+	static String new_obj(String len, String type, String class_dv) {
 		add_comment("new " + type + "()");
 		String reg = new_temp();
 		add_line("Library __allocateObject(" + len + ")," + reg);
+		add_line("MoveField _DV_" + class_dv + "," + reg + ".0");
 		return reg;
 	}
 
 	// should probably use only the second case (new object should be allocated in astNew...)
-	static String move(String objName, String ir_rep, int allType) {
+	static String move(String objName, String ir_rep) {
 
-		if (allType == 0) {
-			add_comment("Assigning new object of type " + objName);
-			add_line("MoveField _DV_Foo" + objName + "," + ir_rep + ".0");
-		} else if (allType == 1) {
-			add_comment("Assigning new variable of type " + objName);
-			add_line("Move " + ir_rep + "," + objName);
-		}
+		add_comment("Assigning object " + objName);
+		add_line("Move " + ir_rep + "," + objName);
 
 		return null;
 

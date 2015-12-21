@@ -144,7 +144,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType rhs_type = stmt.rhs.accept(this, env);
 		validateAssign(varExpr_type, rhs_type, stmt, env);
 		if (run_num ==1){
-			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1);
+			IR.move(varExpr_type.ir_val, rhs_type.ir_val);
 		}
 		return null;
 	}
@@ -510,8 +510,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
-		if (run_num == 1)
-			IR.class_dec(d.lastClass);
+		IR.class_dec(d.lastClass);
 		return null;
 	}
 
@@ -556,7 +555,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (run_num == 1) {
 			d.validateType(new VarType(expr.type));
 			icClass type_class = (icClass)d.getObjByName(expr.type);
-			ir_rep = IR.new_obj(Integer.toString(type_class.size + 1), expr.type);
+			ir_rep = IR.new_obj(Integer.toString(type_class.size + 1), expr.type, type_class.dv);
 		}
 		return new VarType(expr.type, ir_rep);
 	}
@@ -607,18 +606,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (stmt.rhs != null) {
 				rhs = stmt.rhs.accept(this, env);
 				validateAssign(type, rhs, stmt, env);
-				
-				// generating ir code for assignment
-				if (type_classo instanceof icClass){
-					/*
-					String clSize = Integer.toString(((icClass) type_classo).size+1);
-					type.ir_val = IR.new_obj(clSize, type.type);
-					*/
-					IR.move(type.type, rhs.ir_val,0);
-				}
-				else{
-					IR.move(id, rhs.ir_val,1);
-				}
+
+				IR.move(id, rhs.ir_val);
 			}
 		}
 

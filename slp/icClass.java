@@ -12,6 +12,7 @@ public class icClass extends icObject {
 	List <icVariable> instVars = new ArrayList<icVariable>(); // list of names for dynamic fields
 	icClass ext = null;  // the class type that the method extends (null if the class is a base class)
 	int size = 0; //number of fields in class
+	public String dv;
 
 	
 	public icClass(String name, int scope, icClass ext) {
