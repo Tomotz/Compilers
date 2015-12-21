@@ -40,7 +40,10 @@ public class icClass extends icObject {
 					ICEvaluator.error("multiple declerations of object: " + f.name, null);
 				}				
 			}
+			/*
 			f.label = IR.get_label(d.lastClass.name + "_" + f.name);
+			*/
+			f.label = "_" + d.lastClass.name + "_" + f.name + "_";
 			if (isStatic)
 			{
 				statFuncs.add(f);

@@ -142,6 +142,7 @@ public class IR {
 		add_line("");
 		add_line("########## " + cls + "." + func + " ##########");
 	}
+	
 
 	public static void put_label(String label) {
 		add_line(label + ":");
@@ -172,9 +173,19 @@ public class IR {
 
 	}
 	
-	static String staticCall(String funcName, String arguments){ 
+	static String staticCall(String funcName, String arguments, int irLbFlg){ 
+		String fName = "";
+		/*
 		add_comment("StaticCall _C_" + funcName +"(" +arguments);
+		*/
+		if (irLbFlg ==0){
+			fName = "StaticCall _C_";
 		
+		}
+		else if(irLbFlg ==1){
+			fName = "Library __ ";
+		}
+		add_line(fName + funcName +"(" +arguments);
 		return funcName;
 		
 	}

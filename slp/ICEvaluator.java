@@ -48,7 +48,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				"############################################\n" +
 				"# Dispatch vectors\n" +
 				IR.dispatch_tables +
-				"############################################\n\n" +
+				"############################################\n\n" + 
 				IR.code;
 		
 		FileWriter IR_file;
@@ -474,6 +474,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (ASTStmt s : meth.stmts.statements) {
 			s.accept(this, d);
 		}
+		
+		// making sure the IR interpreter will exit after main
+		if (func.name.equals("main")){
+			IR.add_line("Library exit(0),Rdummy");
+		}
+		
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
 		return null;
@@ -695,6 +701,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		VarType funcRet = env.lastFunc.getAssignType();
 		validateAssign(funcRet, rExpr, expr, env);
+		IR.add_line("Return " + rExpr.ir_val);
 		return null;
 	}
 
@@ -931,7 +938,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		/*
 		 * String expLst = expr.exprList.accept(this, env);
 		 */
-
+		int irLbFlg = 0;  // this flag is 1 if the function is a library function
 		List<ASTExpr> expLst = expr.exprList.lst;
 		VarType exp;
 		VarType funcArg;
@@ -947,6 +954,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (!className.hasObject(funcId, env)) {
 			error(funcId + " cannot be resolved or is not a function", expr);
 		}
+		
+		if (classId.equals("Library")){
+			irLbFlg =1;
+		}
+		
 		icFunction func = (icFunction) className.getObject(funcId, env);
 		
 		if (IS_DEBUG)
@@ -958,7 +970,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
 			funcArg = func.arg_types.get(i);
+			
+			if (irLbFlg ==0){
 			args += funcArg.ir_val + "=" + exp.ir_val;
+			}
+			else{
+				args += exp.ir_val;
+			}
+			
 			if (i!= expr.exprList.lst.size() - 1)
 				args += ",";
 			if (exp.num_arrays != funcArg.num_arrays) {
@@ -982,7 +1001,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		String reg = IR.new_temp();
 		args += "),"+ reg;
-		IR.staticCall(funcId, args);
+		
+		
+		
+		IR.staticCall(funcId, args,irLbFlg);
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
 		func.getAssignType().ir_val = reg;

@@ -7,6 +7,7 @@ public class icVariable extends icObject {
 	public icVariable(String name, int scope, VarType type) {
 		super(name, scope);
 		this.type = type;
+		type.ir_val = name;
 	}
 	
 	@Override
