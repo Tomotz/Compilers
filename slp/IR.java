@@ -58,8 +58,30 @@ public class IR {
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
-		
 		boolean is_first = true;
+		int flag = 0;
+		
+		if ( cls.ext!= null){
+			for (icFunction fathElem : cls.ext.instFuncs){
+				flag = 0;
+				if (!is_first) {
+					dispatch_tables += ",";
+				}
+				
+				for (int i =0; i<cls.instFuncs.size();i++){
+					String fName = cls.instFuncs.get(i).name;
+					if (fName.equals(fathElem.name)){
+						flag =1;
+						break;
+					}
+				}
+				
+				if (flag ==0){
+					is_first = false;
+					dispatch_tables += fathElem.label;
+				}
+			}
+		}
 		for (icFunction element : cls.instFuncs) {
 			// should be ordered by offset
 			if (!is_first) {

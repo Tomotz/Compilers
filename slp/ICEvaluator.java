@@ -561,7 +561,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (run_num == 1) {
 			d.validateType(new VarType(expr.type));
 			icClass type_class = (icClass)d.getObjByName(expr.type);
-			ir_rep = IR.new_obj(Integer.toString(type_class.size + 1), expr.type, type_class.dv);
+			ir_rep = IR.new_obj(Integer.toString((type_class.fSize + 1)*4), expr.type, type_class.dv);
 		}
 		return new VarType(expr.type, ir_rep);
 	}
