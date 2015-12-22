@@ -1,6 +1,5 @@
 package slp;
 
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -49,7 +48,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				"############################################\n" +
 				"# Dispatch vectors\n" +
 				IR.dispatch_tables +
-				"############################################\n\n" +
+				"############################################\n\n" + 
 				IR.code;
 		
 		FileWriter IR_file;
@@ -144,6 +143,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType varExpr_type = stmt.varExpr.accept(this, env);
 		VarType rhs_type = stmt.rhs.accept(this, env);
 		validateAssign(varExpr_type, rhs_type, stmt, env);
+		if (run_num ==1){
+			IR.move(varExpr_type.ir_val, rhs_type.ir_val);
+		}
 		return null;
 	}
 
@@ -260,7 +262,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		VarType rhsType_type = rhs.accept(this, env);
-		
+		//System.out.println(expr.line);
+		if (run_num == 0)
+			return new VarType("null", "");
 		if (rhsType_type.num_arrays != 0 || lhsType_type.num_arrays != 0 )
 		{
 			error("cannot evaluate binary op on array type", expr);
@@ -299,19 +303,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
 			else{
-				
-				switch(op){
-					case MINUS: 
-						IRop = "Sub";
-					case DIV:
-						IRop = "Div";
-					case MULTIPLY:
-						IRop = "Mul";
-					case MOD:
-						IRop = "Mod";
-					default:
-						IRop = "";
-				}
+				if (op == Operator.MINUS)
+					IRop = "Sub";
+				else if (op == Operator.DIV)
+					IRop = "Div";
+				else if (op == Operator.MULTIPLY)
+					IRop = "Mul";
+				else if (op == Operator.MOD)
+					IRop = "Mod";
+				else
+					IRop = "";
 				reg = IR.arithmetic_op(lhsType_type.ir_val, rhsType_type.ir_val, IRop);
 				return new VarType("int", reg);
 			}
@@ -463,6 +464,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		++ASTNode.scope;
 		for (Formal formal : meth.formals.lst) {
+			formal.type.ir_val = formal.id;
 			d.lastFunc.arg_types.add(formal.type);
 			icVariable v = new icVariable(formal.id, ASTNode.scope, formal.type);
 			if (IS_DEBUG)
@@ -473,6 +475,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (ASTStmt s : meth.stmts.statements) {
 			s.accept(this, d);
 		}
+		
+		// making sure the IR interpreter will exit after main
+		if (func.name.equals("main")){
+			IR.add_line("Library exit(0),Rdummy");
+		}
+		
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
 		return null;
@@ -509,8 +517,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
-		if (run_num == 1)
-			IR.class_dec(d.lastClass);
+		IR.class_dec(d.lastClass);
 		return null;
 	}
 
@@ -555,7 +562,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (run_num == 1) {
 			d.validateType(new VarType(expr.type));
 			icClass type_class = (icClass)d.getObjByName(expr.type);
-			ir_rep = IR.new_obj(Integer.toString(type_class.size + 1), expr.type);
+			ir_rep = IR.new_obj(Integer.toString((type_class.fSize + 1)*4), expr.type, type_class.dv);
 		}
 		return new VarType(expr.type, ir_rep);
 	}
@@ -567,6 +574,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		++ASTNode.scope;
 		elseStmt.stmt.accept(this, env);
+		System.out.println("else after stmt evaluation" );
 		env.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
 
@@ -593,13 +601,20 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			icObject type_classo = env.getObjByName(type.type);
 			if (type_classo == null) {
 				error(type + " cannot be resolved to a type", stmt);
-			} else if (!(type_classo instanceof icClass))
+			} else if (!(type_classo instanceof icClass)){
 				error(type + " is not a class name", stmt);
-
+			}
+			
+			if (!(type_classo instanceof icClass)){
+				type.ir_val = id;
+			}
+			
 			// case of assignment
 			if (stmt.rhs != null) {
 				rhs = stmt.rhs.accept(this, env);
 				validateAssign(type, rhs, stmt, env);
+
+				IR.move(id, rhs.ir_val);
 			}
 		}
 
@@ -608,14 +623,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 	@Override
 	public VarType visit(ASTWhileStmt stm, Environment env) {
+		
+		String whlStrt;
+		String whlEnd;
+		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
+		
 		ASTExpr expr = stm.expr;
 
 		int nestFlag;
+		whlStrt = IR.get_label("startWhile");;
+		whlEnd = IR.get_label("endWhile");
+		IR.whLblEnd = whlEnd;
+		IR.whLblStrt = whlStrt;
+		
+		IR.add_line(whlStrt);
+		
 		VarType exprType = expr.accept(this, env);
 		if (!exprType.type.equals("boolean") || exprType.num_arrays != 0)
 			error("Expected boolean expression after 'while'", expr);
+		
+		IR.add_line("Compare 0," + exprType.ir_val);
+		IR.add_line("JumpLE " + whlEnd );
+		
 		++ASTNode.scope;
 		// while loop might be nested
 		if (env.loopScope == true) {
@@ -625,9 +656,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			nestFlag = 1;
 		}
 		stm.stmt.accept(this, env);
+		
 		if (nestFlag == 1) {
 			env.loopScope = false;
 		}
+		
+		IR.add_line("Jump " + whlStrt );
+		IR.add_line(whlEnd);
 		env.destroyScope(ASTNode.scope);
 
 		--ASTNode.scope;
@@ -642,6 +677,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (env.loopScope == false) {
 			error(stmt.name + "cannot be used outside of a loop", stmt);
 		}
+		
+		if (stmt.name.equals("continue")){
+			IR.add_line("jump " + IR.whLblStrt );
+		}
+		else if(stmt.name.equals("break")){
+			IR.add_line("jump " + IR.whLblEnd );
+		}
+		
 		return null;
 	}
 
@@ -659,25 +702,46 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		VarType funcRet = env.lastFunc.getAssignType();
 		validateAssign(funcRet, rExpr, expr, env);
+		IR.add_line("Return " + rExpr.ir_val);
 		return null;
 	}
 
 	@Override
 	public VarType visit(ASTIfElseStmt stmt, Environment env) {
+		String ifTrueLabel; 
+		String ifFalseLabel;
 		if (IS_DEBUG)
 			System.out.println("accepting ASTIfElseStmt at line: " + stmt.line);
 		VarType cond = stmt.expr.accept(this, env);
-
+		
+		
 		if (!cond.type.equals("boolean") || cond.num_arrays != 0) {
 
 			error("Type mismatch: cannot convert from " + cond + " to " +
 						"boolean ", stmt);
 		}
+		
+		IR.add_line("Compare 0," + cond.ir_val);
+		ifTrueLabel = IR.get_label("_trueIfCond");
+		
+		IR.add_line("jumpFalse" + ifTrueLabel);
+		ifFalseLabel = IR.get_label("_falseIfCond");
+		IR.add_line(ifFalseLabel);
+		IR.add_line(ifTrueLabel);
+		
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
 
 		env.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
+		
+		if (stmt.elsestmt != null){
+			IR.add_line(ifFalseLabel);
+			stmt.elsestmt.accept(this,env);
+		}
+		else{
+			IR.add_line(ifFalseLabel);
+		}
 		return null;
 	}
 
@@ -700,6 +764,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		String id = expr.id;
 		VarType exp1;
 		VarType exp2;
+		VarType res = null;
 		icObject ident = env.getObjByName(id);
 		if (ident == null)
 		{
@@ -736,15 +801,19 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG)
 				System.out.println("return 1: " + ident.getAssignType());
 			if (run_num == 1) return ident.getAssignType();
-			else return new VarType("null");
+			/*
+			else return new VarType(ident.getAssignType().type,0,id);
+			*/
 		}
 
 		exp1 = expr.e1.accept(this, env);
 		if (expr.type == 1) {
 			if (IS_DEBUG)
 				System.out.println("entered loop");
+			
+			icObject clss = env.getObjByName(exp1.type);
 			if (run_num == 1) {
-				icObject clss = env.getObjByName(exp1.type);
+				
 				// checking if the class has been declared
 
 				if (clss == null) {
@@ -757,7 +826,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					if (((icClass) clss).hasObject(id, env) == false) {
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
 					} else {
-						VarType res = ((icClass) clss).getFieldType(id, env);
+						 res = ((icClass) clss).getFieldType(id, env);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + res);
 						if (run_num == 1) return res;
@@ -768,7 +837,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					error(exp1.type + " is not a class", expr);					
 				}
 			} else
-				return new VarType("null");
+				res = ((icClass) clss).getFieldType(id, env);
+				/*
+				return new VarType(res.type,0,id);
+				*/
 
 		}
 		// e1 is an array
@@ -784,14 +856,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				error("Type mismatch: cannot convert from " + exp2 + " to int", expr);
 			}
 
-			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1);
+			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
 			return out_type;
 		}
 		if (IS_DEBUG)
 			System.out.println("returning null");
-
+		/*
+		return new VarType(exp1.type,exp1.num_arrays - 1,exp1.ir_val);
+		*/
 		return new VarType("null");
 	}
 
@@ -865,7 +939,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		/*
 		 * String expLst = expr.exprList.accept(this, env);
 		 */
-
+		int irLbFlg = 0;  // this flag is 1 if the function is a library function
 		List<ASTExpr> expLst = expr.exprList.lst;
 		VarType exp;
 		VarType funcArg;
@@ -881,15 +955,32 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (!className.hasObject(funcId, env)) {
 			error(funcId + " cannot be resolved or is not a function", expr);
 		}
+		
+		if (classId.equals("Library")){
+			irLbFlg =1;
+		}
+		
 		icFunction func = (icFunction) className.getObject(funcId, env);
+		
 		if (IS_DEBUG)
 			System.out.println("static func " + func.name);
 		if (expLst.size() != func.getNumofArg()) {
 			error("The method " + funcId + "in the type" + classId + " is not applicable for the arguments", expr);
 		}
+		String args = "";
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
 			funcArg = func.arg_types.get(i);
+			
+			if (irLbFlg ==0){
+			args += funcArg.ir_val + "=" + exp.ir_val;
+			}
+			else{
+				args += exp.ir_val;
+			}
+			
+			if (i!= expr.exprList.lst.size() - 1)
+				args += ",";
 			if (exp.num_arrays != funcArg.num_arrays) {
 				error("Wrong argument types for the method '" + func.name + "'. expected: " + funcArg + ", got: " + exp,
 						expr);
@@ -898,6 +989,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (run_num == 1 && !funcArg.type.equals(exp.type)) {
 				icObject argClass = env.getObjByName(funcArg.type);
 				icObject expClass = env.getObjByName(exp.type);
+				
 				if (!(argClass instanceof icClass))
 					error("Undefined type: " + argClass, expr);
 				if (!(expClass instanceof icClass))
@@ -908,8 +1000,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				}
 			}
 		}
+		String reg = IR.new_temp();
+		args += "),"+ reg;
+		
+		
+		
+		IR.staticCall(funcId, args,irLbFlg);
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
+		func.getAssignType().ir_val = reg;
 		return func.getAssignType();
 
 	}

@@ -12,16 +12,21 @@ public class icClass extends icObject {
 	List <icVariable> instVars = new ArrayList<icVariable>(); // list of names for dynamic fields
 	icClass ext = null;  // the class type that the method extends (null if the class is a base class)
 	int size = 0; //number of fields in class
+	int fSize = 0; 
+	public String dv;
 
 	
 	public icClass(String name, int scope, icClass ext) {
 		super(name, scope);
 		this.ext = ext;
-		if (ext == null)
+		if (ext == null){
 			this.size = 0;
-		else
+			this.fSize = 0;
+		}
+		else{
 			this.size = ext.size;
-		
+			this.fSize = ext.fSize;
+		}
 	}
 	
 
@@ -39,7 +44,10 @@ public class icClass extends icObject {
 					ICEvaluator.error("multiple declerations of object: " + f.name, null);
 				}				
 			}
+			/*
 			f.label = IR.get_label(d.lastClass.name + "_" + f.name);
+			*/
+			f.label = "_" + d.lastClass.name + "_" + f.name + "_";
 			if (isStatic)
 			{
 				statFuncs.add(f);
@@ -74,6 +82,7 @@ public class icClass extends icObject {
 		if (ICEvaluator.run_num == 0){
 			v.offset = this.size;
 			this.size++;
+			this.fSize++;
 			instVars.add(v);
 		}
 	}
