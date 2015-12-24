@@ -1,5 +1,8 @@
 package slp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IR {
 	static String str_table = "";
 	static String dispatch_tables = "";
@@ -52,47 +55,44 @@ public class IR {
 
 	}
 
+	//creates a class dispatch vector
 	static void class_dec(icClass cls) {
 		// add dispatch list name
 		cls.dv = "_DV_" + cls.name.toUpperCase();
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
-		boolean is_first = true;
-		int flag = 0;
-		
-		if ( cls.ext!= null){
-			for (icFunction fathElem : cls.ext.instFuncs){
-				flag = 0;
-				if (!is_first) {
-					dispatch_tables += ",";
-				}
-				
-				for (int i =0; i<cls.instFuncs.size();i++){
-					String fName = cls.instFuncs.get(i).name;
-					if (fName.equals(fathElem.name)){
-						flag =1;
-						break;
-					}
-				}
-				
-				if (flag ==0){
-					is_first = false;
-					dispatch_tables += fathElem.label;
-				}
-			}
+		class_dv(cls, new ArrayList<icFunction>());
+	    if (dispatch_tables.length() > 0)
+	    { //remove last comma
+	    	dispatch_tables = dispatch_tables.substring(0, dispatch_tables.length()-1);
+	    }
+		dispatch_tables += "]\n";
+	}
+	
+	//fills a class dispatch vector. does so recursively
+	static void class_dv(icClass cls, List<icFunction> filter)
+	{
+		if (cls.ext != null)
+		{
+			List<icFunction> filter_copy = new ArrayList<icFunction>(filter);
+			filter_copy.addAll(cls.instFuncs);
+			class_dv(cls.ext, filter_copy);
 		}
 		for (icFunction element : cls.instFuncs) {
 			// should be ordered by offset
-			if (!is_first) {
-				dispatch_tables += ",";
+			boolean is_filtered = false;
+			for (icFunction func : filter) {
+				if (func.name.equals(element.name))
+				{
+					is_filtered = true;
+					break;
+				}
 			}
-			is_first = false;
-			dispatch_tables += element.label;
+			if (!is_filtered)
+				dispatch_tables += element.label + ",";
 		}
-		dispatch_tables += "]\n";
 	}
-
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
@@ -105,6 +105,8 @@ public class IR {
 	}
 
 	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
+		if (ICEvaluator.run_num == 0)
+			return null;
 		add_comment(src1 + " " + op.toString() + " " + src2);
 		
 		String result = new_temp();
@@ -127,6 +129,8 @@ public class IR {
 	}
 	
 	static String unary_LNEG_op(String src){
+		if (ICEvaluator.run_num == 0)
+			return null;
 		add_comment("!"+src);
 		String result = new_temp();
 		String temp = new_temp();

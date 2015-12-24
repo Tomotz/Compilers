@@ -9,6 +9,11 @@ public class icVariable extends icObject {
 		this.type = type;
 		type.ir_val = name;
 	}
+	public icVariable(String name, int scope, VarType type, String ir_val) {
+		super(name, scope);
+		this.type = type;
+		type.ir_val = ir_val;
+	}
 	
 	@Override
 	public VarType getAssignType() {
