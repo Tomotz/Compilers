@@ -965,11 +965,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		//completing IR code:
 		
 		int dv_offset = f.offset;
-		//String temp = IR.new_temp();
+		String temp = IR.new_temp();
 		String res_reg = IR.new_temp();
-		//IR.add_line("Move "+obj_reg+","+temp);
+		IR.add_line("Move "+obj_reg+","+temp);
 		
-		IR.add_line("VirtualCall "+obj_reg+"."+dv_offset+"(" + mem_param + ")"+","+res_reg);
+		IR.add_line("VirtualCall "+temp+"."+dv_offset+"(" + mem_param + ")"+","+res_reg);
 		
 		
 		if (IS_DEBUG)
