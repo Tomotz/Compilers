@@ -115,6 +115,7 @@ public class IR {
 	{
 
 		add_comment(src1 + " " + op + " " + src2);
+
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
 		add_line(op +" " + src2 + "," + reg);
@@ -159,6 +160,7 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
+
 
 
 	static String evaluate_int(int src)
