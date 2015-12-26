@@ -462,7 +462,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type), meth.isStatic);
 		d.lastFunc = func;
 		d.lastClass.addFunc(func, d, meth.isStatic);
-		d.add(func);
+		//d.add(func);
 
 		++ASTNode.scope;
 		int i=0;
@@ -884,7 +884,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		icObject f = env.getObjByName(vc.id);
 		
 		// using a method inside a class directly
-		if (vc.expr == null) {
+		if (vc.expr == null || vc.expr.equals("this")) {
 			if (IS_DEBUG)
 			System.out.println("searching in class: " + env.lastClass.name );
 			
