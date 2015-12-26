@@ -113,8 +113,8 @@ public class IR {
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
+		add_comment(src1 + " " + op + " " + src2);
 
-		add_comment(src1 + op + src2);
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
 		add_line(op +" " + src2 + "," + reg);
@@ -144,7 +144,6 @@ public class IR {
 		add_line(end+":"); //label _end (if jumped here then result=0) 
 		return result;
 	}
-
 	static String unary_LNEG_op(String src){
 		if (ICEvaluator.run_num == 0)
 			return null;
@@ -161,6 +160,10 @@ public class IR {
 		return result;
 	}
 
+
+
+
+
 	static String evaluate_int(int src)
 	{
 		return Integer.toString(src);
@@ -176,7 +179,7 @@ public class IR {
 
 	static String dot_len(String src) {
 		add_comment(src + ".length");
-		add_line("__checkNullRef("+src+")");
+		add_line("#__checkNullRef("+src+")");//TODO - remove comment
 		String reg = new_temp();
 		add_line("ArrayLength " + src + "," + reg);
 		return reg;
@@ -194,7 +197,7 @@ public class IR {
 
 	static String new_arr(String len, String type) {
 		add_comment("new " + type + "[" + len + "]");
-		add_line("__checkSize("+len+")");
+		add_line("#__checkSize("+len+")");//TODO - remove comment
 		String reg = new_temp();
 		add_line("Library __allocateArray(" + len + ")," + reg);
 		return reg;
@@ -322,7 +325,7 @@ public class IR {
 		
 		}
 		else if(irLbFlg ==1){
-			fName = "Library __ ";
+			fName = "Library __";
 		}
 		add_line(fName + funcName +"(" +arguments);
 		return funcName;

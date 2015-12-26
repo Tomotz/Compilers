@@ -243,6 +243,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				IR.add_line("Move 0,"+result); // if reached here: the whole expression is false
 			}else{ //op==LAND
 				IR.add_comment(lhs_reg+" && ...");
+
 				IR.add_line("Move 0,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
@@ -296,7 +297,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD)
 		{
 			if (!(lhsType.equals("int") && rhsType.equals("int"))){
-				if (run_num == 1) error("The binary operator '" + op
+				if (run_num == 1) 
+					error("The binary operator '" + op
 						+ "' accepts only Integer types as operands. got lhs: " 
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
@@ -304,7 +306,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (op == Operator.MINUS)
 					IRop = "Sub";
 				else if (op == Operator.DIV)
+				{
+					IR.add_line("#__checkZero(" + rhsType_type.ir_val + ")");//TODO - remove comment
 					IRop = "Div";
+				}
 				else if (op == Operator.MULTIPLY)
 					IRop = "Mul";
 				else if (op == Operator.MOD)
@@ -648,8 +653,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr expr = stm.expr;
 
 		int nestFlag;
-		whlStrt = IR.get_label("startWhile");;
-		whlEnd = IR.get_label("endWhile");
+		whlStrt = IR.get_label("startWhile:");;
+		whlEnd = IR.get_label("endWhile:");
 		IR.whLblEnd = whlEnd;
 		IR.whLblStrt = whlStrt;
 		
@@ -739,10 +744,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		IR.add_line("Compare 0," + cond.ir_val);
-		ifTrueLabel = IR.get_label("_trueIfCond");
+		ifTrueLabel = IR.get_label("_trueIfCond:");
 		
 		IR.add_line("jumpFalse" + ifTrueLabel);
-		ifFalseLabel = IR.get_label("_falseIfCond");
+		ifFalseLabel = IR.get_label("_falseIfCond:");
 		IR.add_line(ifFalseLabel);
 		IR.add_line(ifTrueLabel);
 		
@@ -808,7 +813,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			result = ((icVariable)location_var).type;
 			if (is_class_field)
 			{	
-				
 				result.ir_val = "this." +  Integer.toString(((icVariable)location_var).offset+1);
 			}
 			
@@ -821,7 +825,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 
 		exp1 = expr.e1.accept(this, env);
-		if (expr.type == 1) {
+		if (expr.type == 1) { //expr.ID
 			if (IS_DEBUG)
 				System.out.println("entered loop");
 			
@@ -840,6 +844,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					if (((icClass) clss).hasObject(id, env) == false) {
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
 					} else {
+						IR.add_line("#__checkNullRef(" + exp1.ir_val + ")"); //TODO - remove comment
 						 result = ((icClass) clss).getFieldType(id, env);
 						 result.ir_val = exp1.ir_val + "." + (clss.offset +1);
 						if (IS_DEBUG)
@@ -866,7 +871,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		}
 		// e1 is an array
-		if (expr.type == 2) {
+		if (expr.type == 2) { //expr[expr]
 			exp2 = expr.e2.accept(this, env);
 
 			if (exp1.num_arrays == 0) { // the variable is not an array
@@ -881,6 +886,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
+			IR.add_line("#__checkNullRef(" + out_type.ir_val + ")");//TODO - remove comment
+			IR.add_line("#__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");//TODO - remove comment
+			
+			
 			out_type.ir_val = out_type.ir_val + "[" + exp2.ir_val + "]";
 			/*
 			return out_type;
@@ -964,11 +973,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		//completing IR code:
 		
 		int dv_offset = f.offset;
-		//String temp = IR.new_temp();
+		String temp = IR.new_temp();
 		String res_reg = IR.new_temp();
-		//IR.add_line("Move "+obj_reg+","+temp);
+		IR.add_line("Move "+obj_reg+","+temp);
 		
-		IR.add_line("VirtualCall "+obj_reg+"."+dv_offset+"(" + mem_param + ")"+","+res_reg);
+		IR.add_line("VirtualCall "+temp+"."+dv_offset+"(" + mem_param + ")"+","+res_reg);
 		
 		
 		if (IS_DEBUG)
