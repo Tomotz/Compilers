@@ -751,10 +751,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		if (stmt.elsestmt != null){
 			ifFalseLabel = IR.get_label("_falseIfCond");
-			IR.add_line("jumpFalse " + ifFalseLabel);
+			IR.add_line("JumpFalse " + ifFalseLabel);
 		}
 		else {
-			IR.add_line("jumpFalse " + endIfLabel);
+			IR.add_line("JumpFalse " + endIfLabel);
 		}
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
@@ -763,7 +763,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		--ASTNode.scope;
 		
 		if (stmt.elsestmt != null){
-			IR.add_line("jump " + endIfLabel);
+			IR.add_line("Jump " + endIfLabel);
 			IR.add_line(ifFalseLabel+":");
 			stmt.elsestmt.accept(this,env);
 		}

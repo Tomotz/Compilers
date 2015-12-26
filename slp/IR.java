@@ -131,6 +131,7 @@ public class IR {
 		String end = get_label("end");
 		
 		add_line("Move 0, " + result);
+
 		/*
 		add_line("Move "+src1+","+ temp1);
 		*/
