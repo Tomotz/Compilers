@@ -702,10 +702,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		if (stmt.name.equals("continue")){
-			IR.add_line("jump " + IR.whLblStrt );
+			IR.add_line("Jump " + IR.whLblStrt );
 		}
 		else if(stmt.name.equals("break")){
-			IR.add_line("jump " + IR.whLblEnd );
+			IR.add_line("Jump " + IR.whLblEnd );
 		}
 		
 		return null;

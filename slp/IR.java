@@ -128,7 +128,7 @@ public class IR {
 		
 		String result = new_temp();
 		String temp1 = new_temp();
-		String end = get_label("end");
+		String end = get_label("endComp");
 		
 		add_line("Move 0, " + result);
 
@@ -155,7 +155,7 @@ public class IR {
 		add_comment("!"+src);
 		String result = new_temp();
 		String temp = new_temp();
-		String end_label = get_label("end");
+		String end_label = get_label("endLneg");
 		add_line("Move 0,"+result);
 		add_line("Move "+src+","+temp);
 		add_line("Compare 0,"+temp);
@@ -183,9 +183,11 @@ public class IR {
 	static String dot_len(String src) {
 		add_comment(src + ".length");
 		add_line("#__checkNullRef("+src+")");//TODO - remove comment
-		String reg = new_temp();
-		add_line("ArrayLength " + src + "," + reg);
-		return reg;
+		String reg1 = new_temp();
+		add_line("Move " + src + "," + reg1);
+		String reg2 = new_temp();
+		add_line("ArrayLength " + reg1 + "," + reg2);
+		return reg2;
 	}
 
 	public static void put_label_comment(String cls, String func) {
