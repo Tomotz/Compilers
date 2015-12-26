@@ -857,11 +857,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				{
 					error(exp1.type + " is not a class", expr);					
 				}
-			} else // run_num == 0
+			} 
+			else
 				result = ((icClass) clss).getFieldType(id, env);
 				/*
 				return new VarType(res.type,0,id);
 				*/
+			return result;
+
 		}
 		// e1 is an array
 		if (expr.type == 2) {
@@ -887,10 +890,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		if (IS_DEBUG)
 			System.out.println("returning null");
-		/*
-		return new VarType(exp1.type,exp1.num_arrays - 1,exp1.ir_val);
-		*/
-		return new VarType("null");
+		return new VarType("null", null);
 	}
 
 	@Override
