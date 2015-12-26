@@ -113,7 +113,6 @@ public class IR {
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
-
 		add_comment(src1 + " " + op + " " + src2);
 
 		String reg = new_temp();
@@ -160,7 +159,6 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
-
 
 
 	static String evaluate_int(int src)
