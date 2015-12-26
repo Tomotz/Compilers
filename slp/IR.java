@@ -176,7 +176,7 @@ public class IR {
 
 	static String dot_len(String src) {
 		add_comment(src + ".length");
-		add_line("__checkNullRef("+src+")");
+		add_line("#__checkNullRef("+src+")");//TODO - remove comment
 		String reg = new_temp();
 		add_line("ArrayLength " + src + "," + reg);
 		return reg;
@@ -194,7 +194,7 @@ public class IR {
 
 	static String new_arr(String len, String type) {
 		add_comment("new " + type + "[" + len + "]");
-		add_line("__checkSize("+len+")");
+		add_line("#__checkSize("+len+")");//TODO - remove comment
 		String reg = new_temp();
 		add_line("Library __allocateArray(" + len + ")," + reg);
 		return reg;
