@@ -731,8 +731,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTIfElseStmt stmt, Environment env) {
 		if (run_num == 0)
 			return null;
-		String ifTrueLabel; 
-		String ifFalseLabel;
+		String endIfLabel; 
+		String ifFalseLabel = "";
 		if (IS_DEBUG)
 			System.out.println("accepting ASTIfElseStmt at line: " + stmt.line);
 		VarType cond = stmt.expr.accept(this, env);
@@ -745,13 +745,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		IR.add_line("Compare 0," + cond.ir_val);
-		ifTrueLabel = IR.get_label("_trueIfCond");
-		
-		IR.add_line("jumpFalse" + ifTrueLabel);
-		ifFalseLabel = IR.get_label("_falseIfCond");
-		IR.add_line(ifFalseLabel+":");
-		IR.add_line(ifTrueLabel+":");
-		
+		endIfLabel = IR.get_label("_endIf");
+
+		if (stmt.elsestmt != null){
+			ifFalseLabel = IR.get_label("_falseIfCond");
+			IR.add_line("jumpFalse " + ifFalseLabel);
+		}
+		else {
+			IR.add_line("jumpFalse " + endIfLabel);
+		}
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
 
@@ -759,11 +761,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		--ASTNode.scope;
 		
 		if (stmt.elsestmt != null){
+			IR.add_line("jump " + endIfLabel);
 			IR.add_line(ifFalseLabel+":");
 			stmt.elsestmt.accept(this,env);
 		}
 		else{
-			IR.add_line(ifFalseLabel+":");
+			IR.add_line(endIfLabel+":");
 		}
 		return null;
 	}
