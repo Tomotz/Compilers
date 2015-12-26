@@ -138,9 +138,9 @@ public class IR {
 		move(temp1, src1,env);
 		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
 		
-		if (op==Operator.GT) add_line("JumpLTE "+ end);
-		if (op==Operator.GTE) add_line("JumpLT "+ end);
-		if (op==Operator.LT) add_line("JumpGTE "+ end);
+		if (op==Operator.GT) add_line("JumpG "+ end);
+		if (op==Operator.GTE) add_line("JumpGE "+ end);
+		if (op==Operator.LT) add_line("JumpL "+ end);
 		if (op==Operator.LTE) add_line("JumpLE "+ end);
 		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
 		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
