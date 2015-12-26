@@ -1,5 +1,8 @@
 package slp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IR {
 	static String str_table = "";
 	static String dispatch_tables = "";
@@ -53,47 +56,60 @@ public class IR {
 
 	}
 
+	//creates a class dispatch vector
 	static void class_dec(icClass cls) {
 		// add dispatch list name
 		cls.dv = "_DV_" + cls.name.toUpperCase();
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
-		boolean is_first = true;
-		int flag = 0;
-		
-		if ( cls.ext!= null){
-			for (icFunction fathElem : cls.ext.instFuncs){
-				flag = 0;
-				if (!is_first) {
-					dispatch_tables += ",";
-				}
-				
-				for (int i =0; i<cls.instFuncs.size();i++){
-					String fName = cls.instFuncs.get(i).name;
-					if (fName.equals(fathElem.name)){
-						flag =1;
-						break;
-					}
-				}
-				
-				if (flag ==0){
-					is_first = false;
-					dispatch_tables += fathElem.label;
-				}
-			}
+		class_dv(cls, new ArrayList<icFunction>());
+	    if (dispatch_tables.length() > 0)
+	    { //remove last comma
+	    	dispatch_tables = dispatch_tables.substring(0, dispatch_tables.length()-1);
+	    }
+		dispatch_tables += "]\n";
+	}
+	
+	//fills a class dispatch vector. does so recursively
+	static List<String> class_dv(icClass cls, List<icFunction> usedUp)
+	{
+		List<String> usedDown= new ArrayList<String>();
+		if (cls.ext != null)
+		{
+			List<icFunction> up_copy = new ArrayList<icFunction>(usedUp);
+			up_copy.addAll(cls.instFuncs);
+			usedDown = class_dv(cls.ext, up_copy);
 		}
 		for (icFunction element : cls.instFuncs) {
 			// should be ordered by offset
-			if (!is_first) {
-				dispatch_tables += ",";
+			boolean is_filtered = false;
+			for (String func_name : usedDown) {
+				if (func_name.equals(element.name))
+				{
+					is_filtered = true;
+					break;
+				}
 			}
-			is_first = false;
-			dispatch_tables += element.label;
+			if (is_filtered)
+				continue;
+			usedDown.add(element.name);
+			boolean is_up = false;
+			for (icFunction up: usedUp)
+			{
+				if (up.name.equals(element.name))
+				{
+					is_up = true;
+					dispatch_tables += up.label + ",";					
+					break;
+				}
+			}
+			if (is_up)
+				continue;
+			dispatch_tables += element.label + ",";
 		}
-		dispatch_tables += "]\n";
+		return usedDown;
 	}
-
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
@@ -107,8 +123,9 @@ public class IR {
 	}
 
 	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
-
-		add_comment(src1 + op.toString() + src2);
+		if (ICEvaluator.run_num == 0)
+			return null;
+		add_comment(src1 + " " + op.toString() + " " + src2);
 		
 		String result = new_temp();
 		String temp1 = new_temp();
@@ -130,6 +147,8 @@ public class IR {
 	}
 
 	static String unary_LNEG_op(String src){
+		if (ICEvaluator.run_num == 0)
+			return null;
 		add_comment("!"+src);
 		String result = new_temp();
 		String temp = new_temp();
@@ -185,7 +204,7 @@ public class IR {
 		add_comment("new " + type + "()");
 		String reg = new_temp();
 		add_line("Library __allocateObject(" + len + ")," + reg);
-		add_line("MoveField _DV_" + class_dv + "," + reg + ".0");
+		add_line("MoveField " + class_dv + "," + reg + ".0");
 		return reg;
 	}
 
