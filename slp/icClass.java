@@ -24,6 +24,7 @@ public class icClass extends icObject {
 		}
 		else{
 			this.size = ext.size;
+			this.num_funcs = ext.num_funcs;
 		}
 	}
 	
@@ -38,7 +39,7 @@ public class icClass extends icObject {
 			if (!isStatic)
 			{
 				f.offset = this.num_funcs;
-				this.num_funcs ++;
+				this.num_funcs++;
 			}
 			if (ext != null)
 			{
