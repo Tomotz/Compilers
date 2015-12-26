@@ -14,7 +14,8 @@ public class IR {
 	static String get_label(String text)
 	{
 		//if (ICEvaluator.run_num != 0)
-		//return "";
+		//	return "";
+
 		++label_num;
 		return ("_" + text + "_" + Integer.toString(label_num));
 	}
@@ -96,7 +97,8 @@ public class IR {
 
 	static String arithmetic_op(String src1, String src2, String op)
 	{
-		add_comment(src1 + " " + op + " " + src2);
+
+		add_comment(src1 + op + src2);
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
 		add_line(op +" " + src2 + "," + reg);
@@ -105,7 +107,8 @@ public class IR {
 	}
 
 	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
-		add_comment(src1 + " " + op.toString() + " " + src2);
+
+		add_comment(src1 + op.toString() + src2);
 		
 		String result = new_temp();
 		String temp1 = new_temp();
@@ -122,10 +125,10 @@ public class IR {
 		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
 		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
 		add_line("Move 1,"+result);
-		add_line(end); //label _end (if jumped here then result=0) 
+		add_line(end+":"); //label _end (if jumped here then result=0) 
 		return result;
 	}
-	
+
 	static String unary_LNEG_op(String src){
 		add_comment("!"+src);
 		String result = new_temp();
@@ -136,9 +139,10 @@ public class IR {
 		add_line("Compare 0,"+temp);
 		add_line("JumpTrue "+end_label);	//jump to end if true (src==0)
 		add_line("Move 1, "+result);
-		add_line(end_label);
+		add_line(end_label+":");
 		return result;
 	}
+
 
 	static String evaluate_int(int src)
 	{

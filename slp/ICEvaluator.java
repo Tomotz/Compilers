@@ -228,6 +228,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			String end_label = IR.get_label("end");
 			if (op==Operator.LOR){
 				IR.add_comment(lhs_reg+" || ...");
+
 				IR.add_line("Move 1,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
@@ -257,7 +258,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				IR.add_line("Move 1,"+result); // if reached here: the whole expression is true
 			}
 
-			IR.add_line(end_label); //control will jump here if expression is true
+			IR.add_line(end_label+":"); //control will jump here if expression is true
 			return new VarType("boolean", result);
 		}
 		
