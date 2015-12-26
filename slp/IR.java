@@ -230,14 +230,14 @@ public class IR {
 		
 		else if ((valIndex = ir_rep.indexOf('[')) != -1){
 			field = ir_rep.substring(0,valIndex);
-			offset = ir_rep.substring(valIndex+1);
-			/*
+			offset = ir_rep.substring(valIndex+1,ir_rep.length()-1);
+			
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);
-			*/
+			
 			System.out.println("field " + field + " offset " + offset);
 			ir_rep = new_temp();
-			add_line("MoveArray " + field + "[" + offset + "]" + "," + ir_rep);
+			add_line("MoveArray " + temp + "[" + offset + "]" + "," + ir_rep);
 			tmpFlag = 1;
 		}
 		else if ((valIndex = ir_rep.indexOf('_')) != -1){
@@ -263,7 +263,7 @@ public class IR {
 		}
 		else if((varIndex = objName.indexOf('['))!=-1){
 			field = objName.substring(0,varIndex);
-			offset = objName.substring(varIndex+1);
+			offset = objName.substring(varIndex+1,objName.length()-1);
 			
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);

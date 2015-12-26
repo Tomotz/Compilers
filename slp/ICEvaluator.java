@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 
 	/**
@@ -141,13 +141,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 
 		VarType varExpr_type = stmt.varExpr.accept(this, env);
-		System.out.println("ir_val check " + varExpr_type.ir_val );
 		VarType rhs_type = stmt.rhs.accept(this, env);
-		System.out.println("ir_val check " + varExpr_type.ir_val + " " + rhs_type.ir_val );
 		validateAssign(varExpr_type, rhs_type, stmt, env);
 		
 		if (run_num ==1){
-			System.out.println("var ir " + varExpr_type.ir_val +  " rhs val " + rhs_type.ir_val );
 			IR.move(varExpr_type.ir_val, rhs_type.ir_val,env);
 		}
 		return null;
@@ -412,6 +409,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		for (String field : astField.ids.lst) {
 			if (IS_DEBUG)
 				System.out.println("field type: " + astField.type);
+			
+			if (run_num == 1) {
+				if (!(d.validateType(new VarType(astField.type)))) {
+					error("unknown type: " + astField.type, astField);
+				}
+			}
+			
 			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type));
 			o.type.ir_val = o.name;
 			//d.add(o);
@@ -499,6 +503,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			icObject father = null;
 			if (cls.extend.name != null && cls.extend.name != "") 
 			{
+				if (cls.extend.name.equals(cls.class_id)){
+					throw new RuntimeException("\nLine " + "Cycle detected: the type " + cls.class_id +
+							 "cannot extend/implement itself or one of its own member types");
+				}
+				
 				father = d.getObjByName(cls.extend.name);
 				if (!(father instanceof icClass))
 				{
@@ -807,6 +816,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			}
 			if (run_num == 1) 
 				return result;
+			
 		}
 
 		exp1 = expr.e1.accept(this, env);
@@ -830,11 +840,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
 					} else {
 						 result = ((icClass) clss).getFieldType(id, env);
-						 System.out.println("res ir_val " + result.ir_val );
 						 result.ir_val = exp1.ir_val + "." + (clss.offset +1);
 						if (IS_DEBUG)
 							System.out.println("return 2 " + result);
-						if (run_num == 1) return result;
+						if (run_num == 1) {
+							/*
+							return result;
+							*/
+							return new VarType(result.type,result.num_arrays,result.ir_val);
+						}
 					}
 				}
 				else
@@ -863,8 +877,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
-			out_type.ir_val = out_type.ir_val + "[" + exp2.ir_val;
+			out_type.ir_val = out_type.ir_val + "[" + exp2.ir_val + "]";
+			/*
 			return out_type;
+			*/
+			return new VarType(out_type.type,out_type.num_arrays,out_type.ir_val);
 		}
 		if (IS_DEBUG)
 			System.out.println("returning null");
