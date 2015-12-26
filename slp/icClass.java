@@ -57,7 +57,10 @@ public class icClass extends icObject {
 					}
 				}
 			}
-			f.label = "_" + d.lastClass.name + "_" + f.name;
+			if (f.name.equals("main"))
+				f.label = "_ic_main";
+			else
+				f.label = "_" + d.lastClass.name + "_" + f.name;
 			if (isStatic)
 			{
 				statFuncs.add(f);
