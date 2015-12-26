@@ -71,27 +71,43 @@ public class IR {
 	}
 	
 	//fills a class dispatch vector. does so recursively
-	static void class_dv(icClass cls, List<icFunction> filter)
+	static List<String> class_dv(icClass cls, List<icFunction> usedUp)
 	{
+		List<String> usedDown= new ArrayList<String>();
 		if (cls.ext != null)
 		{
-			List<icFunction> filter_copy = new ArrayList<icFunction>(filter);
-			filter_copy.addAll(cls.instFuncs);
-			class_dv(cls.ext, filter_copy);
+			List<icFunction> up_copy = new ArrayList<icFunction>(usedUp);
+			up_copy.addAll(cls.instFuncs);
+			usedDown = class_dv(cls.ext, up_copy);
 		}
 		for (icFunction element : cls.instFuncs) {
 			// should be ordered by offset
 			boolean is_filtered = false;
-			for (icFunction func : filter) {
-				if (func.name.equals(element.name))
+			for (String func_name : usedDown) {
+				if (func_name.equals(element.name))
 				{
 					is_filtered = true;
 					break;
 				}
 			}
-			if (!is_filtered)
-				dispatch_tables += element.label + ",";
+			if (is_filtered)
+				continue;
+			usedDown.add(element.name);
+			boolean is_up = false;
+			for (icFunction up: usedUp)
+			{
+				if (up.name.equals(element.name))
+				{
+					is_up = true;
+					dispatch_tables += up.label + ",";					
+					break;
+				}
+			}
+			if (is_up)
+				continue;
+			dispatch_tables += element.label + ",";
 		}
+		return usedDown;
 	}
 
 	static String arithmetic_op(String src1, String src2, String op)
@@ -185,7 +201,7 @@ public class IR {
 		add_comment("new " + type + "()");
 		String reg = new_temp();
 		add_line("Library __allocateObject(" + len + ")," + reg);
-		add_line("MoveField _DV_" + class_dv + "," + reg + ".0");
+		add_line("MoveField " + class_dv + "," + reg + ".0");
 		return reg;
 	}
 

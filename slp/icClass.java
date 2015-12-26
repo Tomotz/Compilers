@@ -13,6 +13,7 @@ public class icClass extends icObject {
 	icClass ext = null;  // the class type that the method extends (null if the class is a base class)
 	int size = 0; //number of fields in class
 	public String dv;
+	public int num_funcs = 0; //number of virtual funcs
 
 	
 	public icClass(String name, int scope, icClass ext) {
@@ -28,22 +29,33 @@ public class icClass extends icObject {
 	
 
 	void addFunc(icFunction f, Environment d, boolean isStatic){
-		if (this.hasObject(f.name, d) && ICEvaluator.run_num == 0 )
-		{ //there is already an object with this name in current scope
-			ICEvaluator.error("multiple declerations of object: " + f.name, null);
-		}
 		if (ICEvaluator.run_num == 0)
 		{
-			if (ext != null && ext.hasObject(f.name, d))
-			{ //father class already has an object with that name.
-				if (!(ext.getObject(f.name, d) instanceof icFunction))
-				{
-					ICEvaluator.error("multiple declerations of object: " + f.name, null);
-				}				
+			if (this.hasObject(f.name, d) && ICEvaluator.run_num == 0 )
+			{ //there is already an object with this name in current scope
+				ICEvaluator.error("multiple declerations of object: " + f.name, null);
 			}
-			/*
-			f.label = IR.get_label(d.lastClass.name + "_" + f.name);
-			*/
+			if (!isStatic)
+			{
+				f.offset = this.num_funcs;
+				this.num_funcs ++;
+			}
+			if (ext != null)
+			{
+				icObject overriden = ext.getObject(f.name, d);
+				if (overriden != null);
+				{ //father class already has an object with that name.
+					if (isStatic || !(overriden instanceof icFunction))
+					{
+						ICEvaluator.error("multiple declerations of object: " + f.name, null);
+					}		
+					else
+					{
+						f.offset = overriden.offset;
+						this.num_funcs--;
+					}
+				}
+			}
 			f.label = "_" + d.lastClass.name + "_" + f.name;
 			if (isStatic)
 			{
