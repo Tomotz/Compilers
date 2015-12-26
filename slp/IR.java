@@ -144,6 +144,7 @@ public class IR {
 		add_line(end+":"); //label _end (if jumped here then result=0) 
 		return result;
 	}
+
 	static String unary_LNEG_op(String src){
 		if (ICEvaluator.run_num == 0)
 			return null;
@@ -159,6 +160,7 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
+
 
 
 	static String evaluate_int(int src)

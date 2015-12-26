@@ -229,6 +229,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (op==Operator.LOR){
 				IR.add_comment(lhs_reg+" || ...");
 
+
 				IR.add_line("Move 1,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
