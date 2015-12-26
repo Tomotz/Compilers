@@ -159,7 +159,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTVarExpr at line: " + expr.line);
 
 		if (expr.name.equals("this"))
-			return new VarType(env.lastClass.name);
+			return new VarType(env.lastClass.name,"this");
 		else
 			error("Error!!! should never reach this code", expr);
 		return null;
@@ -242,7 +242,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				IR.add_line("Move 0,"+result); // if reached here: the whole expression is false
 			}else{ //op==LAND
 				IR.add_comment(lhs_reg+" && ...");
-
 				IR.add_line("Move 0,"+result); //result=1
 				IR.add_line("Move "+lhs_reg+","+temp1);
 				IR.add_line("Compare 0,"+temp1); //now compare=lhs-0
@@ -876,19 +875,22 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
 		icObject f = env.getObjByName(vc.id);
-		
+		String obj_reg;
 		// using a method inside a class directly
+		
+		
 		if (vc.expr == null || vc.expr.equals("this")) {
 			if (IS_DEBUG)
 			System.out.println("searching in class: " + env.lastClass.name );
-			
 			f = env.lastClass.getObject(vc.id, env);
+			obj_reg="this";
 		}
 		
 		else{
 			VarType obj = vc.expr.accept(this, env);
 			
 			f = ((icClass) env.getObjByName(obj.type)).getObject(vc.id, env);
+			obj_reg = obj.ir_val;
 		}
 		
 		if (IS_DEBUG)
@@ -903,7 +905,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (formal_params.size() != exprList.size())
 			error("Wrong number of arguments for the method '" + vc.id + "'", vc);
 
-		// check argument types
+		// check argument types + write IR code for arguments
+		String mem_param = "";
 		for (int i = 0; i < formal_params.size(); i++) {
 			VarType formal = formal_params.get(i);
 			VarType found = exprList.get(i).accept(this, env);
@@ -921,14 +924,33 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (!((icClass) expClass).checkIfSubType(argClass, env)) {
 					error("Wrong argument types for the method '" + vc.id + "'. expected: " + formal + ", got: "
 							+ found, vc);
+					
 				}
+			}
+			else{
+				String temp = IR.new_temp();
+				IR.add_comment("preparing arguments");
+				IR.add_line("Move "+found.ir_val+","+temp);
+				mem_param += (formal.ir_val+"="+temp);
+				if (i < formal_params.size()-1) mem_param += ",";
 			}
 
 		}
+		//completing IR code:
+		
+		int dv_offset = f.offset;
+		//String temp = IR.new_temp();
+		String res_reg = IR.new_temp();
+		//IR.add_line("Move "+obj_reg+","+temp);
+		
+		IR.add_line("VirtualCall "+obj_reg+"."+dv_offset+"(" + mem_param + ")"+","+res_reg);
+		
+		
 		if (IS_DEBUG)
 			System.out.println("virtual call check ended");
 		
-		return ((icFunction) f).retType;
+		return new VarType(((icFunction) f).retType.toString(), res_reg);
+		//return ((icFunction) f).retType;
 	}
 
 	@Override

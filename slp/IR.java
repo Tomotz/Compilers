@@ -123,9 +123,8 @@ public class IR {
 	}
 
 	static String compare_op(String src1, String src2, Operator op){ //returns 1 for true, 0 for false
-		if (ICEvaluator.run_num == 0)
-			return null;
-		add_comment(src1 + " " + op.toString() + " " + src2);
+
+		add_comment(src1 + op.toString() + src2);
 		
 		String result = new_temp();
 		String temp1 = new_temp();
@@ -161,7 +160,6 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
-
 
 	static String evaluate_int(int src)
 	{
