@@ -653,12 +653,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		ASTExpr expr = stm.expr;
 
 		int nestFlag;
-		whlStrt = IR.get_label("startWhile:");;
-		whlEnd = IR.get_label("endWhile:");
+		whlStrt = IR.get_label("startWhile");;
+		whlEnd = IR.get_label("endWhile");
 		IR.whLblEnd = whlEnd;
 		IR.whLblStrt = whlStrt;
 		
-		IR.add_line(whlStrt);
+		IR.add_line(whlStrt+":");
 		
 		VarType exprType = expr.accept(this, env);
 		if (!exprType.type.equals("boolean") || exprType.num_arrays != 0)
@@ -682,7 +682,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		IR.add_line("Jump " + whlStrt );
-		IR.add_line(whlEnd);
+		IR.add_line(whlEnd+":");
 		env.destroyScope(ASTNode.scope);
 
 		--ASTNode.scope;
@@ -744,12 +744,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 		
 		IR.add_line("Compare 0," + cond.ir_val);
-		ifTrueLabel = IR.get_label("_trueIfCond:");
+		ifTrueLabel = IR.get_label("_trueIfCond");
 		
 		IR.add_line("jumpFalse" + ifTrueLabel);
-		ifFalseLabel = IR.get_label("_falseIfCond:");
-		IR.add_line(ifFalseLabel);
-		IR.add_line(ifTrueLabel);
+		ifFalseLabel = IR.get_label("_falseIfCond");
+		IR.add_line(ifFalseLabel+":");
+		IR.add_line(ifTrueLabel+":");
 		
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
@@ -758,11 +758,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		--ASTNode.scope;
 		
 		if (stmt.elsestmt != null){
-			IR.add_line(ifFalseLabel);
+			IR.add_line(ifFalseLabel+":");
 			stmt.elsestmt.accept(this,env);
 		}
 		else{
-			IR.add_line(ifFalseLabel);
+			IR.add_line(ifFalseLabel+":");
 		}
 		return null;
 	}
