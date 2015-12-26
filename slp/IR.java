@@ -131,9 +131,14 @@ public class IR {
 		String end = get_label("end");
 		
 		add_line("Move 0, " + result);
-		add_line("Move "+src1+","+ temp1);
-		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
 		
+		add_line("Move "+src1+","+ temp1);
+		
+		/*
+		Environment env = new Environment();
+		move(src1,temp1,env);
+		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
+		*/
 		if (op==Operator.GT) add_line("JumpLTE "+ end);
 		if (op==Operator.GTE) add_line("JumpLT "+ end);
 		if (op==Operator.LT) add_line("JumpGTE "+ end);
@@ -214,7 +219,9 @@ public class IR {
 	// should probably use only the second case (new object should be allocated in astNew...)
 	static String move(String objName, String ir_rep, Environment env) {
 		add_comment("Assigning object " + objName);
+		/*
 		System.out.println("val " + ir_rep + " var " + objName);
+		*/
 		int varIndex = 0;
 		int valIndex = 0;
 		int tmpFlag = 0; 

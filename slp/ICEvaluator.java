@@ -646,15 +646,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		
 		String whlStrt;
 		String whlEnd;
-		
+		String varLabel;
 		if (IS_DEBUG)
 			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
 		
 		ASTExpr expr = stm.expr;
 
 		int nestFlag;
-		whlStrt = IR.get_label("startWhile:");;
-		whlEnd = IR.get_label("endWhile:");
+		whlStrt = IR.get_label("startWhile");
+		whlEnd = IR.get_label("endWhile");
 		IR.whLblEnd = whlEnd;
 		IR.whLblStrt = whlStrt;
 		
@@ -663,8 +663,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		VarType exprType = expr.accept(this, env);
 		if (!exprType.type.equals("boolean") || exprType.num_arrays != 0)
 			error("Expected boolean expression after 'while'", expr);
-		
-		IR.add_line("Compare 0," + exprType.ir_val);
+		varLabel = IR.new_temp();
+		IR.add_line("Move " + exprType.ir_val + "," + varLabel);
+		IR.add_line("Compare 0," + varLabel);
 		IR.add_line("JumpLE " + whlEnd );
 		
 		++ASTNode.scope;
