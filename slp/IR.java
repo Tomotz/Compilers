@@ -190,10 +190,89 @@ public class IR {
 	}
 
 	// should probably use only the second case (new object should be allocated in astNew...)
-	static String move(String objName, String ir_rep) {
-
+	static String move(String objName, String ir_rep, Environment env) {
 		add_comment("Assigning object " + objName);
-		add_line("Move " + ir_rep + "," + objName);
+		int varIndex = 0;
+		int valIndex = 0;
+		int tmpFlag = 0; 
+		String valName = null;
+		String varName = null;
+		String field = null;
+		String offset = null;
+		String temp = null;
+		
+		// value is a field 
+		if ((valIndex= ir_rep.indexOf('.')) != -1){
+			field = ir_rep.substring(0,valIndex);
+			offset = ir_rep.substring(valIndex+1);
+			temp = new_temp();
+			add_line("Move " + field + "," + temp);
+			ir_rep = new_temp();
+			add_line("MoveField " + temp + "." + offset + "," + ir_rep);
+			tmpFlag = 1;
+		}
+		
+		else if ((valIndex = ir_rep.indexOf('[')) != -1){
+			field = ir_rep.substring(0,valIndex);
+			offset = ir_rep.substring(valIndex+1);
+			/*
+			temp = new_temp();
+			add_line("Move " + field + "," + temp);
+			*/
+			System.out.println("field " + field + " offset " + offset);
+			ir_rep = new_temp();
+			add_line("MoveArray " + field + "[" + offset + "]" + "," + ir_rep);
+			tmpFlag = 1;
+		}
+		else if ((valIndex = ir_rep.indexOf('_')) != -1){
+			valName = ir_rep.substring(0,valIndex);
+		}
+		
+		
+		if ((varIndex = objName.indexOf('.')) != -1){
+			field = objName.substring(0,varIndex);
+			offset = objName.substring(varIndex+1);
+			
+			temp = new_temp();
+			add_line("Move " + field + "," + temp);
+			field = temp;
+			
+			if (tmpFlag != 1){
+				temp = new_temp();
+				add_line("Move " + ir_rep + "," + temp);
+				ir_rep = temp;
+			}
+			add_line("MoveField " + ir_rep + "," + field + "." + offset);
+			return null;
+		}
+		else if((varIndex = objName.indexOf('['))!=-1){
+			field = objName.substring(0,varIndex);
+			offset = objName.substring(varIndex+1);
+			
+			temp = new_temp();
+			add_line("Move " + field + "," + temp);
+			field = temp;
+			
+			if (tmpFlag != 1){
+				temp = new_temp();
+				add_line("Move " + ir_rep + "," + temp);
+				ir_rep = temp;
+			}
+			add_line("MoveArray " + ir_rep + "," + field + "[" + offset + "]");
+			return null;
+		}
+		else if ((varIndex = objName.indexOf('_')) != -1){
+			varName = objName.substring(0,varIndex);
+			}
+		
+		if ((env.getObjByName(varName) != null) && (env.getObjByName(valName) != null)){
+				temp = new_temp();
+				add_line("Move " + ir_rep + "," + temp);
+				add_line("Move " + temp + "," + objName);
+			}
+		else{
+			add_line("Move " + ir_rep + "," + objName);
+		}
 
 		return null;
 
