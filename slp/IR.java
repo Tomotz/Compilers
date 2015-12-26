@@ -211,6 +211,7 @@ public class IR {
 	// should probably use only the second case (new object should be allocated in astNew...)
 	static String move(String objName, String ir_rep, Environment env) {
 		add_comment("Assigning object " + objName);
+		System.out.println("val " + ir_rep + " var " + objName);
 		int varIndex = 0;
 		int valIndex = 0;
 		int tmpFlag = 0; 
@@ -224,11 +225,26 @@ public class IR {
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
-			temp = new_temp();
-			add_line("Move " + field + "," + temp);
-			ir_rep = new_temp();
-			add_line("MoveField " + temp + "." + offset + "," + ir_rep);
-			tmpFlag = 1;
+			
+			if ((valIndex = offset.indexOf('[')) != -1){
+				String offsetIn = offset.substring(0,valIndex);
+				String arrayIn = offset.substring(valIndex+1,offset.length()-1);
+				temp = new_temp();
+				add_line("Move " + field + "," + temp);
+				String temp2 = new_temp();
+				add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
+				temp = new_temp();
+				add_line("Move " + arrayIn + "," + temp);
+				ir_rep = new_temp();
+				add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
+			}
+			else{
+				temp = new_temp();
+				add_line("Move " + field + "," + temp);
+				ir_rep = new_temp();
+				add_line("MoveField " + temp + "." + offset + "," + ir_rep);
+				tmpFlag = 1;
+			}
 		}
 		
 		else if ((valIndex = ir_rep.indexOf('[')) != -1){
@@ -238,7 +254,6 @@ public class IR {
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);
 			
-			System.out.println("field " + field + " offset " + offset);
 			ir_rep = new_temp();
 			add_line("MoveArray " + temp + "[" + offset + "]" + "," + ir_rep);
 			tmpFlag = 1;
