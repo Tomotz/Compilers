@@ -297,7 +297,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (op == Operator.MINUS || op == Operator.DIV || op == Operator.MULTIPLY || op == Operator.MOD)
 		{
 			if (!(lhsType.equals("int") && rhsType.equals("int"))){
-				if (run_num == 1) error("The binary operator '" + op
+				if (run_num == 1) 
+					error("The binary operator '" + op
 						+ "' accepts only Integer types as operands. got lhs: " 
 						+ lhsType + ". rhs: " + rhsType, expr);
 			}
@@ -305,7 +306,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				if (op == Operator.MINUS)
 					IRop = "Sub";
 				else if (op == Operator.DIV)
+				{
+					IR.add_line("__checkZero(" + rhsType_type.ir_val + ")");
 					IRop = "Div";
+				}
 				else if (op == Operator.MULTIPLY)
 					IRop = "Mul";
 				else if (op == Operator.MOD)
@@ -809,7 +813,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			result = ((icVariable)location_var).type;
 			if (is_class_field)
 			{	
-				
 				result.ir_val = "this." +  Integer.toString(((icVariable)location_var).offset+1);
 			}
 			
@@ -822,7 +825,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 
 		exp1 = expr.e1.accept(this, env);
-		if (expr.type == 1) {
+		if (expr.type == 1) { //expr.ID
 			if (IS_DEBUG)
 				System.out.println("entered loop");
 			
@@ -841,6 +844,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					if (((icClass) clss).hasObject(id, env) == false) {
 						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
 					} else {
+						IR.add_line("__checkNullRef(" + exp1.ir_val + ")");
 						 result = ((icClass) clss).getFieldType(id, env);
 						 result.ir_val = exp1.ir_val + "." + (clss.offset +1);
 						if (IS_DEBUG)
@@ -867,7 +871,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		}
 		// e1 is an array
-		if (expr.type == 2) {
+		if (expr.type == 2) { //expr[expr]
 			exp2 = expr.e2.accept(this, env);
 
 			if (exp1.num_arrays == 0) { // the variable is not an array
@@ -882,6 +886,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
+			IR.add_line("__checkNullRef(" + out_type.ir_val + ")");
+			IR.add_line("__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");
+			
+			
 			out_type.ir_val = out_type.ir_val + "[" + exp2.ir_val + "]";
 			/*
 			return out_type;

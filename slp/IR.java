@@ -114,7 +114,7 @@ public class IR {
 	static String arithmetic_op(String src1, String src2, String op)
 	{
 
-		add_comment(src1 + op + src2);
+		add_comment(src1 + " " + op + " " + src2);
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
 		add_line(op +" " + src2 + "," + reg);
@@ -307,7 +307,7 @@ public class IR {
 		
 		}
 		else if(irLbFlg ==1){
-			fName = "Library __ ";
+			fName = "Library __";
 		}
 		add_line(fName + funcName +"(" +arguments);
 		return funcName;
