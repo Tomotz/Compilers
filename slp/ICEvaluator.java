@@ -329,7 +329,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						lhsType + ". rhs: " + rhsType, expr);
 			}
 			else{
-				reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+				reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op,env);
 				return new VarType("boolean",reg);
 			}
 		}
@@ -338,7 +338,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				return new VarType("boolean","");
 			if (run_num == 1) {
 				if (lhsType.equals(rhsType) || lhsType.equals("null") || rhsType.equals("null")){
-					reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+					reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op,env);
 					return new VarType("boolean",reg);
 				}
 				// if reached here - lhsType != rhsType
@@ -356,7 +356,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				icClass parent = ((icClass) lhsClass).ext;
 				while (parent != null) {
 					if (rhsType.equals(parent.name)){
-						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op,env);
 						return new VarType("boolean",reg);
 					}
 					else
@@ -372,7 +372,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 				while (parent != null) {
 					if (lhsType.equals(parent)){
-						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op);
+						reg = IR.compare_op(lhsType_type.ir_val, rhsType_type.ir_val, op,env);
 						return new VarType("boolean",reg);
 					}
 					else
