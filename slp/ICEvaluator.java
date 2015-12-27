@@ -147,9 +147,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		validateAssign(varExpr_type, rhs_type, stmt, env);
 		
 		if (run_num ==1){
-			if (!varExpr_type.type.equals("string")){
-				IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
+			/*
+			if (!varExpr_type.type.equals("string")){	
 			}
+			*/
+			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
 		}
 		return null;
 	}
@@ -641,18 +643,23 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			} else if (!(type_classo instanceof icClass)){
 				error(type + " is not a class name", stmt);
 			}
+			/*
 			if (!type.type.equals("string")){
-				type.ir_val = id + "_var_" + Integer.toString(vari);
+				
 				}
+				*/
+			type.ir_val = id + "_var_" + Integer.toString(vari);
 			++vari;
 			
 			// case of assignment
 			if (stmt.rhs != null) {
 				rhs = stmt.rhs.accept(this, env);
 				validateAssign(type, rhs, stmt, env);
+				/*
 				if (!type.type.equals("string")){
-					IR.move(type.ir_val, rhs.ir_val,1,env);
 				}
+				*/
+				IR.move(type.ir_val, rhs.ir_val,1,env);
 			}
 		}
 		stmtFlag = 0;
