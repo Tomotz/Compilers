@@ -745,16 +745,17 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			error("Type mismatch: cannot convert from " + cond + " to " +
 						"boolean ", stmt);
 		}
-		
-		IR.add_line("Compare 0," + cond.ir_val);
+		String temp = IR.new_temp();
+		IR.add_line("Move "+cond.ir_val+","+temp);
+		IR.add_line("Compare 0," + temp);
 		endIfLabel = IR.get_label("_endIf");
 
 		if (stmt.elsestmt != null){
 			ifFalseLabel = IR.get_label("_falseIfCond");
-			IR.add_line("JumpFalse " + ifFalseLabel);
+			IR.add_line("JumpTrue " + ifFalseLabel);
 		}
 		else {
-			IR.add_line("JumpFalse " + endIfLabel);
+			IR.add_line("JumpTrue " + endIfLabel);
 		}
 		++ASTNode.scope;
 		stmt.stmt.accept(this, env);
@@ -767,9 +768,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			IR.add_line(ifFalseLabel+":");
 			stmt.elsestmt.accept(this,env);
 		}
-		else{
-			IR.add_line(endIfLabel+":");
-		}
+		IR.add_line(endIfLabel+":");
+
 		return null;
 	}
 
