@@ -221,9 +221,13 @@ public class IR {
 
 	static String new_arr(String len, String type) {
 		add_comment("new " + type + "[" + len + "]");
-		add_line("#__checkSize("+len+")");//TODO - remove comment
+		String reg1 = new_temp();
+
+		add_line("Move " + len + "," + reg1);
+		add_line("Mul 4," + reg1);
+		add_line("#__checkSize("+reg1+")");//TODO - remove comment
 		String reg = new_temp();
-		add_line("Library __allocateArray(" + len + ")," + reg);
+		add_line("Library __allocateArray(" + reg1 + ")," + reg);
 		return reg;
 	}
 
