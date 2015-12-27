@@ -948,7 +948,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		// check argument types + write IR code for arguments
 		String mem_param = "";
 		for (int i = 0; i < formal_params.size(); i++) {
-			VarType formal = formal_params.get(i);
+			VarType formal = formal_params.get(formal_params.size()-i-1);
 			VarType found = exprList.get(i).accept(this, env);
 			if (formal.num_arrays != found.num_arrays) {
 				error("Wrong argument types for the method '" + vc.id + "'. expected: " + formal + ", got: " + found,
