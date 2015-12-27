@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
 	static int stmtFlag = 0;
 
@@ -843,12 +843,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG){
 				System.out.println("return 1: " + result);
 			}
-			if (run_num == 0) 
-				if (stmtFlag == 1){
+			if (run_num == 1){ 
+				if (stmtFlag == 0){
 					result.ir_val = IR.move(null,result.ir_val,0,env);
 				}
-			
 				return result;
+			}
 		}
 
 		exp1 = expr.e1.accept(this, env);
