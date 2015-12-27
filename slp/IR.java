@@ -274,7 +274,6 @@ public class IR {
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
-			System.out.println("field " + field + " offset " + offset);
 			if ((valIndex = offset.indexOf('[')) != -1){
 				
 				offsetIn = offset.substring(0,valIndex);
@@ -338,7 +337,6 @@ public class IR {
 		if ((varIndex = objName.indexOf('.')) != -1){
 			field = objName.substring(0,varIndex);
 			offset = objName.substring(varIndex+1);
-			System.out.println(" var field " + field + " offset " + offset);
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);
 			field = temp;
