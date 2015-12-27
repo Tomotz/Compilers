@@ -258,6 +258,13 @@ public class IR {
 		String offsetIn = null;
 		String arrayIn = null;
 		
+		if (flag == 2){
+			temp = new_temp();
+			add_line("Move " + ir_rep + "," + temp);
+			add_line("Move " + temp + "," + objName);
+			return null;
+		}
+		
 		// value is a field 
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
 			field = ir_rep.substring(0,valIndex);
