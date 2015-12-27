@@ -123,11 +123,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
-		stmtFlag =1;
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
-		stmtFlag =0;
 		return null;
 	}
 
