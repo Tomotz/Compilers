@@ -860,9 +860,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("return 1: " + result);
 			}
 			if (run_num == 1){ 
+				/*
 				if (stmtFlag == 0){
-					result.ir_val = IR.move(null,result.ir_val,0,env);
 				}
+				*/
+				result.ir_val = IR.move(null,result.ir_val,0,env);
 				return result;
 			}
 		}

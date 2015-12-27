@@ -269,19 +269,31 @@ public class IR {
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
-			
+			System.out.println("field " + field + " offset " + offset);
 			if ((valIndex = offset.indexOf('[')) != -1){
-				 offsetIn = offset.substring(0,valIndex);
+				
+				offsetIn = offset.substring(0,valIndex);
 				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
 				
-				temp = new_temp();
-				add_line("Move " + field + "," + temp);
-				String temp2 = new_temp();
-				add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
-				temp = new_temp();
-				add_line("Move " + arrayIn + "," + temp);
-				ir_rep = new_temp();
-				add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
+				 if ((valIndex= arrayIn.indexOf('.')) != -1){
+					
+					 field = ir_rep.substring(0,valIndex);
+					offset = ir_rep.substring(valIndex+1);
+					temp = new_temp();
+					add_line("Move " + field + "," + temp);
+					ir_rep = new_temp();
+					add_line("MoveField " + temp + "." + offset + "," + ir_rep);
+				}
+				else{
+					temp = new_temp();
+					add_line("Move " + field + "," + temp);
+					String temp2 = new_temp();
+					add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
+					temp = new_temp();
+					add_line("Move " + arrayIn + "," + temp);
+					ir_rep = new_temp();
+					add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
+				}
 			}
 			else{
 				temp = new_temp();
@@ -321,7 +333,7 @@ public class IR {
 		if ((varIndex = objName.indexOf('.')) != -1){
 			field = objName.substring(0,varIndex);
 			offset = objName.substring(varIndex+1);
-			
+			System.out.println(" var field " + field + " offset " + offset);
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);
 			field = temp;
@@ -335,12 +347,13 @@ public class IR {
 			if ((valIndex = offset.indexOf('[')) != -1){
 				 offsetIn = offset.substring(0,valIndex);
 				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
-				
-				String newField = new_temp();
-				add_line("MoveField " + field + "." + offsetIn + "," + newField);
-				offset = new_temp();
-				add_line("Move " + arrayIn + "," + offset);
-				add_line("MoveArray " + ir_rep + "," + newField + "[" + offset + "]");
+				  
+					String newField = new_temp();
+					add_line("MoveField " + field + "." + offsetIn + "," + newField);
+					offset = new_temp();
+					add_line("Move " + arrayIn + "," + offset);
+					add_line("MoveArray " + ir_rep + "," + newField + "[" + offset + "]");
+				 
 			}
 			
 			else{
