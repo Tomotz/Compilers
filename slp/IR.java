@@ -63,8 +63,9 @@ public class IR {
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
+		int prev_dv_len = dispatch_tables.length();
 		class_dv(cls, new ArrayList<icFunction>());
-	    if (dispatch_tables.length() > 0)
+	    if (dispatch_tables.length() > prev_dv_len)
 	    { //remove last comma
 	    	dispatch_tables = dispatch_tables.substring(0, dispatch_tables.length()-1);
 	    }
