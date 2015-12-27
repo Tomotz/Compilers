@@ -140,13 +140,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTAssignStmt stmt, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
-
+		stmtFlag = 1;
 		VarType varExpr_type = stmt.varExpr.accept(this, env);
+		stmtFlag = 0;
 		VarType rhs_type = stmt.rhs.accept(this, env);
 		validateAssign(varExpr_type, rhs_type, stmt, env);
 		
 		if (run_num ==1){
-			IR.move(varExpr_type.ir_val, rhs_type.ir_val,env);
+			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
 		}
 		return null;
 	}
@@ -620,6 +621,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTAssignFormals at line: " + stmt.line);
 		VarType type = stmt.form.type;
 		String id = stmt.form.id;
+		stmtFlag = 1;
 		if (IS_DEBUG)
 			System.out.println("type: " + type + " id: " + id);
 
@@ -646,10 +648,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				rhs = stmt.rhs.accept(this, env);
 				validateAssign(type, rhs, stmt, env);
 
-				IR.move(type.ir_val, rhs.ir_val,env);
+				IR.move(type.ir_val, rhs.ir_val,1,env);
 			}
 		}
-
+		stmtFlag = 0;
 		return type;
 	}
 
@@ -838,9 +840,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG){
 				System.out.println("return 1: " + result);
 			}
-			if (run_num == 1) 
-				return result;
+			if (run_num == 0) 
+				if (stmtFlag == 1){
+					result.ir_val = IR.move(null,result.ir_val,0,env);
+				}
 			
+				return result;
 		}
 
 		exp1 = expr.e1.accept(this, env);
@@ -872,6 +877,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 							/*
 							return result;
 							*/
+							if (stmtFlag == 0){
+								result.ir_val = IR.move(null,result.ir_val,0,env);
+							}
 							return new VarType(result.type,result.num_arrays,result.ir_val);
 						}
 					}
@@ -913,6 +921,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			/*
 			return out_type;
 			*/
+			if (stmtFlag == 0){
+				out_type.ir_val = IR.move(null,out_type.ir_val,0,env);
+			}
 			return new VarType(out_type.type,out_type.num_arrays,out_type.ir_val);
 		}
 		if (IS_DEBUG)

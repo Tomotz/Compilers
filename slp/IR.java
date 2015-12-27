@@ -151,10 +151,12 @@ public class IR {
 		
 		add_line("Move 0, " + result);
 
-		/*
+		
 		add_line("Move "+src1+","+ temp1);
-		*/
+		
+		/*
 		move(temp1, src1,env);
+		*/
 		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
 		
 		if (op==Operator.GT) add_line("JumpLE "+ end);
@@ -233,9 +235,15 @@ public class IR {
 		return reg;
 	}
 
+	
 	// should probably use only the second case (new object should be allocated in astNew...)
-	static String move(String objName, String ir_rep, Environment env) {
-		add_comment("Assigning object " + ir_rep + " to "  + objName);
+	static String move(String objName, String ir_rep,int flag,  Environment env) {
+		if (flag ==1){
+			add_comment("Assigning object " + ir_rep + " to "  + objName);
+		}
+		else{
+			add_comment("load object " + ir_rep);
+		}
 		/*
 		System.out.println("val " + ir_rep + " var " + objName);
 		*/
@@ -290,6 +298,9 @@ public class IR {
 			valName = ir_rep.substring(0,valIndex);
 		}
 		
+		if (flag ==0){
+			return ir_rep;
+		}
 		
 		if ((varIndex = objName.indexOf('.')) != -1){
 			field = objName.substring(0,varIndex);
