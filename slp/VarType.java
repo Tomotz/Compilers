@@ -12,21 +12,6 @@ public class VarType {
 		setArray(Type);
 	}
 
-	//TODO - delete this constructor!!!! no one should use it!
-	public VarType(String Type)
-	{
-		this.type = Type.replace("[]", "");
-		this.ir_val = null;
-		setArray(Type);
-	}
-	//TODO - delete this constructor!!!! no one should use it!
-	public VarType(String baseType, int num_arrays)
-	{
-		this.ir_val = null;
-		this.type = baseType;
-		this.num_arrays = num_arrays;
-	}
-
 	public VarType(String baseType, int num_arrays, String ir_val)
 	{
 		this.ir_val = ir_val;

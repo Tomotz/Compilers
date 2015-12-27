@@ -191,20 +191,30 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				return new VarType("int",result_reg);
 			}
 			else
-				if (run_num == 1) error ("Expected an Integer after '-' ", expr);
+			{
+				if (run_num == 1) 
+					error ("Expected an Integer after '-' ", expr);
+			}
 		}
 		if (op == Operator.LNEG) {
 			if (rhsType.equals("boolean")){
 				result_reg = IR.unary_LNEG_op(rhsType_type.ir_val);
-				return new VarType("boolean");
+				return new VarType("boolean", result_reg);
 			}
 			else
-				if (run_num == 1) error("Expected a Boolean expression after '!' ", expr);
-		} else
-			if (run_num == 1) error("Encountered unexpected operator " + op, expr);
+			{
+				if (run_num == 1)
+					error("Expected a Boolean expression after '!' ", expr);
+			}
+		} 
+		else
+		{
+			if (run_num == 1)
+				error("Encountered unexpected operator " + op, expr);
+		}
 		// Integer value = expr.operand.accept(this, env);
 		// new Integer(- value.intValue());
-		return new VarType("int");
+		return null;
 	}
 
 	public VarType visit(ASTBinaryOpExpr expr, Environment env) {
@@ -418,13 +428,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("field type: " + astField.type);
 			
 			if (run_num == 1) {
-				if (!(d.validateType(new VarType(astField.type)))) {
+				if (!(d.validateType(new VarType(astField.type, null)))) {
 					error("unknown type: " + astField.type, astField);
 				}
 			}
 			
-			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type));
-			o.type.ir_val = o.name;
+			icVariable o = new icVariable(field, ASTNode.scope, new VarType(astField.type, field));
 			//d.add(o);
 			
 			d.lastClass.addVar(o, d);
@@ -470,7 +479,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting method: " + meth.id + " at line: " + meth.line + " scope: " + ASTNode.scope);
 		vari = 0;
-		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type), meth.isStatic);
+		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type, null), meth.isStatic);
 		d.lastFunc = func;
 		d.lastClass.addFunc(func, d, meth.isStatic);
 		//d.add(func);
@@ -566,7 +575,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			error("bad indexer type. expected int, got: " + index, expr);
 		String ir_rep = "";
 		if (run_num == 1) {
-			if (!(d.validateType(new VarType(expr.type)))) {
+			if (!(d.validateType(new VarType(expr.type, null)))) {
 				error("unknown type: " + expr.type, expr);
 			}
 			ir_rep = IR.new_arr(index.ir_val, expr.type);
@@ -580,7 +589,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting new object at line: " + expr.line);
 		String ir_rep = "";
 		if (run_num == 1) {
-			d.validateType(new VarType(expr.type));
+			d.validateType(new VarType(expr.type, null));
 			icClass type_class = (icClass)d.getObjByName(expr.type);
 			ir_rep = IR.new_obj(Integer.toString((type_class.size + 1)*4), expr.type, type_class.dv);
 		}
@@ -718,7 +727,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTRetExp at line: " + expr.line);
 		VarType rExpr;
 		if (expr.exp == null){
-			 rExpr = new VarType("null");
+			 rExpr = new VarType("null", "0");
 		}
 		else{
 			 rExpr = expr.exp.accept(this, env);
@@ -910,7 +919,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	public VarType visit(ASTVirtualCall vc, Environment env) {
 		if (run_num != 1)
-			return new VarType("null");
+			return null;
 		
 		if (IS_DEBUG)
 			System.out.println("accepting ASTVirtualCall at line: " + vc.line);
