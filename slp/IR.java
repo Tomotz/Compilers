@@ -63,8 +63,9 @@ public class IR {
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
+		int prev_dv_len = dispatch_tables.length();
 		class_dv(cls, new ArrayList<icFunction>());
-	    if (dispatch_tables.length() > 0)
+	    if (dispatch_tables.length() > prev_dv_len)
 	    { //remove last comma
 	    	dispatch_tables = dispatch_tables.substring(0, dispatch_tables.length()-1);
 	    }
@@ -128,7 +129,7 @@ public class IR {
 		
 		String result = new_temp();
 		String temp1 = new_temp();
-		String end = get_label("end");
+		String end = get_label("endComp");
 		
 		add_line("Move 0, " + result);
 
@@ -138,10 +139,10 @@ public class IR {
 		move(temp1, src1,env);
 		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
 		
-		if (op==Operator.GT) add_line("JumpLTE "+ end);
-		if (op==Operator.GTE) add_line("JumpLT "+ end);
-		if (op==Operator.LT) add_line("JumpGTE "+ end);
-		if (op==Operator.LTE) add_line("JumpLE "+ end);
+		if (op==Operator.GT) add_line("JumpLE "+ end);
+		if (op==Operator.GTE) add_line("JumpL "+ end);
+		if (op==Operator.LT) add_line("JumpGE "+ end);
+		if (op==Operator.LTE) add_line("JumpG "+ end);
 		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
 		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
 		add_line("Move 1,"+result);
@@ -155,7 +156,7 @@ public class IR {
 		add_comment("!"+src);
 		String result = new_temp();
 		String temp = new_temp();
-		String end_label = get_label("end");
+		String end_label = get_label("endLneg");
 		add_line("Move 0,"+result);
 		add_line("Move "+src+","+temp);
 		add_line("Compare 0,"+temp);
@@ -164,8 +165,6 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
-
-
 
 	static String evaluate_int(int src)
 	{
@@ -183,9 +182,11 @@ public class IR {
 	static String dot_len(String src) {
 		add_comment(src + ".length");
 		add_line("#__checkNullRef("+src+")");//TODO - remove comment
-		String reg = new_temp();
-		add_line("ArrayLength " + src + "," + reg);
-		return reg;
+		String reg1 = new_temp();
+		add_line("Move " + src + "," + reg1);
+		String reg2 = new_temp();
+		add_line("ArrayLength " + reg1 + "," + reg2);
+		return reg2;
 	}
 
 	public static void put_label_comment(String cls, String func) {
