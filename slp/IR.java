@@ -1,5 +1,7 @@
 package slp;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,22 @@ public class IR {
 	static String whLblStrt;   // labels for the use of break and continue in a while loop
 	static String whLblEnd;
 
+	static void add_file_comment(int line_num)
+	{
+		if (ICEvaluator.run_num != 1)
+			return;
+		try {
+		Main.txtFile2.seek(0);
+		for(int i = 0; i < line_num-1; ++i)
+			Main.txtFile2.readLine();
+		String content = Main.txtFile2.readLine();
+		add_comment("line " +Integer.toString(line_num) + ": " +content);
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+	}
 
 	static String get_label(String text)
 	{
@@ -190,7 +208,7 @@ public class IR {
 	}
 
 	public static void put_label_comment(String cls, String func) {
-		add_line("");
+		//add_line("");
 		add_line("########## " + cls + "." + func + " ##########");
 	}
 	

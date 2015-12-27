@@ -9,6 +9,7 @@ import java_cup.runtime.*;
  */
 public class Main {
 	private static boolean printtokens = false;
+	public static RandomAccessFile txtFile2;
 	
 	/** Reads an SLP and pretty-prints it.
 	 * 
@@ -47,7 +48,8 @@ public class Main {
 			//Pretty-print the program to System.out
 			PrettyPrinter printer = new PrettyPrinter(root);
 			printer.print();
-			
+
+			txtFile2 = new RandomAccessFile(args[0], "rw");
 			// Interpret the program
 			
 			ICEvaluator evaluator = new ICEvaluator(root);

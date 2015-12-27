@@ -124,6 +124,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
 		for (ASTNode st : stmts.statements) {
+			IR.add_file_comment(st.line);
 			st.accept(this, env);
 		}
 		return null;
@@ -419,9 +420,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	@Override
 	public VarType visit(ASTField astField, Environment d) {
 		if (IS_DEBUG)
-
 			System.out.println("accepting fields: " + astField.ids.lst + " at line: " + astField.line);
-
+		
 		for (String field : astField.ids.lst) {
 			if (IS_DEBUG)
 				System.out.println("field type: " + astField.type);
@@ -477,12 +477,16 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTMethod meth, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting method: " + meth.id + " at line: " + meth.line + " scope: " + ASTNode.scope);
+
 		vari = 0;
 		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type, null), meth.isStatic);
 		d.lastFunc = func;
+		IR.add_line("");
+		IR.add_file_comment(meth.line);
 		d.lastClass.addFunc(func, d, meth.isStatic);
 		//d.add(func);
-
+		
+		
 		++ASTNode.scope;
 		int i=0;
 		for (Formal formal : meth.formals.lst) {
@@ -496,6 +500,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		}
 
 		for (ASTStmt s : meth.stmts.statements) {
+			IR.add_file_comment(s.line);
 			s.accept(this, d);
 		}
 		
