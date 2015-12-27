@@ -297,7 +297,14 @@ public class IR {
 			tmpFlag = 1;
 		}
 		else if ((valIndex = ir_rep.indexOf('_')) != -1){
-			valName = ir_rep.substring(0,valIndex);
+			if (flag == 0){
+				temp = new_temp();
+				add_line("Move " + ir_rep + "," + temp);
+				ir_rep = temp;
+			}
+			else{
+				valName = ir_rep.substring(0,valIndex);
+			}
 		}
 		
 		if (flag ==0){
