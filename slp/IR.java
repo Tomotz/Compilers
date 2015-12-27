@@ -166,8 +166,6 @@ public class IR {
 		return result;
 	}
 
-
-
 	static String evaluate_int(int src)
 	{
 		return Integer.toString(src);
