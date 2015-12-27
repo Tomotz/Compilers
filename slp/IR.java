@@ -255,6 +255,8 @@ public class IR {
 		String field = null;
 		String offset = null;
 		String temp = null;
+		String offsetIn = null;
+		String arrayIn = null;
 		
 		// value is a field 
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
@@ -262,8 +264,8 @@ public class IR {
 			offset = ir_rep.substring(valIndex+1);
 			
 			if ((valIndex = offset.indexOf('[')) != -1){
-				String offsetIn = offset.substring(0,valIndex);
-				String arrayIn = offset.substring(valIndex+1,offset.length()-1);
+				 offsetIn = offset.substring(0,valIndex);
+				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
 				
 				temp = new_temp();
 				add_line("Move " + field + "," + temp);
@@ -315,7 +317,21 @@ public class IR {
 				add_line("Move " + ir_rep + "," + temp);
 				ir_rep = temp;
 			}
-			add_line("MoveField " + ir_rep + "," + field + "." + offset);
+			
+			if ((valIndex = offset.indexOf('[')) != -1){
+				 offsetIn = offset.substring(0,valIndex);
+				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
+				
+				String newField = new_temp();
+				add_line("MoveField " + field + "." + offsetIn + "," + newField);
+				offset = new_temp();
+				add_line("Move " + arrayIn + "," + offset);
+				add_line("MoveArray " + ir_rep + "," + newField + "[" + offset + "]");
+			}
+			
+			else{
+				add_line("MoveField " + ir_rep + "," + field + "." + offset);
+			}
 			return null;
 		}
 		else if((varIndex = objName.indexOf('['))!=-1){

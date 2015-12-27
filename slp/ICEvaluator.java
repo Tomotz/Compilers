@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 	static int stmtFlag = 0;
 
@@ -657,6 +657,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 	@Override
 	public VarType visit(ASTWhileStmt stm, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTWhileStmt at line: " + stm.line);
+		
 		if (run_num == 0)
 			return null;
 		
