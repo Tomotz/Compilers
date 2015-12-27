@@ -23,7 +23,7 @@ public class IR {
 		Main.txtFile2.seek(0);
 		for(int i = 0; i < line_num-1; ++i)
 			Main.txtFile2.readLine();
-		String content = Main.txtFile2.readLine();
+		String content = Main.txtFile2.readLine().trim();
 		add_comment("line " +Integer.toString(line_num) + ": " +content);
 		} 
 		catch (IOException e) 
