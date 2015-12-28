@@ -397,13 +397,13 @@ public class IR {
 
 	}
 	
-	static String staticCall(String funcName, String arguments, int irLbFlg){ 
+	static String staticCall(String funcName, String className, String arguments, int irLbFlg){ 
 		String fName = "";
 		/*
 		add_comment("StaticCall _C_" + funcName +"(" +arguments);
 		*/
 		if (irLbFlg ==0){
-			fName = "StaticCall _C_";
+			fName = "StaticCall _" + className + "_";
 		
 		}
 		else if(irLbFlg ==1){

@@ -1142,7 +1142,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		
 		
 		
-		IR.staticCall(funcId, args,irLbFlg);
+		IR.staticCall(funcId,classId, args,irLbFlg);
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
 		func.getAssignType().ir_val = reg;
