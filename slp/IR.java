@@ -263,6 +263,7 @@ public class IR {
 		String offsetIn = null;
 		String arrayIn = null;
 		
+		// case of string
 		if (flag == 2){
 			temp = new_temp();
 			add_line("Move " + ir_rep + "," + temp);
@@ -272,6 +273,7 @@ public class IR {
 		
 		// value is a field 
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
+			
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
 			if ((valIndex = offset.indexOf('[')) != -1){
@@ -309,6 +311,7 @@ public class IR {
 		}
 		
 		else if ((valIndex = ir_rep.indexOf('[')) != -1){
+			
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1,ir_rep.length()-1);
 			
@@ -377,6 +380,17 @@ public class IR {
 				add_line("Move " + ir_rep + "," + temp);
 				ir_rep = temp;
 			}
+			
+			while((varIndex = offset.indexOf('['))!=-1){
+				
+				arrayIn = offset.substring(0,varIndex-1);
+				offset = offset.substring(varIndex+1,offset.length());
+				System.out.println(offset + " ar " + arrayIn);
+				temp = new_temp();
+				add_line("MoveArray " + field + "[" + arrayIn + "]" + "," + temp);
+				field = temp;
+			}
+			
 			add_line("MoveArray " + ir_rep + "," + field + "[" + offset + "]");
 			return null;
 		}
