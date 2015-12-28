@@ -137,7 +137,7 @@ id_list ::= ID:i1
 ;
 
 method ::= stat_type_void:st1 LP maybe_formals:mf1 RP LCBR stmt_list:sl1 RCBR
-		{: RESULT = new ASTMethod(st1.isStatic, st1.type, st1.id, mf1, sl1, parser.getLine()); 
+		{: RESULT = new ASTMethod(st1.isStatic, st1.type, st1.id, mf1, sl1, st1.line); 
 		Parser.print_rule("stat_type_void-> 'st1 (maybe_formals) {stmt_list}' for st1="+st1); :} 
 ;
 
@@ -204,10 +204,10 @@ stmt ::= location:v ASSIGN expr:e SEMI
 	{:RESULT = new ASTRetExp(e1, parser.getLine()); 
 	Parser.print_rule("stmt -> 'return e1' for: " + e1);:}
 	| IF LP expr:ex1 RP stmt:s1 else_stmnt:el1 
-	{: RESULT = new ASTIfElseStmt(ex1, s1, el1, parser.getLine()); 
+	{: RESULT = new ASTIfElseStmt(ex1, s1, el1, ex1.line); 
 	 	:}
 	| WHILE LP expr:e1 RP stmt:s1
-	{:  RESULT = new ASTWhileStmt(e1,s1, parser.getLine());
+	{:  RESULT = new ASTWhileStmt(e1,s1, e1.line);
 		Parser.print_rule("stmt -> 'while e1' for: " + e1);:}
 	| BREAK SEMI
 	{: RESULT = new ASTVarStmt(Keyword.BREAK.toString(), parser.getLine());

@@ -1,5 +1,7 @@
 package slp;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,22 @@ public class IR {
 	static String whLblStrt;   // labels for the use of break and continue in a while loop
 	static String whLblEnd;
 
+	static void add_file_comment(int line_num)
+	{
+		if (ICEvaluator.run_num != 1)
+			return;
+		try {
+		Main.txtFile2.seek(0);
+		for(int i = 0; i < line_num-1; ++i)
+			Main.txtFile2.readLine();
+		String content = Main.txtFile2.readLine();
+		add_comment("line " +Integer.toString(line_num) + ": " +content);
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+	}
 
 	static String get_label(String text)
 	{
@@ -63,8 +81,9 @@ public class IR {
 		if (ICEvaluator.run_num == 0)
 			return;
 		dispatch_tables += cls.dv + ": [";
+		int prev_dv_len = dispatch_tables.length();
 		class_dv(cls, new ArrayList<icFunction>());
-	    if (dispatch_tables.length() > 0)
+	    if (dispatch_tables.length() > prev_dv_len)
 	    { //remove last comma
 	    	dispatch_tables = dispatch_tables.substring(0, dispatch_tables.length()-1);
 	    }
@@ -128,20 +147,22 @@ public class IR {
 		
 		String result = new_temp();
 		String temp1 = new_temp();
-		String end = get_label("end");
+		String end = get_label("endComp");
 		
 		add_line("Move 0, " + result);
 
-		/*
+		
 		add_line("Move "+src1+","+ temp1);
-		*/
+		
+		/*
 		move(temp1, src1,env);
+		*/
 		add_line("Compare " + src2 + "," + temp1); // Compare = temp1 - temp2
 		
-		if (op==Operator.GT) add_line("JumpLTE "+ end);
-		if (op==Operator.GTE) add_line("JumpLT "+ end);
-		if (op==Operator.LT) add_line("JumpGTE "+ end);
-		if (op==Operator.LTE) add_line("JumpLE "+ end);
+		if (op==Operator.GT) add_line("JumpLE "+ end);
+		if (op==Operator.GTE) add_line("JumpL "+ end);
+		if (op==Operator.LT) add_line("JumpGE "+ end);
+		if (op==Operator.LTE) add_line("JumpG "+ end);
 		if (op==Operator.EQUAL) add_line("JumpFalse "+ end); //assuming JumpFalse means JumpNEQZ
 		if (op==Operator.NEQUAL) add_line("JumpTrue "+ end); //assuming JumpTrue means JumpEQZ
 		add_line("Move 1,"+result);
@@ -155,7 +176,7 @@ public class IR {
 		add_comment("!"+src);
 		String result = new_temp();
 		String temp = new_temp();
-		String end_label = get_label("end");
+		String end_label = get_label("endLneg");
 		add_line("Move 0,"+result);
 		add_line("Move "+src+","+temp);
 		add_line("Compare 0,"+temp);
@@ -164,8 +185,6 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
-
-
 
 	static String evaluate_int(int src)
 	{
@@ -183,13 +202,15 @@ public class IR {
 	static String dot_len(String src) {
 		add_comment(src + ".length");
 		add_line("#__checkNullRef("+src+")");//TODO - remove comment
-		String reg = new_temp();
-		add_line("ArrayLength " + src + "," + reg);
-		return reg;
+		String reg1 = new_temp();
+		add_line("Move " + src + "," + reg1);
+		String reg2 = new_temp();
+		add_line("ArrayLength " + reg1 + "," + reg2);
+		return reg2;
 	}
 
 	public static void put_label_comment(String cls, String func) {
-		add_line("");
+		//add_line("");
 		add_line("########## " + cls + "." + func + " ##########");
 	}
 	
@@ -198,11 +219,16 @@ public class IR {
 		add_line(label + ":");
 	}
 
+
 	static String new_arr(String len, String type) {
 		add_comment("new " + type + "[" + len + "]");
-		add_line("#__checkSize("+len+")");//TODO - remove comment
+		String reg1 = new_temp();
+
+		add_line("Move " + len + "," + reg1);
+		add_line("Mul 4," + reg1);
+		add_line("#__checkSize("+reg1+")");//TODO - remove comment
 		String reg = new_temp();
-		add_line("Library __allocateArray(" + len + ")," + reg);
+		add_line("Library __allocateArray(" + reg1 + ")," + reg);
 		return reg;
 	}
 
@@ -214,9 +240,15 @@ public class IR {
 		return reg;
 	}
 
+	
 	// should probably use only the second case (new object should be allocated in astNew...)
-	static String move(String objName, String ir_rep, Environment env) {
-		add_comment("Assigning object " + ir_rep + " to "  + objName);
+	static String move(String objName, String ir_rep,int flag,  Environment env) {
+		if (flag ==1){
+			add_comment("Assigning object " + ir_rep + " to "  + objName);
+		}
+		else{
+			add_comment("load object " + ir_rep);
+		}
 		/*
 		System.out.println("val " + ir_rep + " var " + objName);
 		*/
@@ -228,24 +260,44 @@ public class IR {
 		String field = null;
 		String offset = null;
 		String temp = null;
+		String offsetIn = null;
+		String arrayIn = null;
+		
+		if (flag == 2){
+			temp = new_temp();
+			add_line("Move " + ir_rep + "," + temp);
+			add_line("Move " + temp + "," + objName);
+			return null;
+		}
 		
 		// value is a field 
 		if ((valIndex= ir_rep.indexOf('.')) != -1){
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
-			
 			if ((valIndex = offset.indexOf('[')) != -1){
-				String offsetIn = offset.substring(0,valIndex);
-				String arrayIn = offset.substring(valIndex+1,offset.length()-1);
 				
-				temp = new_temp();
-				add_line("Move " + field + "," + temp);
-				String temp2 = new_temp();
-				add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
-				temp = new_temp();
-				add_line("Move " + arrayIn + "," + temp);
-				ir_rep = new_temp();
-				add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
+				offsetIn = offset.substring(0,valIndex);
+				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
+				
+				 if ((valIndex= arrayIn.indexOf('.')) != -1){
+					
+					 field = ir_rep.substring(0,valIndex);
+					offset = ir_rep.substring(valIndex+1);
+					temp = new_temp();
+					add_line("Move " + field + "," + temp);
+					ir_rep = new_temp();
+					add_line("MoveField " + temp + "." + offset + "," + ir_rep);
+				}
+				else{
+					temp = new_temp();
+					add_line("Move " + field + "," + temp);
+					String temp2 = new_temp();
+					add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
+					temp = new_temp();
+					add_line("Move " + arrayIn + "," + temp);
+					ir_rep = new_temp();
+					add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
+				}
 			}
 			else{
 				temp = new_temp();
@@ -268,14 +320,23 @@ public class IR {
 			tmpFlag = 1;
 		}
 		else if ((valIndex = ir_rep.indexOf('_')) != -1){
-			valName = ir_rep.substring(0,valIndex);
+			if (flag == 0){
+				temp = new_temp();
+				add_line("Move " + ir_rep + "," + temp);
+				ir_rep = temp;
+			}
+			else{
+				valName = ir_rep.substring(0,valIndex);
+			}
 		}
 		
+		if (flag ==0){
+			return ir_rep;
+		}
 		
 		if ((varIndex = objName.indexOf('.')) != -1){
 			field = objName.substring(0,varIndex);
 			offset = objName.substring(varIndex+1);
-			
 			temp = new_temp();
 			add_line("Move " + field + "," + temp);
 			field = temp;
@@ -285,7 +346,22 @@ public class IR {
 				add_line("Move " + ir_rep + "," + temp);
 				ir_rep = temp;
 			}
-			add_line("MoveField " + ir_rep + "," + field + "." + offset);
+			
+			if ((valIndex = offset.indexOf('[')) != -1){
+				 offsetIn = offset.substring(0,valIndex);
+				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
+				  
+					String newField = new_temp();
+					add_line("MoveField " + field + "." + offsetIn + "," + newField);
+					offset = new_temp();
+					add_line("Move " + arrayIn + "," + offset);
+					add_line("MoveArray " + ir_rep + "," + newField + "[" + offset + "]");
+				 
+			}
+			
+			else{
+				add_line("MoveField " + ir_rep + "," + field + "." + offset);
+			}
 			return null;
 		}
 		else if((varIndex = objName.indexOf('['))!=-1){
