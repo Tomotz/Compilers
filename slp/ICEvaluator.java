@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 	static int stmtFlag = 0;
 
@@ -513,6 +513,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (func.name.equals("main")){
 			IR.add_line("Library __exit(0),Rdummy");
 		}
+		else{
+			if((meth.type).equals("void")) IR.add_line("Return 0");
+		}
+		
 		
 		d.destroyScope(ASTNode.scope);
 		--ASTNode.scope;
@@ -587,6 +591,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (!(d.validateType(new VarType(expr.type, null)))) {
 				error("unknown type: " + expr.type, expr);
 			}
+			//int i = Integer.parseInt(index.ir_val);
+			//ir_rep = IR.new_arr(Integer.toString(i*4), expr.type);
 			ir_rep = IR.new_arr(index.ir_val, expr.type);
 		}
 		return new VarType(expr.type + "[]", ir_rep);
@@ -1082,7 +1088,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		String args = "";
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
-			funcArg = func.arg_types.get(i);
+			funcArg = func.arg_types.get(func.arg_types.size()-i-1);
 			
 			if (irLbFlg ==0){
 			args += funcArg.ir_val + "=" + exp.ir_val;
