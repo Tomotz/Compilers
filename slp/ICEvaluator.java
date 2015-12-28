@@ -142,11 +142,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 		VarType rhs_type = stmt.rhs.accept(this, env);
-		stmt_src_reg = rhs_type.ir_val;
-		VarType varExpr_type = stmt.varExpr.accept(this, env);
-		stmt_src_reg = null;
-		validateAssign(varExpr_type, rhs_type, stmt, env);
-		
+		if (run_num==1)
+		{
+			stmt_src_reg = rhs_type.ir_val;
+			VarType varExpr_type = stmt.varExpr.accept(this, env);
+			stmt_src_reg = null;
+			validateAssign(varExpr_type, rhs_type, stmt, env);
+		}
 		/*if (run_num ==1){
 			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
 		}*/
@@ -1208,6 +1210,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStaticCall expr, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStaticCall at line: " + expr.line);
+		if (run_num==0)
+			return null;
 		/*
 		 * String expLst = expr.exprList.accept(this, env);
 		 */
@@ -1281,7 +1285,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
 		func.getAssignType().ir_val = reg;
-		return func.getAssignType();
+		VarType a = func.getAssignType();
+		return new VarType(a.type, a.num_arrays, reg);
 
 	}
 
