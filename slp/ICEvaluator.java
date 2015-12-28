@@ -1065,11 +1065,12 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					} 
 					else 
 					{
+						icObject id_o = ((icClass) clss).getObject(id, env);
 						 IR.add_line("#__checkNullRef(" + exp1.ir_val + ")"); //TODO - remove comment
 						 result = ((icClass) clss).getFieldType(id, env);
 						 String out_ir_val = null;
 						 if (run_num == 1)
-							 out_ir_val = IR.location_expr_dot_id(exp1.ir_val, result.ir_val , stmt_src_reg, false);
+							 out_ir_val = IR.location_expr_dot_id(exp1.ir_val, Integer.toString(((icVariable)id_o).offset+1) , stmt_src_reg, false);
 						 return new VarType(result.type,result.num_arrays,out_ir_val);
 					}
 				}
