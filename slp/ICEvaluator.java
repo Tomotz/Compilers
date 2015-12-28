@@ -927,8 +927,10 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						 result.ir_val = exp1.ir_val + "." + (clss.offset +1);
 						 */
 						 result.ir_val = newIrVal + "." + (clss.offset +1);
+						 /*
 						 newIrVal = IR.move(null,result.ir_val,0,env); // loading the offset
 						 result.ir_val = newIrVal;
+						 */
 						 
 						if (IS_DEBUG)
 							System.out.println("return 2 " + result);
