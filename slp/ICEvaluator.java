@@ -861,17 +861,17 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				System.out.println("return 1: " + result);
 			}
 			if (run_num == 1){ 
-				/*
+				
 				if (stmtFlag == 0){
+					result.ir_val = IR.move(null,result.ir_val,0,env);
 				}
-				*/
-				/*				/*
-				result.ir_val = IR.move(null,result.ir_val,0,env);
+			
 				return result;
-				*/
+				
+				/*
 				newIrVal = IR.move(null,result.ir_val,0,env);
 				 return new VarType(result.type,result.num_arrays,newIrVal);
-				
+				*/
 			}
 		}
 
@@ -905,10 +905,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 							return result;
 							*/
 							if (stmtFlag == 0){
-								/*
 								result.ir_val = IR.move(null,result.ir_val,0,env);
-								*/
-								
 							}
 							return new VarType(result.type,result.num_arrays,result.ir_val);
 						}
