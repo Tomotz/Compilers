@@ -9,8 +9,9 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = false;
+	static Boolean IS_DEBUG = true;
 	static int run_num = 0;
+	static int stmtFlag = 0;
 
 	/**
 	 * Constructs an SLP interpreter for the given AST.
@@ -122,10 +123,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStmtList stmts, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStmtList at line: " + stmts.line);
-		
+		stmtFlag =1;
 		for (ASTNode st : stmts.statements) {
 			st.accept(this, env);
 		}
+		stmtFlag =0;
 		return null;
 	}
 
@@ -833,7 +835,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		exp1 = expr.e1.accept(this, env);
 		if (expr.type == 1) { //expr.ID
 			if (IS_DEBUG)
-				System.out.println("entered loop");
+				System.out.println("type 1");
 			
 			icObject clss = env.getObjByName(exp1.type);
 			if (run_num == 1) {
