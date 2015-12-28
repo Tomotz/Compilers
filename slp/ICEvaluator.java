@@ -142,11 +142,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
 		VarType rhs_type = stmt.rhs.accept(this, env);
-		stmt_src_reg = rhs_type.ir_val;
-		VarType varExpr_type = stmt.varExpr.accept(this, env);
-		stmt_src_reg = null;
-		validateAssign(varExpr_type, rhs_type, stmt, env);
-		
+		if (run_num==1)
+		{
+			stmt_src_reg = rhs_type.ir_val;
+			VarType varExpr_type = stmt.varExpr.accept(this, env);
+			stmt_src_reg = null;
+			validateAssign(varExpr_type, rhs_type, stmt, env);
+		}
 		/*if (run_num ==1){
 			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
 		}*/
