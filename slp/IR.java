@@ -241,9 +241,10 @@ public class IR {
 	}
 
 	
-	// should probably use only the second case (new object should be allocated in astNew...)
-	static String move(String objName, String ir_rep,int flag,  Environment env) {
-		if (flag ==1){
+	// assigns ir_rep to objName. 
+	//op_type - if 0, will load value from ir_rep and store it in a new var. if 1, will load ir_rep to a temp.
+	static String move(String objName, String ir_rep, int op_type,  Environment env) {
+		if (op_type !=0){
 			add_comment("Assigning object " + ir_rep + " to "  + objName);
 		}
 		else{
@@ -264,7 +265,7 @@ public class IR {
 		String arrayIn = null;
 		
 		// case of string
-		if (flag == 2){
+		if (op_type == 2){
 			temp = new_temp();
 			add_line("Move " + ir_rep + "," + temp);
 			add_line("Move " + temp + "," + objName);
@@ -323,7 +324,7 @@ public class IR {
 			tmpFlag = 1;
 		}
 		else if ((valIndex = ir_rep.indexOf('_')) != -1){
-			if (flag == 0){
+			if (op_type == 0){
 				temp = new_temp();
 				add_line("Move " + ir_rep + "," + temp);
 				ir_rep = temp;
@@ -333,7 +334,7 @@ public class IR {
 			}
 		}
 		
-		if (flag ==0){
+		if (op_type ==0){
 			return ir_rep;
 		}
 		
@@ -410,6 +411,66 @@ public class IR {
 		return null;
 
 	}
+	
+
+	//if src is null we assume its not an assign stmt
+	static String location_expr_dot_id(String expr, String id, String src)
+	{
+		//String temp_expr = IR.new_temp();
+		//IR.add_line("Move " + expr + "," + temp_expr);
+		String temp_id = IR.new_temp();
+		IR.add_line("Move " + id + "," + temp_id);
+		if (src==null)
+		{//non assign
+			String out_reg = IR.new_temp();
+			IR.add_line("MoveField " + expr + "." + temp_id + "," + out_reg);
+			return out_reg;
+		}
+		else 
+		{//assign
+			IR.add_line("MoveField "+ src + "," + expr + "." + temp_id );
+			return null;
+		}
+	}
+
+	//if src is null we assume its not an assign stmt
+	static String location_id(String id, String src)
+	{
+		String temp_id = IR.new_temp();
+		IR.add_line("Move " + id + "," + temp_id);
+		if (src==null)
+		{//non assign
+			return temp_id;
+		}
+		else 
+		{//assign
+			IR.add_line("Move "+ src + ","  + temp_id );
+			return null;
+		}
+	}
+
+	//if src is null we assume its not an assign stmt
+	static String location_arr(String arr, String index, String src)
+	{
+
+		//String temp_arr = IR.new_temp();
+		//IR.add_line("Move " + arr + "," + temp_arr);
+		String temp_index = IR.new_temp();
+		IR.add_line("Move " + index + "," + temp_index);
+		if (src==null)
+		{//non assign
+			String out_reg = IR.new_temp();
+			IR.add_line("MoveArray " + arr + "[" + temp_index + "]," + out_reg);
+			return out_reg;
+		}
+		else 
+		{//assign
+			IR.add_line("MoveArray " + src + "," + arr + "[" + temp_index + "]");
+			return null;
+		}
+	}
+	
+	
 	
 	static String staticCall(String funcName, String className, String arguments, int irLbFlg){ 
 		String fName = "";

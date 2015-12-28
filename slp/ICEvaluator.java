@@ -11,7 +11,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
 	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
-	static int stmtFlag = 0;
+	static String stmt_src_reg = null; //the register in which the source of the current assign stmt is saved
+	
 
 	/**
 	 * Constructs an SLP interpreter for the given AST.
@@ -140,19 +141,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTAssignStmt stmt, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTAssignStmt at line: " + stmt.line);
-		stmtFlag = 1;
-		VarType varExpr_type = stmt.varExpr.accept(this, env);
-		stmtFlag = 0;
 		VarType rhs_type = stmt.rhs.accept(this, env);
+		stmt_src_reg = rhs_type.ir_val;
+		VarType varExpr_type = stmt.varExpr.accept(this, env);
+		stmt_src_reg = null;
 		validateAssign(varExpr_type, rhs_type, stmt, env);
 		
-		if (run_num ==1){
-			/*
-			if (!varExpr_type.type.equals("string")){	
-			}
-			*/
+		/*if (run_num ==1){
 			IR.move(varExpr_type.ir_val, rhs_type.ir_val,1,env);
-		}
+		}*/
 		return null;
 	}
 
@@ -631,7 +628,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			System.out.println("accepting ASTAssignFormals at line: " + stmt.line);
 		VarType type = stmt.form.type;
 		String id = stmt.form.id;
-		stmtFlag = 1;
 		if (IS_DEBUG)
 			System.out.println("type: " + type + " id: " + id);
 
@@ -673,7 +669,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 				
 			}
 		}
-		stmtFlag = 0;
 		return type;
 	}
 
@@ -821,7 +816,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		return stmt.call.accept(this, env);
 	}
 
-	@Override
+	/*@Override
 	public VarType visit(ASTLocation expr, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTLocation at line: " + expr.line);
@@ -872,9 +867,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (run_num == 1){ 
 				
 				if (stmtFlag == 0){
-					/*
+					
 					result.ir_val = IR.move(null,result.ir_val,0,env);
-					*/
+					
 					newIrVal = IR.move(null,result.ir_val,0,env);
 					
 					if (!result.ir_val.contains("arg")){
@@ -889,14 +884,14 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						newIrVal = result.ir_val;
 					}
 				}
-				/*
+				
 				return result;
-				*/
+				
 				return new VarType(result.type,result.num_arrays,newIrVal);
-				/*
+				
 				newIrVal = IR.move(null,result.ir_val,0,env);
 				 return new VarType(result.type,result.num_arrays,newIrVal);
-				*/
+				
 			}
 		}
 
@@ -923,21 +918,21 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						IR.add_line("#__checkNullRef(" + exp1.ir_val + ")"); //TODO - remove comment
 						 result = ((icClass) clss).getFieldType(id, env);
 						 newIrVal = IR.move(null,exp1.ir_val ,0,env);
-						 /*
+						 
 						 result.ir_val = exp1.ir_val + "." + (clss.offset +1);
-						 */
+						 
 						 result.ir_val = newIrVal + "." + (clss.offset +1);
-						 /*
+						 
 						 newIrVal = IR.move(null,result.ir_val,0,env); // loading the offset
 						 result.ir_val = newIrVal;
-						 */
+						 
 						 
 						if (IS_DEBUG)
 							System.out.println("return 2 " + result);
 						if (run_num == 1) {
-							/*
+							
 							return result;
-							*/
+							
 							if (stmtFlag == 0){
 								result.ir_val = IR.move(null,result.ir_val,0,env);
 							}
@@ -952,9 +947,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			} 
 			else
 				result = ((icClass) clss).getFieldType(id, env);
-				/*
+				
 				return new VarType(res.type,0,id);
-				*/
+				
 			return result;
 
 		}
@@ -979,9 +974,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			
 			
 			out_type.ir_val = out_type.ir_val + "[" + exp2.ir_val + "]";
-			/*
+			
 			return out_type;
-			*/
+			
 			if (stmtFlag == 0){
 				out_type.ir_val = IR.move(null,out_type.ir_val,0,env);
 			}
@@ -990,8 +985,138 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("returning null");
 		return new VarType("null", null);
-	}
+	}*/
 
+	
+	@Override
+	public VarType visit(ASTLocation expr, Environment env) {
+		if (IS_DEBUG)
+			System.out.println("accepting ASTLocation at line: " + expr.line);
+
+		if (IS_DEBUG)
+			System.out.println("id: " + expr.id + " type " + expr.type);
+
+		if (run_num ==0){
+			return new VarType("null", null);
+		}
+		
+		String id = expr.id;
+		VarType exp1;
+		VarType exp2;
+		VarType result = null;
+		// only a variable name
+		if (expr.type == 0)
+		{
+			boolean is_class_field = false;
+			//look for variable in all scopes and in last class
+			icObject location_var = env.getObjByName(id);
+			if (location_var == null)
+			{
+				location_var = env.lastClass.getObject(id, env);
+				is_class_field = true;
+			}
+			if (location_var == null)
+			{
+				error(id + " cannot be resolved! ", expr);
+			}
+			if (!(location_var instanceof icVariable))
+			{
+				error(id + " cannot be resolved! ", expr);
+			}
+			result = ((icVariable)location_var).type;
+			String out_ir_val = null;
+			if (run_num == 1)
+			{
+				if (is_class_field)
+				{
+					out_ir_val = IR.location_expr_dot_id("this", Integer.toString(((icVariable)location_var).offset+1), stmt_src_reg);
+				}
+				else
+				{
+					out_ir_val = IR.location_id(result.ir_val, stmt_src_reg);
+				}
+			}
+			return new VarType(result.type,result.num_arrays,out_ir_val);
+		}
+		
+		String temp = stmt_src_reg;
+		stmt_src_reg = null;
+		exp1 = expr.e1.accept(this, env);
+		stmt_src_reg = temp;
+		if (expr.type == 1) { //expr.ID
+			if (IS_DEBUG)
+				System.out.println("type 1");
+			
+			icObject clss = env.getObjByName(exp1.type);
+			if (run_num == 1) {
+				
+				// checking if the class has been declared
+
+				if (clss == null) {
+					error(exp1.type + " cannot be resolved to a type", expr);
+				}
+
+				// e1 is a name of a class
+				if (clss instanceof icClass) {
+					// checking if exp1 is a valid field inside of class
+					if (((icClass) clss).hasObject(id, env) == false) 
+					{
+						error(id + " cannot be resolved or is not a field of class " + exp1, expr);
+					} 
+					else 
+					{
+						 IR.add_line("#__checkNullRef(" + exp1.ir_val + ")"); //TODO - remove comment
+						 result = ((icClass) clss).getFieldType(id, env);
+						 String out_ir_val = null;
+						 if (run_num == 1)
+							 out_ir_val = IR.location_expr_dot_id(exp1.ir_val, result.ir_val , stmt_src_reg);
+						 return new VarType(result.type,result.num_arrays,out_ir_val);
+					}
+				}
+				else
+				{
+					error(exp1.type + " is not a class", expr);					
+				}
+			} 
+			else
+				result = ((icClass) clss).getFieldType(id, env);
+			return result;
+
+		}
+		// e1 is an array
+		if (expr.type == 2) { //expr[expr]
+			temp = stmt_src_reg;
+			stmt_src_reg = null;
+			exp2 = expr.e2.accept(this, env);
+			stmt_src_reg = temp;
+
+			if (exp1.num_arrays == 0) { // the variable is not an array
+				error("The type of the expression must be an array type but it resolved to" + exp1, expr);
+			}
+
+			if (!exp2.isBaseType("int")) { // checking if the parameter inside
+											// the array is an integer
+				error("Type mismatch: cannot convert from " + exp2 + " to int", expr);
+			}
+
+			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
+			if (IS_DEBUG)
+				System.out.println("returning exp1: " + out_type); // need
+			IR.add_line("#__checkNullRef(" + out_type.ir_val + ")");//TODO - remove comment
+			IR.add_line("#__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");//TODO - remove comment
+			
+			
+
+			 if (run_num == 1)
+				 out_type.ir_val = IR.location_arr(exp1.ir_val, exp2.ir_val, stmt_src_reg);
+			return out_type;
+		}
+		if (IS_DEBUG)
+			System.out.println("returning null");
+		return new VarType("null", null);
+	}
+	
+	
 	@Override
 	public VarType visit(ASTVirtualCall vc, Environment env) {
 		if (run_num != 1)
