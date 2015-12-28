@@ -1029,7 +1029,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			{
 				if (is_class_field)
 				{
-					out_ir_val = IR.location_expr_dot_id("this", Integer.toString(((icVariable)location_var).offset+1), stmt_src_reg);
+					out_ir_val = IR.location_expr_dot_id("this", Integer.toString(((icVariable)location_var).offset+1), stmt_src_reg, true);
 				}
 				else
 				{
@@ -1069,7 +1069,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 						 result = ((icClass) clss).getFieldType(id, env);
 						 String out_ir_val = null;
 						 if (run_num == 1)
-							 out_ir_val = IR.location_expr_dot_id(exp1.ir_val, result.ir_val , stmt_src_reg);
+							 out_ir_val = IR.location_expr_dot_id(exp1.ir_val, result.ir_val , stmt_src_reg, false);
 						 return new VarType(result.type,result.num_arrays,out_ir_val);
 					}
 				}

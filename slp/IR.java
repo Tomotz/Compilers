@@ -414,21 +414,25 @@ public class IR {
 	
 
 	//if src is null we assume its not an assign stmt
-	static String location_expr_dot_id(String expr, String id, String src)
+	static String location_expr_dot_id(String expr, String id, String src, boolean is_this)
 	{
-		//String temp_expr = IR.new_temp();
-		//IR.add_line("Move " + expr + "," + temp_expr);
-		String temp_id = IR.new_temp();
-		IR.add_line("Move " + id + "," + temp_id);
+		String temp_expr = IR.new_temp();
+		IR.add_line("Move " + expr + "," + temp_expr);
+		String temp_id = id;
+		if (!is_this)
+		{
+			IR.new_temp();
+			IR.add_line("Move " + id + "," + temp_id);
+		}
 		if (src==null)
 		{//non assign
 			String out_reg = IR.new_temp();
-			IR.add_line("MoveField " + expr + "." + temp_id + "," + out_reg);
+			IR.add_line("MoveField " + temp_expr + "." + temp_id + "," + out_reg);
 			return out_reg;
 		}
 		else 
 		{//assign
-			IR.add_line("MoveField "+ src + "," + expr + "." + temp_id );
+			IR.add_line("MoveField "+ src + "," + temp_expr + "." + temp_id );
 			return null;
 		}
 	}
@@ -437,14 +441,15 @@ public class IR {
 	static String location_id(String id, String src)
 	{
 		String temp_id = IR.new_temp();
-		IR.add_line("Move " + id + "," + temp_id);
 		if (src==null)
 		{//non assign
+			IR.add_line("Move " + id + "," + temp_id);
 			return temp_id;
 		}
 		else 
 		{//assign
-			IR.add_line("Move "+ src + ","  + temp_id );
+			//IR.add_line("Move "+ src + ","  + temp_id );
+			IR.add_line("Move "+ src + ","  + id );
 			return null;
 		}
 	}
