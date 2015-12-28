@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 	static int stmtFlag = 0;
 
@@ -855,6 +855,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (is_class_field)
 			{	
 				result.ir_val = "this." +  Integer.toString(((icVariable)location_var).offset+1);
+				
+				newIrVal = IR.move(null,result.ir_val,0,env);
+				result.ir_val = newIrVal;
 			}
 			
 			if (IS_DEBUG){
@@ -863,11 +866,27 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (run_num == 1){ 
 				
 				if (stmtFlag == 0){
+					/*
 					result.ir_val = IR.move(null,result.ir_val,0,env);
+					*/
+					newIrVal = IR.move(null,result.ir_val,0,env);
+					
+					if (!result.ir_val.contains("arg")){
+						result.ir_val = newIrVal;
+					}		
 				}
-			
+				else{
+					if (result.ir_val.contains("arg")){
+						newIrVal = IR.move(null,result.ir_val,0,env);
+					}		
+					else{
+						newIrVal = result.ir_val;
+					}
+				}
+				/*
 				return result;
-				
+				*/
+				return new VarType(result.type,result.num_arrays,newIrVal);
 				/*
 				newIrVal = IR.move(null,result.ir_val,0,env);
 				 return new VarType(result.type,result.num_arrays,newIrVal);
