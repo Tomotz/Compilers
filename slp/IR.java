@@ -419,11 +419,6 @@ public class IR {
 		String temp_expr = IR.new_temp();
 		IR.add_line("Move " + expr + "," + temp_expr);
 		String temp_id = id;
-		if (!is_this)
-		{
-			IR.new_temp();
-			IR.add_line("Move " + id + "," + temp_id);
-		}
 		if (src==null)
 		{//non assign
 			String out_reg = IR.new_temp();
