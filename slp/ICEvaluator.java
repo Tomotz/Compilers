@@ -1210,6 +1210,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public VarType visit(ASTStaticCall expr, Environment env) {
 		if (IS_DEBUG)
 			System.out.println("accepting ASTStaticCall at line: " + expr.line);
+		if (run_num==0)
+			return null;
 		/*
 		 * String expLst = expr.exprList.accept(this, env);
 		 */
@@ -1283,7 +1285,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("return static " + func.getAssignType());
 		func.getAssignType().ir_val = reg;
-		return func.getAssignType();
+		VarType a = func.getAssignType();
+		return new VarType(a.type, a.num_arrays, reg);
 
 	}
 
