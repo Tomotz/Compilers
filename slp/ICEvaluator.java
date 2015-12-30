@@ -475,14 +475,13 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		/* should not be called. do nothing */
 		return null;
 	}
-	static int vari = 0; //offset of current field in current func
-	
+	static int num_locals = 0; //offset of current field in current func
 	@Override
 	public VarType visit(ASTMethod meth, Environment d) {
 		if (IS_DEBUG)
 			System.out.println("accepting method: " + meth.id + " at line: " + meth.line + " scope: " + ASTNode.scope);
 
-		vari = 0;
+		num_locals = 0;
 		icFunction func = new icFunction(meth.id, ASTNode.scope, new VarType(meth.type, null), meth.isStatic);
 		d.lastFunc = func;
 		IR.add_line("");
@@ -515,6 +514,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		else{
 			if((meth.type).equals("void")) IR.add_line("Return 0");
 		}
+		
+		
+		IR.add_line("SPACE " + Integer.toString(num_locals));
 		
 		
 		d.destroyScope(ASTNode.scope);
@@ -651,8 +653,8 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (!type.type.equals("string")){
 				}
 				*/
-			type.ir_val = id + "_var_" + Integer.toString(vari);
-			++vari;
+			type.ir_val = id + "_var_" + Integer.toString(num_locals);
+			++num_locals;
 			
 			// case of assignment
 			if (stmt.rhs != null) {

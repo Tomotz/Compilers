@@ -2,14 +2,16 @@ package slp;
 
 public class Asm {
 	static String code = "";
-	
-	static final String sp = "$sp";
+	private static int temp_counter;
+
+	static final String fp = "$fp";
+	static final String zero = "$zero";
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
-	static final int DEST_REG = 2;
-	static final int TARGET_REG = 1;
-	static final int SRC_REG = 0;
+	static final int DST = 2;
+	static final int TARGET = 1;
+	static final int SRC = 0;
 
 	
 
@@ -28,6 +30,7 @@ public class Asm {
 	    }
 	    return true;
 	}
+
 	//returns IMM, REG or MEM
 	public int getSingleOpType(String value)
 	{
@@ -63,10 +66,32 @@ public class Asm {
 		}
 		int[] opTypes = getOpTypes(ops);
 
-		String temp_reg = new_temp();
-		if (opTypes[SRC_REG] == MEM)
+		String temp_src = new_temp();
+		if (opTypes[SRC] == MEM)
 		{
-			add_line("lw " + temp_reg + ", " + getVarOffset(ops[SRC_REG]) + "(" + sp + ")");
+			add_line("lw " + temp_src + ", " + getVarOffset(ops[SRC]) + "(" + fp + ")");
+			opTypes[SRC] = REG;
+			ops[SRC] = temp_src;
+		}
+		String temp_dst = ops[TARGET];
+		if (opTypes[TARGET] == MEM)
+		{
+			temp_dst = new_temp();
+		}
+		
+		if (opTypes[SRC] == IMM)
+		{
+			add_line("addi " + temp_dst + ", " + zero + ", " + ops[SRC]);
+		}
+		else
+		{ //SRC is REG
+			add_line("move " +temp_dst + ", " + ops[SRC]);
+			
+		}
+		
+		if (opTypes[TARGET] == MEM)
+		{
+			add_line("sw " + ops[TARGET] + ", " + getVarOffset(temp_dst) + "(" + fp + ")");
 		}
 		
 		
@@ -74,8 +99,8 @@ public class Asm {
 
 	//returns an unused temporary
 	private String new_temp() {
-		// TODO Auto-generated method stub
-		return null;
+		++temp_counter;
+		return "RR" + Integer.toString(temp_counter - 1);
 	}
 
 	//get a variable name and returns its offset on the stack
