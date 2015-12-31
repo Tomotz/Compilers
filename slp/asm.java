@@ -6,6 +6,7 @@ public class Asm {
 
 	static final String fp = "$fp";
 	static final String zero = "$zero";
+	static final String ret = "$a0";
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
@@ -57,12 +58,38 @@ public class Asm {
 		return opTypes;
 	}
 	
-	public void move(String operands)
+	//returns an unused temporary
+	private String new_temp() {
+		++temp_counter;
+		return "RR" + Integer.toString(temp_counter - 1);
+	}
+
+	//get a variable name and returns its offset on the stack
+	private String getVarOffset(String var) {
+		//try parsing as var
+		String[] var_parts = var.split("_var_");
+		if (var_parts.length > 1)
+		{
+			return Integer.toString(-4*Integer.parseInt(var_parts[1])); 
+		}
+		//try parsing as arg
+		String[] arg_parts = var.split("_arg_");
+		if (arg_parts.length > 1)
+		{
+			//leave place for this, ra, fp
+			return Integer.toString(4*Integer.parseInt(var_parts[1])+3*4); 
+		}
+		throw new RuntimeException("bad var name: " + var);
+		
+	}
+	
+
+	public void move(String[] ops)
 	{
-		String[] ops = operands.split(" ");
+		//lui and ori??
 		if (ops.length != 2)
 		{
-			throw new RuntimeException("move: wrong number of arguments");
+			throw new RuntimeException("move: wrong number of arguments\n" + ops);
 		}
 		int[] opTypes = getOpTypes(ops);
 
@@ -78,35 +105,57 @@ public class Asm {
 		{
 			temp_dst = new_temp();
 		}
-		
 		if (opTypes[SRC] == IMM)
 		{
 			add_line("addi " + temp_dst + ", " + zero + ", " + ops[SRC]);
 		}
 		else
 		{ //SRC is REG
-			add_line("move " +temp_dst + ", " + ops[SRC]);
+			add_line("move " + temp_dst + ", " + ops[SRC]);
 			
 		}
-		
 		if (opTypes[TARGET] == MEM)
 		{
 			add_line("sw " + ops[TARGET] + ", " + getVarOffset(temp_dst) + "(" + fp + ")");
 		}
-		
-		
 	}
 
-	//returns an unused temporary
-	private String new_temp() {
-		++temp_counter;
-		return "RR" + Integer.toString(temp_counter - 1);
+	
+	public void virtual_call(String[] ops)
+	{
+		final int CLASS = 0;
+		final int OFFSET = 1;
+		final int CALL_DST = ops.length-1;
+		
+		for (int i=ops.length-2; i>=2; --i)
+		{ //push arguments
+			add_line("push " + ops[i]);
+		}
+		add_line("push this");
+		
+		String off = Integer.toString(4*Integer.parseInt(ops[OFFSET]));
+		String temp = new_temp();
+		add_line("lw " + temp + ", 0(" + ops[CLASS] + ")"); //get the DV
+		add_line("lw " + temp + ", " + off + "(" + temp + ")"); //get the correct function
+		add_line("jalr " + temp); //save return address and call the virtual func
+		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
 	}
-
-	//get a variable name and returns its offset on the stack
-	private String getVarOffset(String var) {
-		//TODO!!!!
-		return "";
+	
+	public void static_call(String[] ops)
+	{
+		final int LABEL = 0;
+		final int CALL_DST = ops.length-1;
+		
+		for (int i=ops.length-2; i>=1; --i)
+		{ //push arguments
+			add_line("push " + ops[i]);
+		}
+		
+		add_line("push 0"); //no 'this' in static call
+		
+		add_line("jal " + LABEL); //save return address and call the virtual func
+		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
 	}
+	
 
 }
