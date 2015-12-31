@@ -147,10 +147,7 @@ public class Asm {
 		}
 		
 		String asm_inst = opTypes[SRC] == IMM ? arith_imm_insts.get(Instruction) : arith_reg_insts.get(Instruction);
-		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);
-		
-		
-		
+		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);		
 	}
 
 	
