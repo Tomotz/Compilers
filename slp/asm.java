@@ -1,5 +1,8 @@
 package slp;
 
+import java.util.Dictionary;
+import java.util.HashMap;
+
 public class Asm {
 	static String code = "";
 	private static int temp_counter;
@@ -10,9 +13,8 @@ public class Asm {
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
-	static final int DST = 2;
-	static final int TARGET = 1;
 	static final int SRC = 0;
+	static final int DST = 1;
 
 	
 
@@ -100,8 +102,8 @@ public class Asm {
 			opTypes[SRC] = REG;
 			ops[SRC] = temp_src;
 		}
-		String temp_dst = ops[TARGET];
-		if (opTypes[TARGET] == MEM)
+		String temp_dst = ops[DST];
+		if (opTypes[DST] == MEM)
 		{
 			temp_dst = new_temp();
 		}
@@ -114,10 +116,41 @@ public class Asm {
 			add_line("move " + temp_dst + ", " + ops[SRC]);
 			
 		}
-		if (opTypes[TARGET] == MEM)
+		if (opTypes[DST] == MEM)
 		{
-			add_line("sw " + ops[TARGET] + ", " + getVarOffset(temp_dst) + "(" + fp + ")");
+			add_line("sw " + ops[DST] + ", " + getVarOffset(temp_dst) + "(" + fp + ")");
 		}
+	}
+
+	HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
+	put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
+	HashMap<String, String> arith_reg_insts = new HashMap<String, String>() {{ put("Add", "add"); put("Or", "or"); 
+	put("Xor", "xor"); put("And", "and"); put("Sub", "sub"); }};
+	public void arithmetic_op(String Instruction, String[] ops)
+	{
+		if (ops.length != 2)
+		{
+			throw new RuntimeException(Instruction + ": wrong number of arguments\n" + ops);
+		}
+		int[] opTypes = getOpTypes(ops);
+		String temp_src = new_temp();
+		if (opTypes[SRC] == MEM)
+		{
+			add_line("lw " + temp_src + ", " + getVarOffset(ops[SRC]) + "(" + fp + ")");
+			opTypes[SRC] = REG;
+			ops[SRC] = temp_src;
+		}
+		
+		if (Instruction.equals("Sub"))
+		{
+			ops[SRC] = Integer.toString(-Integer.parseInt(ops[SRC]));
+		}
+		
+		String asm_inst = opTypes[SRC] == IMM ? arith_imm_insts.get(Instruction) : arith_reg_insts.get(Instruction);
+		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);
+		
+		
+		
 	}
 
 	
