@@ -51,7 +51,7 @@ line, */
   
 %{
 public void printLineNumber(){
-	System.out.println();
+	System.out.pr3intln();
 	System.out.print(yyline+1);
 	System.out.print(": "); 
 }  
