@@ -2,6 +2,8 @@ package slp;
 
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.*;
+import java_cup.runtime.Symbol;
 
 public class Asm {
 	static String code = "";
@@ -16,9 +18,10 @@ public class Asm {
 	static final int SRC = 0;
 	static final int DST = 1;
 
-	
+	static final boolean DEBUG = true;
 
 	static void add_line(String content) {
+		if (DEBUG) System.out.println(content);
 		code += content + "\n";
 	}
 	
@@ -35,7 +38,7 @@ public class Asm {
 	}
 
 	//returns IMM, REG or MEM
-	public int getSingleOpType(String value)
+	public static int getSingleOpType(String value)
 	{
 		if (value.startsWith("R"))
 		{
@@ -49,7 +52,7 @@ public class Asm {
 			return MEM;
 	}
 	
-	int[] getOpTypes(String[] ops)
+	static int[] getOpTypes(String[] ops)
 	{
 		int[] opTypes = new int[ops.length];
 		int i=0;
@@ -61,13 +64,13 @@ public class Asm {
 	}
 	
 	//returns an unused temporary
-	private String new_temp() {
+	private static String new_temp() {
 		++temp_counter;
 		return "RR" + Integer.toString(temp_counter - 1);
 	}
 
 	//get a variable name and returns its offset on the stack
-	private String getVarOffset(String var) {
+	private static String getVarOffset(String var) {
 		//try parsing as var
 		String[] var_parts = var.split("_var_");
 		if (var_parts.length > 1)
@@ -86,7 +89,7 @@ public class Asm {
 	}
 	
 
-	public void move(String[] ops)
+	public static void move(String[] ops)
 	{
 		//lui and ori??
 		if (ops.length != 2)
@@ -151,7 +154,7 @@ public class Asm {
 	}
 
 	
-	public void virtual_call(String[] ops)
+	public static void virtual_call(String[] ops)
 	{
 		final int CLASS = 0;
 		final int OFFSET = 1;
@@ -171,7 +174,7 @@ public class Asm {
 		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
 	}
 	
-	public void static_call(String[] ops)
+	public static void static_call(String[] ops)
 	{
 		final int LABEL = 0;
 		final int CALL_DST = ops.length-1;
@@ -187,5 +190,90 @@ public class Asm {
 		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
 	}
 	
-
+	public static void LirToMips(IRLexer lexer) throws Exception{
+		
+		Symbol token = lexer.next_token();
+		Symbol nextToken;
+		List<String> resultList;
+		while (token.sym != sym.EOF)
+		{
+			String result="";
+			//System.out.println(token.toString());
+			switch(token.sym){
+				case IRsym.STRINGLABEL:
+					if (DEBUG) result = "(string label:)";
+					nextToken = lexer.next_token();
+					result += token.toString() + " word. " + nextToken.toString();
+					add_line(result);
+					break;
+				case IRsym.LABEL:
+					if (DEBUG) result = "(label:)";
+					result += token.toString();
+					add_line(result);
+					break;
+				case IRsym.DVLABEL:
+					if (DEBUG) result = "(DVLabel:)";
+					result += token.toString();
+					result = result.substring(0, result.length()-1) + "word. ";
+					nextToken = lexer.next_token();
+					while(nextToken.sym != IRsym.RB){
+						if (nextToken.sym != IRsym.COMMA) result += nextToken.toString();
+						nextToken = lexer.next_token();
+					}	
+					add_line(result);
+					break;
+				case IRsym.MOVE:
+					
+					String op1 = lexer.next_token().toString();
+					lexer.next_token();
+					String op2 = lexer.next_token().toString();
+					String[] ops = {op1,op2};
+					move(ops);
+					break;
+					
+				case IRsym.VIRTUALCALL:
+					if (DEBUG) System.out.println("(virtualCall:)");
+					resultList = new ArrayList<String>();
+					resultList.add(lexer.next_token().toString()); // object of the virtual call
+					lexer.next_token(); // DOT
+					resultList.add(lexer.next_token().toString());	// offset
+					lexer.next_token();	// LP
+					nextToken = lexer.next_token();
+					while (nextToken.sym != IRsym.RP){
+						if (nextToken.sym == IRsym.COMMA) 
+							nextToken = lexer.next_token();	// ignore commas. now nextToken is formal param
+						nextToken = lexer.next_token();	// now nextToken is "="
+						nextToken = lexer.next_token(); // now nextToken is the actual arg
+						resultList.add(nextToken.toString());
+						nextToken = lexer.next_token();
+					}
+					lexer.next_token();	// ignore comma
+					resultList.add(lexer.next_token().toString());	// result reg
+					virtual_call(resultList.toArray(new String[0]));
+ 					break;
+ 					
+				case IRsym.STATICCALL:
+					if (DEBUG) System.out.println("(staticCall:)");
+					resultList = new ArrayList<String>();
+					resultList.add(lexer.next_token().toString());	// _class_method
+					lexer.next_token();	// LP
+					
+					token = lexer.next_token();
+					while(token.sym != IRsym.RP){
+						if (token.sym == IRsym.COMMA) lexer.next_token();	// ignore commas
+						lexer.next_token();	// ignore formal parameter and "="
+						token=lexer.next_token(); // ignore "="
+						resultList.add(token.toString());	// arg of the virtual call
+						token = lexer.next_token();
+					}
+					lexer.next_token();	// ignore comma
+					resultList.add(lexer.next_token().toString());	// result reg
+					static_call(resultList.toArray(new String[0]));
+					break;
+				default: break;
+			}			
+			token = lexer.next_token();
+			
+		}
+	}
 }
