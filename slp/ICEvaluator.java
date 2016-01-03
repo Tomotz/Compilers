@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	protected ASTNode root;
-	static Boolean IS_DEBUG = true;
+	static Boolean IS_DEBUG = false;
 	static int run_num = 0;
 	static String stmt_src_reg = null; //the register in which the source of the current assign stmt is saved
 	
