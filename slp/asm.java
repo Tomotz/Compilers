@@ -129,10 +129,10 @@ public class Asm {
 
 	@SuppressWarnings("serial")
 	HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
-	put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
+		put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
 	@SuppressWarnings("serial")
 	HashMap<String, String> arith_reg_insts = new HashMap<String, String>() {{ put("Add", "add"); put("Or", "or"); 
-	put("Xor", "xor"); put("And", "and"); put("Sub", "sub"); }};
+		put("Xor", "xor"); put("And", "and"); put("Sub", "sub"); }};
 	public void arithmetic_op(String Instruction, String[] ops)
 	{
 		if (ops.length != 2)
@@ -140,9 +140,9 @@ public class Asm {
 			throw new RuntimeException(Instruction + ": wrong number of arguments\n" + ops);
 		}
 		int[] opTypes = getOpTypes(ops);
-		String temp_src = new_temp();
 		if (opTypes[SRC] == MEM)
 		{
+			String temp_src = new_temp();
 			add_line("lw " + temp_src + ", " + getVarOffset(ops[SRC]) + "(" + fp + ")");
 			opTypes[SRC] = REG;
 			ops[SRC] = temp_src;
@@ -157,6 +157,40 @@ public class Asm {
 		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);		
 	}
 
+	@SuppressWarnings("serial")
+	HashMap<String, String> mul_insts = new HashMap<String, String>() {{ put("Mul", "mult"); put("Div", "div"); 
+		put("Mod", "div"); }};
+	public void mult_op(String Instruction, String[] ops)
+	{
+		if (ops.length != 2)
+		{
+			throw new RuntimeException(Instruction + ": wrong number of arguments\n" + ops);
+		}
+		int[] opTypes = getOpTypes(ops);
+		if (opTypes[SRC] == MEM)
+		{
+			String temp_src = new_temp();
+			add_line("lw " + temp_src + ", " + getVarOffset(ops[SRC]) + "(" + fp + ")");
+			opTypes[SRC] = REG;
+			ops[SRC] = temp_src;
+		}
+		if (opTypes[SRC] == IMM)
+		{
+			String temp_src = new_temp();
+			add_line("addi " + temp_src + ", " + zero +", " + getVarOffset(ops[SRC]));
+			opTypes[SRC] = REG;
+			ops[SRC] = temp_src;
+		}
+		
+		
+		String asm_inst = mul_insts.get(Instruction);
+		add_line(asm_inst + " " + ops[DST] + ", " + ops[SRC]);	
+		if (Instruction.equals("Mod"))
+			add_line("mfhi " + " " + ops[DST]);		
+		else
+			add_line("mflo " + " " + ops[DST]);	
+			
+	}
 	
 	public static void virtual_call(String[] ops)
 	{
