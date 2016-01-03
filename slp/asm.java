@@ -1,8 +1,7 @@
 package slp;
 
-import java.util.Dictionary;
-import java.util.HashMap;
 import java.util.*;
+
 import java_cup.runtime.Symbol;
 
 public class Asm {
@@ -48,8 +47,7 @@ public class Asm {
 		{
 			return IMM;
 		}
-		else
-			return MEM;
+		return MEM;
 	}
 	
 	static int[] getOpTypes(String[] ops)
@@ -81,8 +79,12 @@ public class Asm {
 		String[] arg_parts = var.split("_arg_");
 		if (arg_parts.length > 1)
 		{
-			//leave place for this, ra, fp
-			return Integer.toString(4*Integer.parseInt(var_parts[1])+3*4); 
+			//leave place for 'this, ra, fp'
+			return Integer.toString(4*Integer.parseInt(arg_parts[1])+3*4); 
+		}
+		if (var.equals("this"))
+		{
+			return "8";
 		}
 		throw new RuntimeException("bad var name: " + var);
 		
@@ -121,12 +123,14 @@ public class Asm {
 		}
 		if (opTypes[DST] == MEM)
 		{
-			add_line("sw " + ops[DST] + ", " + getVarOffset(temp_dst) + "(" + fp + ")");
+			add_line("sw " + ops[SRC] + ", " + getVarOffset(ops[DST]) + "(" + fp + ")");
 		}
 	}
 
+	@SuppressWarnings("serial")
 	HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
 	put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
+	@SuppressWarnings("serial")
 	HashMap<String, String> arith_reg_insts = new HashMap<String, String>() {{ put("Add", "add"); put("Or", "or"); 
 	put("Xor", "xor"); put("And", "and"); put("Sub", "sub"); }};
 	public void arithmetic_op(String Instruction, String[] ops)
@@ -201,23 +205,27 @@ public class Asm {
 			//System.out.println(token.toString());
 			switch(token.sym){
 				case IRsym.STRINGLABEL:
-					if (DEBUG) result = "(string label:)";
+					if (DEBUG) 
+						result = "(string label:)";
 					nextToken = lexer.next_token();
-					result += token.toString() + " word. " + nextToken.toString();
+					result += token.toString() + " .asciiz " + nextToken.toString();
 					add_line(result);
 					break;
 				case IRsym.LABEL:
-					if (DEBUG) result = "(label:)";
+					if (DEBUG) 
+						result = "(label:)";
 					result += token.toString();
 					add_line(result);
 					break;
 				case IRsym.DVLABEL:
-					if (DEBUG) result = "(DVLabel:)";
+					if (DEBUG) 
+						result = "(DVLabel:)";
 					result += token.toString();
-					result = result.substring(0, result.length()-1) + "word. ";
+					result = result.substring(0, result.length()-1) + ".word ";
 					nextToken = lexer.next_token();
 					while(nextToken.sym != IRsym.RB){
-						if (nextToken.sym != IRsym.COMMA) result += nextToken.toString();
+						if (nextToken.sym != IRsym.COMMA) 
+							result += nextToken.toString();
 						nextToken = lexer.next_token();
 					}	
 					add_line(result);
@@ -232,7 +240,8 @@ public class Asm {
 					break;
 					
 				case IRsym.VIRTUALCALL:
-					if (DEBUG) System.out.println("(virtualCall:)");
+					if (DEBUG) 
+						System.out.println("(virtualCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString()); // object of the virtual call
 					lexer.next_token(); // DOT
@@ -253,7 +262,8 @@ public class Asm {
  					break;
  					
 				case IRsym.STATICCALL:
-					if (DEBUG) System.out.println("(staticCall:)");
+					if (DEBUG) 
+						System.out.println("(staticCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString());	// _class_method
 					lexer.next_token();	// LP
