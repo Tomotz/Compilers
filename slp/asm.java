@@ -390,6 +390,8 @@ public class Asm {
 					Asm func = new Asm();
 					 func.arithmetic_op("sub", oper);
 					 */
+				case IRsym.COMMENT:
+					add_line(token.toString());
 				default: break;
 			}			
 			token = lexer.next_token();

@@ -203,7 +203,7 @@ DVLabel			= {Label} [ \t\f]* "["
 					
 {WhiteSpace}		{ /* just skip what was found, do nothing */ }  
 					
-{COMMENT}			{  }
+{COMMENT}			{ return printToken(new String(yytext()), IRsym.COMMENT); }
 
 
 .|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1)); }
