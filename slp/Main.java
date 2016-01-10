@@ -1,5 +1,7 @@
 package slp;
 
+//import sym;
+
 import java.io.*;
 
 import java_cup.runtime.*;
@@ -35,6 +37,7 @@ public class Main {
 			}
 			
 			// Parse the input file
+		
 			FileReader txtFile = new FileReader(args[0]);
 			Lexer scanner = new Lexer(txtFile);
 			Parser parser = new Parser(scanner);
@@ -43,6 +46,7 @@ public class Main {
 			Symbol parseSymbol = parser.parse();
 			System.out.println("Parsed " + args[0] + " successfully!");
 			ASTRoot root = (ASTRoot) parseSymbol.value;
+			
 			
 			
 			//Pretty-print the program to System.out
@@ -56,9 +60,29 @@ public class Main {
 			evaluator.evaluate();
 			
 			System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
+			
+			// LIR to MIPS
+			
+			System.out.println("\n\nLIR to MIPS\n");
+			FileReader LirFile = new FileReader("output.lir");
+			IRLexer LirScanner = new IRLexer(LirFile);
+			
+			/*
+			Symbol token = LirScanner.next_token();
+			while (token.sym != sym.EOF){
+				System.out.println(token.toString());
+				token=LirScanner.next_token();
+			}
+			*/
+			Asm.LirToMips(LirScanner);
+			
+			
+			
 		} catch (FileNotFoundException e) {//(Exception e) {
 			System.out.print(e);
 		}
+		
+		
 	}
 	
 	/** Prints usage information about this application to System.out

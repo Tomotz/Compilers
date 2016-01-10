@@ -11,7 +11,7 @@
 /*************/
    
 import java_cup.runtime.*;
-
+ 
 /******************************/
 /* DOLAR DOLAR - DON'T TOUCH! */
 /******************************/
@@ -26,7 +26,7 @@ import java_cup.runtime.*;
 /* Lexer is the name of the class JFlex will create. */
 /* The code will be written to the file Lexer.java.  */
 /*****************************************************/ 
-%class Lexer
+%class IRLexer
 
 /********************************************************************/
 /* The current line number can be accessed with the variable yyline */
@@ -51,7 +51,7 @@ line, */
   
 %{
 public void printLineNumber(){
-	System.out.pr3intln();
+	System.out.println();
 	System.out.print(yyline+1);
 	System.out.print(": "); 
 }  
@@ -93,7 +93,7 @@ current token */
     
 
 /*************************************************************************
-
+ 
 ********/
     private Token symbol(int type, String token_name)               
    		{return new Token(type, yyline, yycolumn, token_name);}
@@ -104,6 +104,7 @@ current token */
 /***********************/
 /* MACRO DECALARATIONS */
 /***********************/
+/*
 LineTerminator	= \r|\n|\r\n
 InputCharacter	= [^\r\n]
 StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
@@ -114,7 +115,20 @@ illegalInt       = 0+[1-9]+
 CLASS_ID		= [A-Z][A-Za-z_0-9]* 
 COMMENT			= "/*" ~"*/" | "//" {InputCharacter}* {LineTerminator}?
 QUOTE			= \" {StringCharacter}* \"
-/******************************/
+*/
+/****************************************************/
+LineTerminator	= \r|\n|\r\n
+InputCharacter	= [^\r\n]
+StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
+WhiteSpace		= {LineTerminator} | [ \t\f]
+QUOTE			= \" {StringCharacter}* \"
+COMMENT			= "#" {InputCharacter}* {LineTerminator}?
+WORD			= [A-Za-z_0-9]+
+QUOTE			= \" {StringCharacter}* \"
+StringLabel		= [A-Za-z0-9]{WORD}":" 
+Label			= "_"{WORD}":"
+DVLabel			= {Label} [ \t\f]* "["
+/******QUOTE************************/
 /* DOLAR DOLAR - DON'T TOUCH! */
 /******************************/
 
@@ -132,84 +146,71 @@ QUOTE			= \" {StringCharacter}* \"
    
 <YYINITIAL> {
 
-"="					{ return printToken("ASSIGN", sym.ASSIGN);}
-"boolean"			{ return printToken("BOOLEAN", sym.BOOLEAN);}
-"break"				{ return printToken("BREAK",sym.BREAK);}
-"class"				{ return printToken("CLASS",sym.CLASS);}
-","					{ return printToken("COMMA",sym.COMMA);}
-"continue"			{ return printToken("CONTINUE",sym.CONTINUE);}
-"/"					{ return printToken("DIVIDE",sym.DIVIDE);}
-"."					{ return printToken("DOT",sym.DOT);}
-"=="				{ return printToken("EQUAL",sym.EQUAL);}
-"extends"			{ return printToken("EXTENDS",sym.EXTENDS);}
-"else"				{ return printToken("ELSE",sym.ELSE);}
-"false"				{ return printToken("FALSE",sym.FALSE);}  
-">"					{ return printToken("GT",sym.GT);}
-">="				{ return printToken("GTE",sym.GTE);}
-"if"				{ return printToken("IF",sym.IF);}
-"int"				{ return printToken("INT",sym.INT);}
-"&&"				{ return printToken("LAND",sym.LAND);}
-"["					{ return printToken("LB",sym.LB);}
-"("					{ return printToken("LP",sym.LP);}
-"{"					{ return printToken("LCBR",sym.LCBR);}
-"length"			{ return printToken("LENGTH",sym.LENGTH);}
-"new"				{ return printToken("NEW",sym.NEW);}
-"!"					{ return printToken("LNEG",sym.LNEG);}
-"||"				{ return printToken("LOR",sym.LOR);}
-"<"					{ return printToken("LT",sym.LT);}
-"<="				{ return printToken("LTE",sym.LTE);}
-"-"					{ return printToken("MINUS",sym.MINUS);}
-"%"					{ return printToken("MOD",sym.MOD);}
-"*"					{ return printToken("MULTIPLY",sym.MULTIPLY);}
-"!="				{ return printToken("NEQUAL",sym.NEQUAL);}
-"null"				{ return printToken("NULL",sym.NULL);}
-"+"					{ return printToken("PLUS",sym.PLUS);}
-"]"					{ return printToken("RB",sym.RB);}
-"}"					{ return printToken("RCBR",sym.RCBR);}
-"return"			{ return printToken("RETURN",sym.RETURN);}
-")"					{ return printToken("RP",sym.RP);}
-";"					{ return printToken("SEMI",sym.SEMI);}
-"static"			{ return printToken("STATIC",sym.STATIC);}
-"string"			{ return printToken("STRING",sym.STRING);}
-"this"				{ return printToken("THIS",sym.THIS);}
-"true"				{ return printToken("TRUE",sym.TRUE);}
-"void"				{ return printToken("VOID",sym.VOID);}
-"while"				{ return printToken("WHILE",sym.WHILE);}
-"/*" 				{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }
-"*/"				{ throw new RuntimeException("Error: closed comment without an opening at line "+Integer.toString(yyline+1)); }
+
+"Move"					{ return printToken("Move", IRsym.MOVE); }
+"MoveArray"				{ return printToken("MoveArray", IRsym.MOVEARRAY); }
+"MoveField"				{ return printToken("MoveField",IRsym.MOVEFIELD); }
+"ArrayLength"			{ return printToken("ArrayLength",IRsym.ARRAYLENGTH); }
+"Add"					{ return printToken("Add",IRsym.ADD); }
+"Sub"					{ return printToken("Sub",IRsym.SUB); }
+"Mul"					{ return printToken("Mul",IRsym.MUL); }
+"Div"					{ return printToken("Div",IRsym.DIV); }
+"Mod"					{ return printToken("Mod",IRsym.MOD); }
+"Inc"					{ return printToken("Inc",IRsym.INC); }
+"Dec"					{ return printToken("Dec",IRsym.DEC); }
+"Neg"					{ return printToken("Neg",IRsym.NEG); }
+"Not"					{ return printToken("Not",IRsym.NOT); }
+"And"					{ return printToken("And",IRsym.AND); }
+"Or"					{ return printToken("Or",IRsym.OR); }
+"Xor"					{ return printToken("Xor",IRsym.XOR); }
+"Compare"				{ return printToken("Compare",IRsym.COMPARE); }
+"Jump"					{ return printToken("Jump",IRsym.JUMP); }
+"JumpTrue"				{ return printToken("JumpTrue",IRsym.JUMPTRUE); }
+"JumpFalse"				{ return printToken("JumpFalse",IRsym.JUMPFALSE); }
+"JumpG"					{ return printToken("JumpG",IRsym.JUMPG); }
+"JumpGE"				{ return printToken("JumpGE",IRsym.JUMPGE); }
+"JumpL"					{ return printToken("JumpL",IRsym.JUMPL); }
+"JumpLE"				{ return printToken("JumpLE",IRsym.JUMPLE); }
+"Library"				{ return printToken("Library",IRsym.LIBRARY); }
+"StaticCall"			{ return printToken("StaticCall",IRsym.STATICCALL); }
+"VirtualCall"			{ return printToken("VirtualCall",IRsym.VIRTUALCALL); }
+"Return"				{ return printToken("Return",IRsym.RETURN); }
+","						{ return printToken(",",IRsym.COMMA); }
+":"						{ return printToken(":",IRsym.COLON); }
+"_"						{ return printToken("_",IRsym.UNDER); }
+"["						{ return printToken("LB",IRsym.LB);}
+"("						{ return printToken("LP",IRsym.LP);}
+"]"						{ return printToken("RB",IRsym.RB);}
+")"						{ return printToken("RP",IRsym.RP);}
+"="						{ return printToken("ASSIGN", IRsym.ASSIGN);}
+"."						{ return printToken("DOT",IRsym.DOT);}
+ 
+
+{StringLabel}		{
+						return printToken(new String(yytext()), IRsym.STRINGLABEL);
+					}  
+
+{DVLabel}			{ return printToken(new String(yytext()),	IRsym.DVLABEL); }
+
+{Label}		{
+						return printToken(new String(yytext()),	IRsym.LABEL);
+					} 
 
 
-{INTEGER}			{
-						return printToken("INTEGER(" + new String(yytext()) + ")", 
-							sym.INTEGER, new Integer(yytext()));
-					}   
-{IDENTIFIER}		{
-						return printToken("ID(" + new String(yytext()) + ")", 
-							sym.ID, new String(yytext()));
-					}
-						
-{CLASS_ID}			{
-						return printToken("CLASS_ID(" + new String(yytext()) + ")", 
-							sym.CLASS_ID, new String(yytext()));
-					}	
+{QUOTE}				{ return printToken(new String(yytext()), IRsym.QUOTE); }
+					
+{WORD}				{ return printToken(new String(yytext()), IRsym.WORD); }
 					
 {WhiteSpace}		{ /* just skip what was found, do nothing */ }  
-
-{QUOTE}				{
-						return printToken("QUOTE(" + new String(yytext()) + ")", 
-							sym.QUOTE, new String(yytext()));
-					} 
 					
-{COMMENT}			{ /* skip */ }
+{COMMENT}			{ return printToken(new String(yytext()), IRsym.COMMENT); }
 
 
 .|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1)); }
 
-{illegalInt}        { throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1));  }
-
 
 <<EOF>>             {
-						return printToken("EOF", sym.EOF, new String(yytext()));
+						return printToken("EOF", IRsym.EOF, new String(yytext()));
 					}
 
 
