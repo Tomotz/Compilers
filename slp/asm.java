@@ -240,6 +240,7 @@ public class Asm {
 	}
 	
 	public static void ret(String rValue){
+		add_line("move " + "$v1," + rValue); //save return value in v1
 		add_line("jr " + ret);
 	}
 	
@@ -269,6 +270,35 @@ public class Asm {
 	
 	public static void JumpTrue(String label){
 		add_line("beq " + compRig + "," + compLef + "," + label);
+	}
+	
+	public static void not(String cond){
+		add_line("not " + cond + "," + cond);
+	}
+	
+	public static void exit(){
+		add_line("li $v0, 10");
+		add_line("syscall");
+	}
+	
+	public static void printInt(int d){
+		add_line("li $v0, 1");
+		add_line("li $a0, " + d);
+		add_line("syscall");
+	}
+	
+	public static void printChar(char c){
+		add_line("li $v0, 11");
+		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
+		add_line("syscall");
+	}
+	
+	public static void allocate(int byteSize){
+		add_line("li $a0, " + byteSize);
+		add_line("mul $a0, $a0, 4");
+		add_line("li $v0, 9");
+		add_line("syscall");
+		add_line("move $t0, $v0");
 	}
 	
 	public static void LirToMips(IRLexer lexer) throws Exception{
@@ -378,22 +408,34 @@ public class Asm {
 					if (DEBUG) 
 						System.out.println("(return:)");
 					String rValue = lexer.next_token().toString();
+					ret(rValue);
 				case IRsym.SUB:	
-					/*
+					
 					if (DEBUG) 
 						System.out.println("(sub:)");
 					String lValue = lexer.next_token().toString();
 					lexer.next_token().toString();
 					rValue = lexer.next_token().toString();
 					String[] oper = {lValue,rValue};
-					System.out.println("sub " + lValue + " " + rValue);
+					
+					//System.out.println("debug: sub " + lValue + " " + rValue);
 					Asm func = new Asm();
-					 func.arithmetic_op("sub", oper);
-					 */
+					func.arithmetic_op("Sub", oper);
+					break;
+				case IRsym.NOT:	
+					
+					if (DEBUG) 
+						System.out.println("(not:)");
+					String nt = lexer.next_token().toString();
+					not(nt);
+					
 				case IRsym.COMMENT:
+					if (DEBUG) 
+						System.out.println("(comment:)");
 					add_line(token.toString());
 				default: break;
-			}			
+			}	
+			
 			token = lexer.next_token();
 			
 		}
