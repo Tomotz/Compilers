@@ -1,6 +1,8 @@
 package slp;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java_cup.runtime.Symbol;
 
@@ -35,12 +37,93 @@ public class asm
 	static Map<Integer, String> reg_def = new HashMap<Integer, String>();
 	static List<List<String>> in = new ArrayList<List<String>>();
 	static List<List<String>> out = new ArrayList<List<String>>();
+	static Map<String, Set<String>> bump_graph = new HashMap<String, Set<String>>();
+	static Map<String, String> reg_aloc = new HashMap<String, String>();
 	
+	//run register allocation algorithm
 	static void reg_algo()
 	{
 		get_label_lines();
 		prepare_usage();
 		get_dataflow();
+		build_graph();
+		allocate_regs();
+		fix_code();
+	}
+
+	//replace the temporaries in code with correct registers
+	private static void fix_code()
+	{
+		//probably doesn't work :)
+		String seperator = "( | ,|, |,|\\(|\\)|$)";
+		for (String reg : reg_aloc.keySet()) {
+			Pattern p = Pattern.compile(seperator +"(" + reg + ")" + seperator);
+			Matcher m = p.matcher(code);
+			if (m.find()) {
+			    code = m.replaceAll(reg_aloc.get(reg) + " $2");  
+			}
+			
+		}
+		
+	}
+
+	//build the reg alloc dict
+	private static void allocate_regs() {
+		for (String temp : reg_aloc.keySet()) 
+		{
+			Set<String> banned_regs = new HashSet<String>();
+			for (String neighbor : bump_graph.get(temp))
+			{
+				if (reg_aloc.containsKey(neighbor))
+					banned_regs.add(reg_aloc.get(neighbor));				
+			}
+			boolean is_alloced = false;
+			for (int i=0; i<8; ++i)
+			{
+				String allocated_reg = "$t" + Integer.toString(i);
+				if (banned_regs.contains(allocated_reg))
+					continue;
+				is_alloced = true;
+				reg_aloc.put(temp, allocated_reg);				
+			}
+			if (!is_alloced)
+				throw new RuntimeException("cannot allocate temp: " + temp + " not enough regs in pool");
+				
+		}		
+	}
+
+	//build the interference graph
+	private static void build_graph() 
+	{
+		for (List<String> line : in)
+		{
+			for (int i=0; i<line.size();++i)
+			{
+				for (int j=i+1; j<line.size();++j)
+				{
+					String temp0 = line.get(i);
+					String temp1 = line.get(j);
+					if (temp0 == temp1)
+						continue;
+					if (bump_graph.containsKey(temp0))
+						bump_graph.get(temp0).add(temp1);
+					else
+					{
+						Set<String> h = new HashSet<String>();
+						h.add(temp1);
+						bump_graph.put(temp0, h);
+					}
+					if (bump_graph.containsKey(temp1))
+						bump_graph.get(temp1).add(temp0);
+					else
+					{
+						Set<String> h = new HashSet<String>();
+						h.add(temp0);
+						bump_graph.put(temp1, h);
+					}
+				}	
+			}
+		}
 		
 	}
 
@@ -93,8 +176,8 @@ public class asm
 	private static void prepare_usage() {
 		for (String line : code.split("\n")) {
 			String trimmed = line.trim();
-			if (trimmed.equals("") || trimmed.startsWith("#"))
-				continue;
+			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
+				continue; //comment, label or empty line
 			String[] parts = trimmed.split(" | ,|,|(|)");
 			String inst = parts[0];
 			List<Integer> lines_follow = new ArrayList<Integer>();
@@ -125,7 +208,18 @@ public class asm
 	
 	//searches the code for labels and put their lines in the label_lines dict
 	private static void get_label_lines() {
-		// TODO Auto-generated method stub
+		int line_num = 0;
+		for (String line : code.split("\n")) {
+			String trimmed = line.trim();
+			if (trimmed.equals("") || trimmed.startsWith("#"))
+				continue; //comment
+			if (!trimmed.contains(":"))
+			{
+				++line_num;
+				continue;//not a label
+			}
+			label_lines.put(trimmed.replace(":",  ""), line_num);	
+		}
 		
 	}
 
@@ -194,7 +288,7 @@ public class asm
 	//returns an unused temporary
 	private static String new_temp() {
 		++temp_counter;
-		return "RR" + Integer.toString(temp_counter - 1);
+		return "RA" + Integer.toString(temp_counter - 1);
 	}
 
 	//get a variable name and returns its offset on the stack
