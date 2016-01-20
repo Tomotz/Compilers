@@ -30,6 +30,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 	public void evaluate() {
 		Environment env = new Environment();
 		env.run_num = 0;
+		IR.runtime_error_label = IR.get_label("runtime_error");
 		if (IS_DEBUG)
 			System.out.println("starting first itteration");
 		root.accept(this, env);
@@ -38,6 +39,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
 		root.accept(this, env);
+		IR.runtime_error();
 		write_ir();
 	}
 	
@@ -975,10 +977,11 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			
 			f = ((icClass) env.getObjByName(obj.type)).getObject(vc.id, env);
 			obj_reg = obj.ir_val;
+			IR.check_null_ref(obj_reg);
 		}
 		
 		if (IS_DEBUG)
-		System.out.println("func name: " + f.name);
+			System.out.println("func name: " + f.name);
 		// check vc is a valid method:
 		if (!(f instanceof icFunction))
 			error("The method '" + vc.id + "' has not been declared", vc);

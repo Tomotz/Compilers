@@ -13,6 +13,7 @@ public class IR {
 	static int str_num = 0;
 	static String whLblStrt;   // labels for the use of break and continue in a while loop
 	static String whLblEnd;
+	static String runtime_error_label;
 
 	static void add_file_comment(int line_num)
 	{
@@ -135,6 +136,11 @@ public class IR {
 
 		String reg = new_temp();
 		add_line("Move " + src1 + "," + reg);
+		if (op == "Div")
+		{
+			add_line("Compare 0," + reg);
+			add_line("JumpFalse " + runtime_error_label);
+		}
 		add_line(op +" " + src2 + "," + reg);
 		return reg;
 
@@ -200,12 +206,17 @@ public class IR {
 
 	static String dot_len(String src) {
 		add_comment(src + ".length");
-		add_line("#__checkNullRef("+src+")");//TODO - remove comment
+		check_null_ref(src);
 		String reg1 = new_temp();
 		add_line("Move " + src + "," + reg1);
 		String reg2 = new_temp();
 		add_line("ArrayLength " + reg1 + "," + reg2);
 		return reg2;
+	}
+
+	public static void check_null_ref(String reg) {
+		add_line("Compare 0," + reg);
+		add_line("JumpFalse " + runtime_error_label);
 	}
 
 	public static void put_label_comment(String cls, String func) {
@@ -222,13 +233,36 @@ public class IR {
 	static String new_arr(String len, String type) {
 		add_comment("new " + type + "[" + len + "]");
 		String reg1 = new_temp();
-
 		add_line("Move " + len + "," + reg1);
+		add_line("Add 1," + reg1);
 		add_line("Mul 4," + reg1);
-		add_line("#__checkSize("+reg1+")");//TODO - remove comment
+		//check size(reg1)
+		add_line("Compare 0," + reg1);
+		add_line("JumpLE " + runtime_error_label);
+
 		String reg = new_temp();
 		add_line("Library __allocateArray(" + reg1 + ")," + reg);
+		
+		//init array
+		add_line("MoveArray " + len + "," + reg + "[0]");
+
+		init_allocated(len, reg);
+		
+		
 		return reg;
+	}
+
+	private static void init_allocated(String len, String start_reg) 
+	{
+		String temp = new_temp();
+		String init_loop_label = get_label("init_loop");
+
+		add_line("Move " + len + "," + temp);
+		add_line(init_loop_label + ":");
+		add_line("MoveArray 0," + start_reg + "[" + temp + "]");
+		add_line("Sub 1," + temp);
+		add_line("Compare 0," + temp);
+		add_line("JumpLE " + init_loop_label);
 	}
 
 	static String new_obj(String len, String type, String class_dv) {
@@ -236,6 +270,7 @@ public class IR {
 		String reg = new_temp();
 		add_line("Library __allocateObject(" + len + ")," + reg);
 		add_line("MoveField " + class_dv + "," + reg + ".0");
+		init_allocated(len, reg);
 		return reg;
 	}
 
@@ -417,6 +452,7 @@ public class IR {
 	{
 		String temp_expr = IR.new_temp();
 		IR.add_line("Move " + expr + "," + temp_expr);
+		check_null_ref(temp_expr);
 		String temp_id = id;
 		if (src==null)
 		{//non assign
@@ -454,8 +490,18 @@ public class IR {
 
 		//String temp_arr = IR.new_temp();
 		//IR.add_line("Move " + arr + "," + temp_arr);
+		check_null_ref(arr);
 		String temp_index = IR.new_temp();
 		IR.add_line("Move " + index + "," + temp_index);
+
+		//check array access
+		String temp = IR.new_temp();
+		add_line("MoveArray " + arr + "[0]," + "," + temp);
+
+		add_line("Compare " + temp_index + "," + temp);
+		add_line("JumpLE " + runtime_error_label);
+		
+		
 		if (src==null)
 		{//non assign
 			String out_reg = IR.new_temp();
@@ -486,6 +532,12 @@ public class IR {
 		add_line(fName + funcName +"(" +arguments);
 		return funcName;
 		
+	}
+
+	public static void runtime_error() {
+		add_line(runtime_error_label + ":");
+		add_line("Library __exit(0),Rdummy");
+				
 	}
 
 }
