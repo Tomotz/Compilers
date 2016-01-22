@@ -51,6 +51,8 @@ public class asm
 		build_graph();
 		allocate_regs();
 		fix_code();
+		if (DEBUG)
+			System.out.println(code);
 	}
 
 	//replace the temporaries in code with correct registers
