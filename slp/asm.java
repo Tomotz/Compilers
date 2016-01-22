@@ -51,8 +51,8 @@ public class asm
 		build_graph();
 		allocate_regs();
 		fix_code();
-		if (DEBUG)
-			System.out.println(code);
+		//if (DEBUG)
+			//System.out.println(code);
 	}
 
 	//replace the temporaries in code with correct registers
@@ -167,7 +167,8 @@ public class asm
 				
 				//out[n] = U(in[s])
 				List<String> cur_out= new ArrayList<String>();
-				for (Integer next :next_lines.get(line))
+				List<Integer> next_line = next_lines.get(line);
+				for (Integer next : next_line)
 				{
 					cur_out.addAll(in.get(next));
 				}
@@ -183,10 +184,12 @@ public class asm
 
 	//prepare all reg use and def lists
 	private static void prepare_usage() {
+		int cur_line = 0;
 		for (String line : code.split("\n")) {
 			String trimmed = line.trim();
 			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
 				continue; //comment, label or empty line
+			
 			String[] parts = trimmed.split(" |\\, | \\,|\\,|\\(|\\)");
 			String inst = parts[0];
 			List<Integer> lines_follow = new ArrayList<Integer>();
@@ -196,14 +199,14 @@ public class asm
 			}
 			else if (inst.equals("jalr"))
 			{
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(cur_line);
 			}
 			else if (inst.equals("beq") || inst.equals("bne"))
 			{
 				reg_usage(parts[1], "use", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
-				lines_follow.add(label_lines.get(parts[1]));
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(label_lines.get(parts[3]));
+				lines_follow.add(cur_line);
 			}
 			else if (inst.equals("jr"))
 			{
@@ -218,7 +221,7 @@ public class asm
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(cur_line);
 			}
 			else if (inst.equals("addi") || inst.equals("addiu") || inst.equals("andi")
 					|| inst.equals("ori") || inst.equals("sll") || inst.equals("sra")
@@ -228,24 +231,34 @@ public class asm
 			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(cur_line);
 			}
 			else if (inst.equals("lw"))
 			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(cur_line);
 			}
 			else if (inst.equals("sw"))
 			{
 				reg_usage(parts[1], "use", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(next_lines.size()+1);
+				lines_follow.add(cur_line);
+			}
+			else if (inst.equals("li"))
+			{
+				reg_usage(parts[1], "def", next_lines.size());
+				lines_follow.add(cur_line);
+			}
+			else if (inst.equals("syscall"))
+			{
+				lines_follow.add(cur_line);
 			}
 			else
 				throw new RuntimeException("unknown instruction: " + inst);
 			
 			next_lines.add(lines_follow);
+			++cur_line;
 		}
 	}
 	
@@ -677,6 +690,18 @@ public class asm
 					String label = lexer.next_token().toString();
 					jump(label);
 					break;
+				case IRsym.JUMPFALSE:
+					if (DEBUG) 
+						System.out.println("#(jumpFalse:)");
+					String labelf = lexer.next_token().toString();
+					JumpFalse(labelf);
+					break;
+				case IRsym.JUMPTRUE:
+					if (DEBUG) 
+						System.out.println("#(jumpFalse:)");
+					String labelt = lexer.next_token().toString();
+					JumpTrue(labelt);
+					break;
 				case IRsym.COMPARE:
 					if (DEBUG) 
 						System.out.println("#(compare:)");
@@ -721,7 +746,18 @@ public class asm
 						System.out.println("#(comment:)");
 					add_line(token.toString());
 					break;
-				default: break;
+				case IRsym.LIBRARY:
+					if (DEBUG) 
+						System.out.println("#(library:)");
+					String libname = lexer.next_token().toString();
+					if (libname.equals("__exit"))
+						exit();
+					//TODO: other libs
+					break;
+				default:
+					if (DEBUG) 
+						System.out.println("bad token: " + token.toString());
+					break;
 			}	
 			
 			token = lexer.next_token();
