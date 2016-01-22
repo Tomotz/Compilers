@@ -324,7 +324,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					IRop = "Sub";
 				else if (op == Operator.DIV)
 				{
-					IR.add_line("#__checkZero(" + rhsType_type.ir_val + ")");//TODO - remove comment
+					
+					IR.add_line("Compare 0," + rhsType_type.ir_val);
+					IR.add_line("JumpFalse " + IR.runtime_error_label);
 					IRop = "Div";
 				}
 				else if (op == Operator.MULTIPLY)
@@ -901,7 +903,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 					else 
 					{
 						icObject id_o = ((icClass) clss).getObject(id, env);
-						 IR.add_line("#__checkNullRef(" + exp1.ir_val + ")"); //TODO - remove comment
+						IR.check_null_ref(exp1.ir_val);
 						 result = ((icClass) clss).getFieldType(id, env);
 						 String out_ir_val = null;
 						 if (run_num == 1)
@@ -938,8 +940,15 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			VarType out_type = new VarType(exp1.type, exp1.num_arrays - 1,exp1.ir_val);
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
-			IR.add_line("#__checkNullRef(" + out_type.ir_val + ")");//TODO - remove comment
-			IR.add_line("#__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");//TODO - remove comment
+			IR.check_null_ref(out_type.ir_val);
+			IR.add_line("#__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");
+			String temp_reg = IR.new_temp();
+			IR.add_line("MoveArray " + out_type.ir_val + "[0]," + temp_reg);
+			IR.add_line("Compare 0," + exp2.ir_val);
+			IR.add_line("JumpLE " + IR.runtime_error_label);
+			IR.add_line("Compare " + temp_reg + "," + exp2.ir_val);
+			IR.add_line("JumpGE " + IR.runtime_error_label);
+			
 			
 			
 
