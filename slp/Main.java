@@ -74,7 +74,7 @@ public class Main {
 				token=LirScanner.next_token();
 			}
 			*/
-			Asm.LirToMips(LirScanner);
+			asm.LirToMips(LirScanner);
 			
 			
 			

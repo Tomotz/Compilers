@@ -1,16 +1,21 @@
 package slp;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java_cup.runtime.Symbol;
 
-public class Asm {
+public class asm 
+{
 	static String code = "";
 	private static int temp_counter;
 
 	static final String fp = "$fp";
+	static final String sp = "$sp";
 	static final String zero = "$zero";
-	static final String ret = "$a0";
+	static final String ret_addr = "$ra";
+	static final String ret_val = "$v0";
 	static String compLef = null;
 	static String compRig = null;
 	static final int IMM = 0;
@@ -26,6 +31,223 @@ public class Asm {
 		code += content + "\n";
 	}
 	
+	static List<List<Integer>> next_lines = new ArrayList<List<Integer>>();
+	static Map<String, Integer> label_lines = new HashMap<String, Integer>();
+	static Map<Integer, List<String>> reg_use = new HashMap<Integer, List<String>>();
+	static Map<Integer, String> reg_def = new HashMap<Integer, String>();
+	static List<List<String>> in = new ArrayList<List<String>>();
+	static List<List<String>> out = new ArrayList<List<String>>();
+	static Map<String, Set<String>> bump_graph = new HashMap<String, Set<String>>();
+	static Map<String, String> reg_aloc = new HashMap<String, String>();
+	
+	//run register allocation algorithm
+	static void reg_algo()
+	{
+		get_label_lines();
+		prepare_usage();
+		get_dataflow();
+		build_graph();
+		allocate_regs();
+		fix_code();
+	}
+
+	//replace the temporaries in code with correct registers
+	private static void fix_code()
+	{
+		//probably doesn't work :)
+		String seperator = "( | ,|, |,|\\(|\\)|$)";
+		for (String reg : reg_aloc.keySet()) {
+			Pattern p = Pattern.compile(seperator +"(" + reg + ")" + seperator);
+			Matcher m = p.matcher(code);
+			if (m.find()) {
+			    code = m.replaceAll(reg_aloc.get(reg) + " $2");  
+			}
+			
+		}
+		
+	}
+
+	//build the reg alloc dict
+	private static void allocate_regs() {
+		for (String temp : reg_aloc.keySet()) 
+		{
+			Set<String> banned_regs = new HashSet<String>();
+			for (String neighbor : bump_graph.get(temp))
+			{
+				if (reg_aloc.containsKey(neighbor))
+					banned_regs.add(reg_aloc.get(neighbor));				
+			}
+			boolean is_alloced = false;
+			for (int i=0; i<8; ++i)
+			{
+				String allocated_reg = "$t" + Integer.toString(i);
+				if (banned_regs.contains(allocated_reg))
+					continue;
+				is_alloced = true;
+				reg_aloc.put(temp, allocated_reg);				
+			}
+			if (!is_alloced)
+				throw new RuntimeException("cannot allocate temp: " + temp + " not enough regs in pool");
+				
+		}		
+	}
+
+	//build the interference graph
+	private static void build_graph() 
+	{
+		for (List<String> line : in)
+		{
+			for (int i=0; i<line.size();++i)
+			{
+				for (int j=i+1; j<line.size();++j)
+				{
+					String temp0 = line.get(i);
+					String temp1 = line.get(j);
+					if (temp0 == temp1)
+						continue;
+					if (bump_graph.containsKey(temp0))
+						bump_graph.get(temp0).add(temp1);
+					else
+					{
+						Set<String> h = new HashSet<String>();
+						h.add(temp1);
+						bump_graph.put(temp0, h);
+					}
+					if (bump_graph.containsKey(temp1))
+						bump_graph.get(temp1).add(temp0);
+					else
+					{
+						Set<String> h = new HashSet<String>();
+						h.add(temp0);
+						bump_graph.put(temp1, h);
+					}
+				}	
+			}
+		}
+		
+	}
+
+	//fills in and out lists
+	private static void get_dataflow() {
+		boolean is_changed;
+		for (int line=0; line < next_lines.size(); ++line) {
+			//init in and out
+			in.add(new ArrayList<String>());
+			out.add(new ArrayList<String>());
+		}
+		do
+		{
+			is_changed = false;
+			for (int line=0; line < next_lines.size(); ++line) { 
+				//for each n
+				List<String> in_tag = new ArrayList<String>(in.get(line));
+				List<String> out_tag = new ArrayList<String>(out.get(line));
+				List<String> cur_in;
+				//in[n] = use[n]
+				if (reg_use.containsKey(line))
+					cur_in = new ArrayList<String>(reg_use.get(line));
+				else
+					cur_in = new ArrayList<String>();
+				//in[n] += out[n] - def[n]
+				for (String reg : out.get(line)) {
+					if (reg_def.containsKey(line) && reg_def.get(line) == reg)
+						continue;
+					cur_in.add(reg);
+				}
+				in.set(line, cur_in);
+				
+				//out[n] = U(in[s])
+				List<String> cur_out= new ArrayList<String>();
+				for (Integer next :next_lines.get(line))
+				{
+					cur_out.addAll(in.get(next));
+				}
+				out.set(line, cur_out);
+				is_changed = !(in_tag.equals(cur_in) && out_tag.equals(cur_out));
+				
+			}
+			
+			
+		}
+		while (is_changed);
+	}
+
+	//prepare all reg use and def lists
+	private static void prepare_usage() {
+		for (String line : code.split("\n")) {
+			String trimmed = line.trim();
+			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
+				continue; //comment, label or empty line
+			String[] parts = trimmed.split(" | ,|,|(|)");
+			String inst = parts[0];
+			List<Integer> lines_follow = new ArrayList<Integer>();
+			switch (inst)
+			{
+			case "j":
+				lines_follow.add(label_lines.get(parts[1]));
+			case "beq":
+				lines_follow.add(label_lines.get(parts[1]));
+				lines_follow.add(next_lines.size()+1);				
+			case "add":
+			case "sub":
+				reg_usage(parts[1], "def", next_lines.size());
+				reg_usage(parts[2], "use", next_lines.size());
+				reg_usage(parts[3], "use", next_lines.size());
+				lines_follow.add(next_lines.size()+1);
+				break;
+			case "addi":
+				reg_usage(parts[1], "def", next_lines.size());
+				reg_usage(parts[2], "use", next_lines.size());
+				lines_follow.add(next_lines.size()+1);
+			default:
+				throw new RuntimeException("unknown instruction: " + inst);
+			}
+			next_lines.add(lines_follow);
+		}
+	}
+	
+	//searches the code for labels and put their lines in the label_lines dict
+	private static void get_label_lines() {
+		int line_num = 0;
+		for (String line : code.split("\n")) {
+			String trimmed = line.trim();
+			if (trimmed.equals("") || trimmed.startsWith("#"))
+				continue; //comment
+			if (!trimmed.contains(":"))
+			{
+				++line_num;
+				continue;//not a label
+			}
+			label_lines.put(trimmed.replace(":",  ""), line_num);	
+		}
+		
+	}
+
+
+	//prepare the reg use or def of a single register
+	private static void reg_usage(String reg, String usage_type, int line_num)
+	{
+		if (!reg.startsWith("R"))
+			return; //not a temporary name
+		if (usage_type == "def")
+		{ //only one def per line. no list problems like in use
+			reg_def.put(line_num, reg);
+			return;
+		}
+		
+		//handle use
+		if (reg_use.containsKey(line_num))
+			reg_use.get(line_num).add(reg);
+		else
+		{
+			List<String> reg_list = new ArrayList<String>();
+			reg_list.add(reg);
+			reg_use.put(line_num, reg_list);
+		}
+	}
+
+
+
 	public static boolean isInteger(String s, int radix) {
 	    if(s.isEmpty()) return false;
 	    for(int i = 0; i < s.length(); i++) {
@@ -66,7 +288,7 @@ public class Asm {
 	//returns an unused temporary
 	private static String new_temp() {
 		++temp_counter;
-		return "RR" + Integer.toString(temp_counter - 1);
+		return "RA" + Integer.toString(temp_counter - 1);
 	}
 
 	//get a variable name and returns its offset on the stack
@@ -194,6 +416,14 @@ public class Asm {
 			
 	}
 	
+	public static String get_this()
+	{
+		String this_off = getVarOffset("this");
+		String temp = new_temp();
+		add_line("lw " + temp + ", " + this_off + "(" + fp + ")");
+		return temp;
+	}
+	
 	public static void virtual_call(String[] ops)
 	{
 		final int CLASS = 0;
@@ -202,32 +432,40 @@ public class Asm {
 		
 		for (int i=ops.length-2; i>=2; --i)
 		{ //push arguments
-			add_line("push " + ops[i]);
+			push(ops[i]);
 		}
-		add_line("push this");
+		
+		push(get_this());
 		
 		String off = Integer.toString(4*Integer.parseInt(ops[OFFSET]));
 		String temp = new_temp();
 		add_line("lw " + temp + ", 0(" + ops[CLASS] + ")"); //get the DV
 		add_line("lw " + temp + ", " + off + "(" + temp + ")"); //get the correct function
+		push(ret_addr); 
 		add_line("jalr " + temp); //save return address and call the virtual func
-		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
+		add_line("move " + ops[CALL_DST] + ", " + ret_val);
+	}
+	
+	public static void push(String reg)
+	{
+		add_line("addi " + sp + ", " + sp + ", -4");
+		add_line("sw " + reg + ", 4("+sp+")");
 	}
 	
 	public static void static_call(String[] ops)
 	{
 		final int LABEL = 0;
 		final int CALL_DST = ops.length-1;
-		
 		for (int i=ops.length-2; i>=1; --i)
 		{ //push arguments
-			add_line("push " + ops[i]);
+			push(ops[i]);
 		}
 		
-		add_line("push 0"); //no 'this' in static call
-		
+		push(zero); //no 'this' in static call
+
+		push(ret_addr); 
 		add_line("jal " + LABEL); //save return address and call the virtual func
-		add_line("move " + ops[CALL_DST] + ", " + ret); //save return address and call the virtual func
+		add_line("move " + ops[CALL_DST] + ", " + ret_val); 
 	}
 	
 	public static void compare(String fReg, String sReg){
@@ -240,7 +478,9 @@ public class Asm {
 	}
 	
 	public static void ret(String rValue){
-		add_line("jr " + ret);
+		//TODO: rValue can be integer. move work on registers
+		add_line("move " + ret_val + ", " + rValue); //save return value in v1
+		add_line("jr " + ret_addr);
 	}
 	
 	public static void jump(String label){
@@ -271,7 +511,37 @@ public class Asm {
 		add_line("beq " + compRig + "," + compLef + "," + label);
 	}
 	
-	public static void LirToMips(IRLexer lexer) throws Exception{
+	public static void not(String cond){
+		add_line("not " + cond + "," + cond);
+	}
+	
+	public static void exit(){
+		add_line("li $v0, 10");
+		add_line("syscall");
+	}
+	
+	public static void printInt(int d){
+		add_line("li $v0, 1");
+		add_line("li $a0, " + d);
+		add_line("syscall");
+	}
+	
+	public static void printChar(char c){
+		add_line("li $v0, 11");
+		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
+		add_line("syscall");
+	}
+	
+	public static void allocate(int byteSize){
+		add_line("li $a0, " + byteSize);
+		add_line("mul $a0, $a0, 4");
+		add_line("li $v0, 9");
+		add_line("syscall");
+		add_line("move $t0, $v0");
+	}
+	
+	public static void LirToMips(IRLexer lexer) throws Exception
+	{
 		
 		Symbol token = lexer.next_token();
 		Symbol nextToken;
@@ -283,20 +553,20 @@ public class Asm {
 			switch(token.sym){
 				case IRsym.STRINGLABEL:
 					if (DEBUG) 
-						result = "(string label:)";
+						System.out.println("#(string label:)");
 					nextToken = lexer.next_token();
 					result += token.toString() + " .asciiz " + nextToken.toString();
 					add_line(result);
 					break;
 				case IRsym.LABEL:
 					if (DEBUG) 
-						result = "(label:)";
+						System.out.println("#(label:)");
 					result += token.toString();
 					add_line(result);
 					break;
 				case IRsym.DVLABEL:
 					if (DEBUG) 
-						result = "(DVLabel:)";
+						System.out.println("#(DVLabel:)");
 					result += token.toString();
 					result = result.substring(0, result.length()-1) + ".word ";
 					nextToken = lexer.next_token();
@@ -318,7 +588,7 @@ public class Asm {
 					
 				case IRsym.VIRTUALCALL:
 					if (DEBUG) 
-						System.out.println("(virtualCall:)");
+						System.out.println("#(virtualCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString()); // object of the virtual call
 					lexer.next_token(); // DOT
@@ -340,7 +610,7 @@ public class Asm {
  					
 				case IRsym.STATICCALL:
 					if (DEBUG) 
-						System.out.println("(staticCall:)");
+						System.out.println("#(staticCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString());	// _class_method
 					lexer.next_token();	// LP
@@ -359,12 +629,13 @@ public class Asm {
 					break;
 				case IRsym.JUMP:
 					if (DEBUG) 
-						System.out.println("(jump:)");
+						System.out.println("#(jump:)");
 					String label = lexer.next_token().toString();
 					jump(label);
+					break;
 				case IRsym.COMPARE:
 					if (DEBUG) 
-						System.out.println("(compare:)");
+						System.out.println("#(compare:)");
 					compLef = lexer.next_token().toString();
 					token=lexer.next_token();
 					compRig = lexer.next_token().toString();
@@ -374,26 +645,41 @@ public class Asm {
 					String sReg = lexer.next_token().toString();
 					compare(fReg,sReg);
 					*/
+					break;
 				case IRsym.RETURN:
 					if (DEBUG) 
-						System.out.println("(return:)");
+						System.out.println("#(return:)");
 					String rValue = lexer.next_token().toString();
+					ret(rValue);
+					break;
 				case IRsym.SUB:	
-					/*
+					
 					if (DEBUG) 
-						System.out.println("(sub:)");
+						System.out.println("#(sub:)");
 					String lValue = lexer.next_token().toString();
 					lexer.next_token().toString();
 					rValue = lexer.next_token().toString();
 					String[] oper = {lValue,rValue};
-					System.out.println("sub " + lValue + " " + rValue);
-					Asm func = new Asm();
-					 func.arithmetic_op("sub", oper);
-					 */
+					
+					//System.out.println("debug: sub " + lValue + " " + rValue);
+					asm func = new asm();
+					func.arithmetic_op("Sub", oper);
+					break;
+				case IRsym.NOT:	
+					
+					if (DEBUG) 
+						System.out.println("#(not:)");
+					String nt = lexer.next_token().toString();
+					not(nt);
+					break;
 				case IRsym.COMMENT:
+					if (DEBUG) 
+						System.out.println("#(comment:)");
 					add_line(token.toString());
+					break;
 				default: break;
-			}			
+			}	
+			
 			token = lexer.next_token();
 			
 		}
