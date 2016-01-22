@@ -59,7 +59,7 @@ public class Main {
 			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
 			
-			System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
+			//System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
 			
 			// LIR to MIPS
 			
@@ -75,6 +75,17 @@ public class Main {
 			}
 			*/
 			asm.LirToMips(LirScanner);
+			//System.out.println(asm.code);
+			FileWriter IR_file;
+			try {
+				IR_file = new FileWriter("output.asm");
+				IR_file.write(asm.code);
+				IR_file.close();
+			} catch (IOException e) {
+				System.out.println("could not open asm file");
+				e.printStackTrace();
+				return;
+			}
 			
 			
 			

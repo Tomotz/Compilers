@@ -420,7 +420,6 @@ public class IR {
 				
 				arrayIn = offset.substring(0,varIndex-1);
 				offset = offset.substring(varIndex+1,offset.length());
-				System.out.println(offset + " ar " + arrayIn);
 				temp = new_temp();
 				add_line("MoveArray " + field + "[" + arrayIn + "]" + "," + temp);
 				field = temp;

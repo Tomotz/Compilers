@@ -24,10 +24,11 @@ public class asm
 	static final int SRC = 0;
 	static final int DST = 1;
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 
 	static void add_line(String content) {
-		if (DEBUG) System.out.println(content);
+		if (DEBUG) 
+			System.out.println(content);
 		code += content + "\n";
 	}
 	
@@ -178,30 +179,64 @@ public class asm
 			String trimmed = line.trim();
 			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
 				continue; //comment, label or empty line
-			String[] parts = trimmed.split(" | ,|,|(|)");
+			String[] parts = trimmed.split(" |\\, | \\,|\\,|\\(|\\)");
 			String inst = parts[0];
 			List<Integer> lines_follow = new ArrayList<Integer>();
-			switch (inst)
+			if (inst.equals("j"))
 			{
-			case "j":
 				lines_follow.add(label_lines.get(parts[1]));
-			case "beq":
+			}
+			else if (inst.equals("jalr"))
+			{
+				lines_follow.add(next_lines.size()+1);
+			}
+			else if (inst.equals("beq") || inst.equals("bne"))
+			{
+				reg_usage(parts[1], "use", next_lines.size());
+				reg_usage(parts[2], "use", next_lines.size());
 				lines_follow.add(label_lines.get(parts[1]));
-				lines_follow.add(next_lines.size()+1);				
-			case "add":
-			case "sub":
+				lines_follow.add(next_lines.size()+1);
+			}
+			else if (inst.equals("jr"))
+			{
+				//empty on perpose
+			}
+			else if (inst.equals("add") || inst.equals("sub") || inst.equals("addu")
+					|| inst.equals("and") || inst.equals("nor") || inst.equals("or")
+					|| inst.equals("sllv") || inst.equals("srav") || inst.equals("srlv")
+					|| inst.equals("subu") || inst.equals("xor") || inst.equals("slt")
+					|| inst.equals("sltu"))
+			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
 				lines_follow.add(next_lines.size()+1);
-				break;
-			case "addi":
+			}
+			else if (inst.equals("addi") || inst.equals("addiu") || inst.equals("andi")
+					|| inst.equals("ori") || inst.equals("sll") || inst.equals("sra")
+					|| inst.equals("srl") || inst.equals("xori") || inst.equals("sltiu")
+					|| inst.equals("slti") || inst.equals("move") || inst.equals("div")
+					|| inst.equals("divu") || inst.equals("mult") || inst.equals("multu"))
+			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
 				lines_follow.add(next_lines.size()+1);
-			default:
-				throw new RuntimeException("unknown instruction: " + inst);
 			}
+			else if (inst.equals("lw"))
+			{
+				reg_usage(parts[1], "def", next_lines.size());
+				reg_usage(parts[3], "use", next_lines.size());
+				lines_follow.add(next_lines.size()+1);
+			}
+			else if (inst.equals("sw"))
+			{
+				reg_usage(parts[1], "use", next_lines.size());
+				reg_usage(parts[3], "use", next_lines.size());
+				lines_follow.add(next_lines.size()+1);
+			}
+			else
+				throw new RuntimeException("unknown instruction: " + inst);
+			
 			next_lines.add(lines_follow);
 		}
 	}
@@ -549,7 +584,6 @@ public class asm
 		while (token.sym != sym.EOF)
 		{
 			String result="";
-			//System.out.println(token.toString());
 			switch(token.sym){
 				case IRsym.STRINGLABEL:
 					if (DEBUG) 
@@ -683,5 +717,7 @@ public class asm
 			token = lexer.next_token();
 			
 		}
+		reg_algo();
 	}
+	
 }
