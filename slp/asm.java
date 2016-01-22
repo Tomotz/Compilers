@@ -24,11 +24,11 @@ public class asm
 	static final int SRC = 0;
 	static final int DST = 1;
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 
 	static void add_line(String content) {
-		if (DEBUG) 
-			System.out.println(content);
+		//if (DEBUG) 
+			//System.out.println(content);
 		code += content + "\n";
 	}
 	
@@ -40,6 +40,7 @@ public class asm
 	static List<List<String>> out = new ArrayList<List<String>>();
 	static Map<String, Set<String>> bump_graph = new HashMap<String, Set<String>>();
 	static Map<String, String> reg_aloc = new HashMap<String, String>();
+	static Set<String> all_regs = new HashSet<String>();
 	
 	//run register allocation algorithm
 	static void reg_algo()
@@ -56,22 +57,27 @@ public class asm
 	private static void fix_code()
 	{
 		//probably doesn't work :)
-		String seperator = "( | ,|, |,|\\(|\\)|$)";
-		for (String reg : reg_aloc.keySet()) {
-			Pattern p = Pattern.compile(seperator +"(" + reg + ")" + seperator);
-			Matcher m = p.matcher(code);
-			if (m.find()) {
-			    code = m.replaceAll(reg_aloc.get(reg) + " $2");  
+		String seperator = "( | \\,|\\, |\\,|\\(|\\)|$|\\n)";
+		for (int i=0; i<2; ++i)
+		{ //loop because regex cant catch same var twice
+			for (String reg : reg_aloc.keySet()) {
+				String pat = seperator +"(" + reg + ")" + seperator;
+				code = code.replaceAll(pat, "$1\\" + reg_aloc.get(reg) + "$3");
+				
 			}
-			
 		}
-		
 	}
 
 	//build the reg alloc dict
 	private static void allocate_regs() {
-		for (String temp : reg_aloc.keySet()) 
+		for (String temp : all_regs) 
 		{
+			if (!bump_graph.containsKey(temp))
+			{
+				String allocated_reg = "$t0";
+				reg_aloc.put(temp, allocated_reg);	
+				continue;
+			}
 			Set<String> banned_regs = new HashSet<String>();
 			for (String neighbor : bump_graph.get(temp))
 			{
@@ -267,6 +273,7 @@ public class asm
 		if (usage_type == "def")
 		{ //only one def per line. no list problems like in use
 			reg_def.put(line_num, reg);
+			all_regs.add(reg);
 			return;
 		}
 		
@@ -278,6 +285,7 @@ public class asm
 			List<String> reg_list = new ArrayList<String>();
 			reg_list.add(reg);
 			reg_use.put(line_num, reg_list);
+			all_regs.add(reg);
 		}
 	}
 
