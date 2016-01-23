@@ -602,6 +602,7 @@ public class asm
 		Symbol token = lexer.next_token();
 		Symbol nextToken;
 		List<String> resultList;
+		String[] operands = new String[2];
 		while (token.sym != sym.EOF)
 		{
 			String result="";
@@ -634,11 +635,10 @@ public class asm
 					break;
 				case IRsym.MOVE:
 					
-					String op1 = lexer.next_token().toString();
+					operands[0] = lexer.next_token().toString();
 					lexer.next_token();
-					String op2 = lexer.next_token().toString();
-					String[] ops = {op1,op2};
-					move(ops);
+					operands[1] = lexer.next_token().toString();
+					move(operands);
 					break;
 					
 				case IRsym.VIRTUALCALL:
@@ -700,6 +700,27 @@ public class asm
 					String labelt = lexer.next_token().toString();
 					JumpTrue(labelt);
 					break;
+				case IRsym.JUMPG:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(jumpG:)");
+					JumpG(lexer.next_token().toString());
+					break;
+				case IRsym.JUMPGE:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(jumpGE:)");
+					JumpGE(lexer.next_token().toString());
+					break;
+				case IRsym.JUMPL:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(jumpL:)");
+					JumpL(lexer.next_token().toString());
+					break;
+				case IRsym.JUMPLE:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(jumpLE:)");
+					JumpLE(lexer.next_token().toString());
+					break;
+				
 				case IRsym.COMPARE:
 					if (DEBUG_TOKENS) 
 						System.out.println("#(compare:)");
@@ -722,22 +743,42 @@ public class asm
 				case IRsym.SUB:	
 					if (DEBUG_TOKENS) 
 						System.out.println("#(sub:)");
-					String lValue = lexer.next_token().toString();
+					operands[0] = lexer.next_token().toString();
 					lexer.next_token().toString();
-					rValue = lexer.next_token().toString();
-					String[] oper = {lValue,rValue};
-					
-					arithmetic_op("Sub", oper);
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Sub", operands);
 					break;
 				case IRsym.ADD:	
 					if (DEBUG_TOKENS) 
 						System.out.println("#(add:)");
-					lValue = lexer.next_token().toString();
+					operands[0] = lexer.next_token().toString();
 					lexer.next_token().toString();
-					rValue = lexer.next_token().toString();
-					String[] oper_a = {lValue,rValue};
-					
-					arithmetic_op("Add", oper_a);
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Add", operands);
+					break;
+				case IRsym.MUL:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(mul:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Mul", operands);
+					break;
+				case IRsym.DIV:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(div:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Div", operands);
+					break;
+				case IRsym.MOD:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(mod:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Mod", operands);
 					break;
 				case IRsym.NOT:	
 					
