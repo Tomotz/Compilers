@@ -682,6 +682,12 @@ public class asm
 		add_line("syscall");
 	}
 	
+	public static void printCharI(int c){
+		add_line("li $v0, 11");
+		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
+		add_line("syscall");
+	}
+	
 	public static void allocate(String byteSize){
 		
 		int rValue_type = getSingleOpType(byteSize);
@@ -1014,7 +1020,7 @@ public class asm
 						add_line("syscall");
 						
 						if (libname.equals("__println")){
-							printChar('\n');
+							printCharI(13);
 						}
 						
 					}
