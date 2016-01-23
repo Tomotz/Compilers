@@ -408,12 +408,12 @@ public class asm
 	}
 
 	@SuppressWarnings("serial")
-	HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
+	static HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
 		put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
 	@SuppressWarnings("serial")
-	HashMap<String, String> arith_reg_insts = new HashMap<String, String>() {{ put("Add", "add"); put("Or", "or"); 
+	static HashMap<String, String> arith_reg_insts = new HashMap<String, String>() {{ put("Add", "add"); put("Or", "or"); 
 		put("Xor", "xor"); put("And", "and"); put("Sub", "sub"); }};
-	public void arithmetic_op(String Instruction, String[] ops)
+	public static void arithmetic_op(String Instruction, String[] ops)
 	{
 		if (ops.length != 2)
 		{
@@ -598,7 +598,7 @@ public class asm
 	
 	public static void LirToMips(IRLexer lexer) throws Exception
 	{
-		
+		boolean DEBUG_TOKENS = false && DEBUG;
 		Symbol token = lexer.next_token();
 		Symbol nextToken;
 		List<String> resultList;
@@ -607,20 +607,20 @@ public class asm
 			String result="";
 			switch(token.sym){
 				case IRsym.STRINGLABEL:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(string label:)");
 					nextToken = lexer.next_token();
 					result += token.toString() + " .asciiz " + nextToken.toString();
 					add_line(result);
 					break;
 				case IRsym.LABEL:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(label:)");
 					result += token.toString();
 					add_line(result);
 					break;
 				case IRsym.DVLABEL:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(DVLabel:)");
 					result += token.toString();
 					result = result.substring(0, result.length()-1) + ".word ";
@@ -642,7 +642,7 @@ public class asm
 					break;
 					
 				case IRsym.VIRTUALCALL:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(virtualCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString()); // object of the virtual call
@@ -664,7 +664,7 @@ public class asm
  					break;
  					
 				case IRsym.STATICCALL:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(staticCall:)");
 					resultList = new ArrayList<String>();
 					resultList.add(lexer.next_token().toString());	// _class_method
@@ -683,25 +683,25 @@ public class asm
 					static_call(resultList.toArray(new String[0]));
 					break;
 				case IRsym.JUMP:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(jump:)");
 					String label = lexer.next_token().toString();
 					jump(label);
 					break;
 				case IRsym.JUMPFALSE:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(jumpFalse:)");
 					String labelf = lexer.next_token().toString();
 					JumpFalse(labelf);
 					break;
 				case IRsym.JUMPTRUE:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(jumpFalse:)");
 					String labelt = lexer.next_token().toString();
 					JumpTrue(labelt);
 					break;
 				case IRsym.COMPARE:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(compare:)");
 					compLef = lexer.next_token().toString();
 					token=lexer.next_token();
@@ -714,38 +714,45 @@ public class asm
 					*/
 					break;
 				case IRsym.RETURN:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(return:)");
 					String rValue = lexer.next_token().toString();
 					ret(rValue);
 					break;
 				case IRsym.SUB:	
-					
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(sub:)");
 					String lValue = lexer.next_token().toString();
 					lexer.next_token().toString();
 					rValue = lexer.next_token().toString();
 					String[] oper = {lValue,rValue};
 					
-					//System.out.println("debug: sub " + lValue + " " + rValue);
-					asm func = new asm();
-					func.arithmetic_op("Sub", oper);
+					arithmetic_op("Sub", oper);
+					break;
+				case IRsym.ADD:	
+					if (DEBUG_TOKENS) 
+						System.out.println("#(add:)");
+					lValue = lexer.next_token().toString();
+					lexer.next_token().toString();
+					rValue = lexer.next_token().toString();
+					String[] oper_a = {lValue,rValue};
+					
+					arithmetic_op("Add", oper_a);
 					break;
 				case IRsym.NOT:	
 					
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(not:)");
 					String nt = lexer.next_token().toString();
 					not(nt);
 					break;
 				case IRsym.COMMENT:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(comment:)");
 					add_line(token.toString());
 					break;
 				case IRsym.LIBRARY:
-					if (DEBUG) 
+					if (DEBUG_TOKENS) 
 						System.out.println("#(library:)");
 					String libname = lexer.next_token().toString();
 					if (libname.equals("__exit"))
@@ -768,7 +775,8 @@ public class asm
 					}
 					else
 					{
-						System.out.println("unknown Lib: " + libname.toString());
+						if (DEBUG) 
+							System.out.println("unknown Lib: " + libname.toString());
 						lexer.next_token().toString(); //LP
 						lexer.next_token().toString(); //RP?
 						lexer.next_token().toString(); //comma?
