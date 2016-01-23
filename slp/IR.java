@@ -495,7 +495,7 @@ public class IR {
 
 		//check array access
 		String temp = IR.new_temp();
-		add_line("MoveArray " + arr + "[0]," + "," + temp);
+		add_line("MoveArray " + arr + "[0]," + temp);
 
 		add_line("Compare " + temp_index + "," + temp);
 		add_line("JumpLE " + runtime_error_label);
