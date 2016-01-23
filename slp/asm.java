@@ -182,7 +182,7 @@ public class asm
 
 	//prepare all reg use and def lists
 	private static void prepare_usage() {
-		int cur_line = 0;
+		int next_line = 0;
 		for (String line : code.split("\n")) {
 			String trimmed = line.trim();
 			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
@@ -191,20 +191,28 @@ public class asm
 			String[] parts = trimmed.split(" |\\, | \\,|\\,|\\(|\\)");
 			String inst = parts[0];
 			List<Integer> lines_follow = new ArrayList<Integer>();
-			if (inst.equals("j"))
+			if (inst.equals("j") || inst.equals("b"))
 			{
 				lines_follow.add(label_lines.get(parts[1]));
 			}
 			else if (inst.equals("jalr"))
 			{
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
-			else if (inst.equals("beq") || inst.equals("bne"))
+			else if (inst.equals("beq") || inst.equals("bne")|| inst.equals("bgt")
+					|| inst.equals("blt")|| inst.equals("bge")|| inst.equals("ble")
+					|| inst.equals("bgtu"))
 			{
 				reg_usage(parts[1], "use", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
 				lines_follow.add(label_lines.get(parts[3]));
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
+			}
+			else if (inst.equals("bgez") || inst.equals("bgtz")|| inst.equals("blez")|| inst.equals("bltz"))
+			{
+				reg_usage(parts[1], "use", next_lines.size());
+				lines_follow.add(label_lines.get(parts[2]));
+				lines_follow.add(next_line);
 			}
 			else if (inst.equals("jr"))
 			{
@@ -214,49 +222,60 @@ public class asm
 					|| inst.equals("and") || inst.equals("nor") || inst.equals("or")
 					|| inst.equals("sllv") || inst.equals("srav") || inst.equals("srlv")
 					|| inst.equals("subu") || inst.equals("xor") || inst.equals("slt")
-					|| inst.equals("sltu"))
+					|| inst.equals("sltu")|| inst.equals("mul")|| inst.equals("div")
+					|| inst.equals("rem"))
 			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
 			else if (inst.equals("addi") || inst.equals("addiu") || inst.equals("andi")
 					|| inst.equals("ori") || inst.equals("sll") || inst.equals("sra")
 					|| inst.equals("srl") || inst.equals("xori") || inst.equals("sltiu")
 					|| inst.equals("slti") || inst.equals("move") || inst.equals("div")
-					|| inst.equals("divu") || inst.equals("mult") || inst.equals("multu"))
+					|| inst.equals("divu") || inst.equals("mult") || inst.equals("multu")
+					|| inst.equals("not"))
 			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[2], "use", next_lines.size());
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
 			else if (inst.equals("lw"))
 			{
 				reg_usage(parts[1], "def", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
 			else if (inst.equals("sw"))
 			{
 				reg_usage(parts[1], "use", next_lines.size());
 				reg_usage(parts[3], "use", next_lines.size());
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
-			else if (inst.equals("li"))
+			else if (inst.equals("li") || inst.equals("mfhi") || inst.equals("mflo")|| inst.equals("clear")
+					|| inst.equals("la"))
 			{
 				reg_usage(parts[1], "def", next_lines.size());
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
+			}
+			else if (inst.equals("mthi") || inst.equals("mtlo"))
+			{
+				reg_usage(parts[1], "use", next_lines.size());
+				lines_follow.add(next_line);
 			}
 			else if (inst.equals("syscall"))
 			{
-				lines_follow.add(cur_line);
+				lines_follow.add(next_line);
 			}
 			else
-				throw new RuntimeException("unknown instruction: " + inst);
+			{
+				if (DEBUG)
+					throw new RuntimeException("unknown instruction: " + inst);
+			}
 			
 			next_lines.add(lines_follow);
-			++cur_line;
+			++next_line;
 		}
 	}
 	
@@ -373,7 +392,6 @@ public class asm
 
 	public static void move(String[] ops)
 	{
-		//lui and ori??
 		if (ops.length != 2)
 		{
 			throw new RuntimeException("move: wrong number of arguments\n" + ops);
@@ -394,7 +412,7 @@ public class asm
 		}
 		if (opTypes[SRC] == IMM)
 		{
-			add_line("addi " + temp_dst + ", " + zero + ", " + ops[SRC]);
+			add_line("li " + temp_dst + ", " + ops[SRC]);
 		}
 		else
 		{ //SRC is REG
@@ -407,6 +425,43 @@ public class asm
 		}
 	}
 
+	public static void load_arr(String arr, String index, String dest)
+	{
+		String index_temp = get_arr_offset(arr, index);
+		add_line("lw " + dest + ",0(" + index_temp + ")"); //find wished place in arr	
+	}
+
+	public static void store_arr(String arr, String index, String src)
+	{
+		String index_temp = get_arr_offset(arr, index);
+		int src_type = getSingleOpType(src);
+		String src_temp;
+		if (src_type == IMM)
+		{
+			src_temp = new_temp();
+			add_line("li " + src_temp + ", " + index);
+		}
+		else
+			src_temp = index;
+		add_line("sw " + src_temp + ",0(" + index_temp + ")"); //find wished place in arr	
+	}
+
+	private static String get_arr_offset(String arr, String index) {
+		int index_type = getSingleOpType(index);
+		String index_temp; 
+		if (index_type == IMM)
+		{
+			index_temp = new_temp();
+			add_line("li " + index_temp + ", " + index);
+		}
+		else
+			index_temp = index;
+		add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
+		add_line("sll " + index_temp + "," + index_temp + ",4"); //*4
+		add_line("add " + index_temp + "," + index_temp + "," + arr); //find wished place in arr
+		return index_temp;
+	}
+	
 	@SuppressWarnings("serial")
 	static HashMap<String, String> arith_imm_insts = new HashMap<String, String>() {{ put("Add", "addi"); put("Or", "ori"); 
 		put("Xor", "xori"); put("And", "andi"); put("Sub", "addi"); }};
@@ -438,9 +493,9 @@ public class asm
 	}
 
 	@SuppressWarnings("serial")
-	HashMap<String, String> mul_insts = new HashMap<String, String>() {{ put("Mul", "mult"); put("Div", "div"); 
-		put("Mod", "div"); }};
-	public void mult_op(String Instruction, String[] ops)
+	static HashMap<String, String> mul_insts = new HashMap<String, String>() {{ put("Mul", "mul"); put("Div", "div"); 
+		put("Mod", "rem"); }};
+	static public void mult_op(String Instruction, String[] ops)
 	{
 		if (ops.length != 2)
 		{
@@ -457,18 +512,14 @@ public class asm
 		if (opTypes[SRC] == IMM)
 		{
 			String temp_src = new_temp();
-			add_line("addi " + temp_src + ", " + zero +", " + getVarOffset(ops[SRC]));
+			add_line("addi " + temp_src + ", " + zero +", " + ops[SRC]);
 			opTypes[SRC] = REG;
 			ops[SRC] = temp_src;
 		}
 		
 		
 		String asm_inst = mul_insts.get(Instruction);
-		add_line(asm_inst + " " + ops[DST] + ", " + ops[SRC]);	
-		if (Instruction.equals("Mod"))
-			add_line("mfhi " + " " + ops[DST]);		
-		else
-			add_line("mflo " + " " + ops[DST]);	
+		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);	
 			
 	}
 	
@@ -598,6 +649,7 @@ public class asm
 	
 	public static void LirToMips(IRLexer lexer) throws Exception
 	{
+		@SuppressWarnings("unused")
 		boolean DEBUG_TOKENS = false && DEBUG;
 		Symbol token = lexer.next_token();
 		Symbol nextToken;
@@ -762,7 +814,7 @@ public class asm
 					operands[0] = lexer.next_token().toString();
 					lexer.next_token().toString();
 					operands[1] = lexer.next_token().toString();
-					arithmetic_op("Mul", operands);
+					mult_op("Mul", operands);
 					break;
 				case IRsym.DIV:
 					if (DEBUG_TOKENS) 
@@ -770,7 +822,7 @@ public class asm
 					operands[0] = lexer.next_token().toString();
 					lexer.next_token().toString();
 					operands[1] = lexer.next_token().toString();
-					arithmetic_op("Div", operands);
+					mult_op("Div", operands);
 					break;
 				case IRsym.MOD:
 					if (DEBUG_TOKENS) 
@@ -778,7 +830,7 @@ public class asm
 					operands[0] = lexer.next_token().toString();
 					lexer.next_token().toString();
 					operands[1] = lexer.next_token().toString();
-					arithmetic_op("Mod", operands);
+					mult_op("Mod", operands);
 					break;
 				case IRsym.NOT:	
 					
@@ -791,6 +843,46 @@ public class asm
 					if (DEBUG_TOKENS) 
 						System.out.println("#(comment:)");
 					add_line(token.toString());
+					break;
+				case IRsym.MOVEARRAY:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(move_array:)");
+					String reg1 = lexer.next_token().toString();
+					if (lexer.next_token().sym == IRsym.COMMA)
+					{ //store
+						String arr = lexer.next_token().toString();
+						lexer.next_token().toString(); //LP
+						String index = lexer.next_token().toString();
+						lexer.next_token().toString(); //RP
+						store_arr(arr, index, reg1);
+					}
+					else
+					{ //load
+						String index = lexer.next_token().toString(); 
+						lexer.next_token().toString(); //RP 
+						lexer.next_token().toString(); //COMMA
+						String dest = lexer.next_token().toString();
+						load_arr(reg1, index, dest);
+					}
+					break;
+				case IRsym.MOVEFIELD:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(move_field:)");
+					reg1 = lexer.next_token().toString();
+					if (lexer.next_token().sym == IRsym.COMMA)
+					{ //store
+						String obj = lexer.next_token().toString();
+						lexer.next_token().toString(); //DOT
+						String index = lexer.next_token().toString();
+						store_arr(obj, index, reg1);
+					}
+					else
+					{ //load
+						String index = lexer.next_token().toString(); 
+						lexer.next_token().toString(); //DOT
+						String dest = lexer.next_token().toString();
+						load_arr(reg1, index, dest);
+					}
 					break;
 				case IRsym.LIBRARY:
 					if (DEBUG_TOKENS) 
