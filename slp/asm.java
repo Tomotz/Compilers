@@ -884,8 +884,8 @@ public class asm
 					else
 					{ //load
 						String index = lexer.next_token().toString(); 
-						lexer.next_token().toString(); //RP 
-						lexer.next_token().toString(); //COMMA
+						String rp = lexer.next_token().toString(); //RP 
+						String comma = lexer.next_token().toString(); //COMMA
 						String dest = lexer.next_token().toString();
 						load_arr(reg1, index, dest);
 					}
