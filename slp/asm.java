@@ -864,10 +864,55 @@ public class asm
 					String nt = lexer.next_token().toString();
 					not(nt);
 					break;
+				case IRsym.AND:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(and:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("And", operands);
+					break;
+				case IRsym.OR:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(or:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Or", operands);
+					break;
+				case IRsym.XOR:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(xor:)");
+					operands[0] = lexer.next_token().toString();
+					lexer.next_token().toString();
+					operands[1] = lexer.next_token().toString();
+					arithmetic_op("Xor", operands);
+					break;
 				case IRsym.COMMENT:
 					if (DEBUG_TOKENS) 
 						System.out.println("#(comment:)");
 					add_line(token.toString());
+					break;
+				case IRsym.INC:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(inc:)");
+					operands[1]=lexer.next_token().toString();
+					operands[0]="1";
+					arithmetic_op("Add", operands);
+					break;
+				case IRsym.DEC:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(dec:)");
+					operands[1]=lexer.next_token().toString();
+					operands[0]="1";
+					arithmetic_op("Sub", operands);
+					break;
+				case IRsym.NEG:
+					if (DEBUG_TOKENS) 
+						System.out.println("#(neg:)");
+					operands[1]=lexer.next_token().toString();
+					operands[0]="-1";
+					arithmetic_op("Mul", operands);
 					break;
 				case IRsym.MOVEARRAY:
 					if (DEBUG_TOKENS) 
