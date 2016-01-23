@@ -636,9 +636,17 @@ public class asm
 		add_line("syscall");
 	}
 	
-	public static void printInt(int d){
+	public static void printInt(String d){
+		
+		int rValue_type = getSingleOpType(d);
 		add_line("li $v0, 1");
-		add_line("li $a0, " + d);
+		
+		if (rValue_type == IMM)
+			add_line("li $a0, " + d);
+			
+		else
+			add_line("move $a0, " + d);
+		
 		add_line("syscall");
 	}
 	
@@ -648,8 +656,16 @@ public class asm
 		add_line("syscall");
 	}
 	
-	public static void allocate(int byteSize){
-		add_line("li $a0, " + byteSize);
+	public static void allocate(String byteSize){
+		
+		int rValue_type = getSingleOpType(byteSize);
+		add_line("li $v0, 1");
+		
+		if (rValue_type == IMM)
+			add_line("li $a0, " + byteSize);
+		else
+			add_line("move $a0, " + byteSize);
+		
 		add_line("mul $a0, $a0, 4");
 		add_line("li $v0, 9");
 		add_line("syscall");
@@ -906,14 +922,39 @@ public class asm
 						lexer.next_token().toString(); //out_reg
 						exit();
 					}
-					else if (libname.equals("__printInt"))
+					else if (libname.equals("__printi"))
 					{
 						lexer.next_token().toString(); //LP
 						String param = lexer.next_token().toString(); //num
 						lexer.next_token().toString(); //RP
 						lexer.next_token().toString(); //comma
 						lexer.next_token().toString(); //out_reg
-						printInt(Integer.parseInt(param));						
+						printInt(param);						
+					}
+					else if (libname.equals("__print") || libname.equals("__println")){
+						lexer.next_token().toString(); //LP
+						String str = lexer.next_token().toString(); //num
+						lexer.next_token().toString(); //RP
+						lexer.next_token().toString(); //comma
+						lexer.next_token().toString(); //out_reg
+						
+						add_line("la $t0, " + str);
+						add_line("li $v0, 4");
+						add_line("syscall");
+						
+						if (libname.equals("__println")){
+							printChar('\n');
+						}
+						
+					}
+					
+					else if (libname.equals("__allocateObject") || libname.equals("__allocateArray")){
+						lexer.next_token().toString(); //LP
+						String param = lexer.next_token().toString(); //num
+						lexer.next_token().toString(); //RP
+						lexer.next_token().toString(); //comma
+						lexer.next_token().toString(); //out_reg
+						allocate(param);
 					}
 					else
 					{
