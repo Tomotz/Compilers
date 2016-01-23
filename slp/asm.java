@@ -91,7 +91,8 @@ public class asm
 				if (banned_regs.contains(allocated_reg))
 					continue;
 				is_alloced = true;
-				reg_aloc.put(temp, allocated_reg);				
+				reg_aloc.put(temp, allocated_reg);		
+				break;
 			}
 			if (!is_alloced)
 				throw new RuntimeException("cannot allocate temp: " + temp + " not enough regs in pool");
@@ -585,7 +586,15 @@ public class asm
 	}
 	
 	public static void ret(String rValue){
-		//TODO: rValue can be integer. move work on registers
+		int rValue_type = getSingleOpType(rValue);
+		String rValue_temp; 
+		if (rValue_type == IMM)
+		{
+			rValue_temp = new_temp();
+			add_line("li " + rValue_temp + ", " + rValue);
+		}
+		else
+			rValue_temp = rValue;
 		add_line("move " + ret_val + ", " + rValue); //save return value in v1
 		add_line("jr " + ret_addr);
 	}
