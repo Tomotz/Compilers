@@ -585,6 +585,20 @@ public class asm
 		}
 	}
 	
+	public static String handleImm(String rValue){
+		int rValue_type = getSingleOpType(rValue);
+		String rValue_temp; 
+		if (rValue_type == IMM)
+		{
+			rValue_temp = new_temp();
+			add_line("li " + rValue_temp + ", " + rValue);
+		}
+		else rValue_temp = rValue;
+		
+		return rValue_temp;
+	}
+	
+	
 	public static void ret(String rValue){
 		int rValue_type = getSingleOpType(rValue);
 		String rValue_temp; 
@@ -604,26 +618,38 @@ public class asm
 	}
 	
 	public static void JumpGE(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("bge " + compRig + "," + compLef + "," + label);
 	}
 	
 	public static void JumpG(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("bgt " + compRig + "," + compLef + "," + label);
 	}
 	
 	public static void JumpLE(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("ble " + compRig + "," + compLef + "," + label);
 	}
 	
 	public static void JumpL(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("blt " + compRig + "," + compLef + "," + label);
 	}
 	
 	public static void JumpFalse(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("bne " + compRig + "," + compLef + "," + label);
 	}
 	
 	public static void JumpTrue(String label){
+		compRig = handleImm(compRig);
+		compLef = handleImm(compLef);
 		add_line("beq " + compRig + "," + compLef + "," + label);
 	}
 	
