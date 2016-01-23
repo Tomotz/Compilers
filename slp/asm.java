@@ -749,7 +749,32 @@ public class asm
 						System.out.println("#(library:)");
 					String libname = lexer.next_token().toString();
 					if (libname.equals("__exit"))
+					{
+						lexer.next_token().toString(); //LP
+						lexer.next_token().toString(); //num
+						lexer.next_token().toString(); //RP
+						lexer.next_token().toString(); //comma
+						lexer.next_token().toString(); //out_reg
 						exit();
+					}
+					else if (libname.equals("__printInt"))
+					{
+						lexer.next_token().toString(); //LP
+						String param = lexer.next_token().toString(); //num
+						lexer.next_token().toString(); //RP
+						lexer.next_token().toString(); //comma
+						lexer.next_token().toString(); //out_reg
+						printInt(Integer.parseInt(param));						
+					}
+					else
+					{
+						System.out.println("unknown Lib: " + libname.toString());
+						lexer.next_token().toString(); //LP
+						lexer.next_token().toString(); //RP?
+						lexer.next_token().toString(); //comma?
+						lexer.next_token().toString(); //out_reg?
+						
+					}
 					//TODO: other libs
 					break;
 				default:
