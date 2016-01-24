@@ -49,8 +49,19 @@ public class asm
 		build_graph();
 		allocate_regs();
 		fix_code();
+		remove_null_lines();
+		code = ".data\n" + code;
 		//if (DEBUG)
 			//System.out.println(code);
+	}
+
+	private static void remove_null_lines() {
+		for (int i=0; i<=8; ++i)
+		{
+			String regex = "move \\$t" + Integer.toString(i) + ", ?\\$t" + Integer.toString(i) + "\\n";
+			code=code.replaceAll(regex, "");
+		}
+		
 	}
 
 	//replace the temporaries in code with correct registers
@@ -265,7 +276,7 @@ public class asm
 				reg_usage(parts[1], "use", next_lines.size());
 				lines_follow.add(next_line);
 			}
-			else if (inst.equals("syscall"))
+			else if (inst.equals("syscall") || inst.equals(".text"))
 			{
 				lines_follow.add(next_line);
 			}
@@ -401,7 +412,7 @@ public class asm
 
 		String temp_src = new_temp();
 		if (opTypes[SRC] == MEM)
-		{
+		{ //src is mem - load it
 			add_line("lw " + temp_src + ", " + getVarOffset(ops[SRC]) + "(" + fp + ")");
 			opTypes[SRC] = REG;
 			ops[SRC] = temp_src;
@@ -422,28 +433,40 @@ public class asm
 		}
 		if (opTypes[DST] == MEM)
 		{
-			add_line("sw " + ops[SRC] + ", " + getVarOffset(ops[DST]) + "(" + fp + ")");
+			add_line("sw " + temp_dst + ", " + getVarOffset(ops[DST]) + "(" + fp + ")");
 		}
 	}
 
 	public static void load_arr(String arr, String index, String dest)
 	{
+		if (dest.startsWith("_"))
+		{//label
+			String temp = new_temp();
+			add_line("la "+temp + ", " + dest);
+			dest = temp;
+		}
 		String index_temp = get_arr_offset(arr, index);
 		add_line("lw " + dest + ",0(" + index_temp + ")"); //find wished place in arr	
 	}
 
 	public static void store_arr(String arr, String index, String src)
 	{
+		if (src.startsWith("_"))
+		{//label
+			String temp = new_temp();
+			add_line("la "+temp + ", " + src);
+			src = temp;
+		}
 		String index_temp = get_arr_offset(arr, index);
 		int src_type = getSingleOpType(src);
 		String src_temp;
 		if (src_type == IMM)
 		{
 			src_temp = new_temp();
-			add_line("li " + src_temp + ", " + index);
+			add_line("li " + src_temp + ", " + src);
 		}
 		else
-			src_temp = index;
+			src_temp = src;
 		add_line("sw " + src_temp + ",0(" + index_temp + ")"); //find wished place in arr	
 	}
 
@@ -609,7 +632,7 @@ public class asm
 		}
 		else
 			rValue_temp = rValue;
-		add_line("move " + ret_val + ", " + rValue); //save return value in v1
+		add_line("move " + ret_val + ", " + rValue_temp); //save return value in v1
 		add_line("jr " + ret_addr);
 	}
 	
@@ -681,15 +704,15 @@ public class asm
 		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
 		add_line("syscall");
 	}
-	
+
 	public static void printCharI(int c){
 		add_line("li $v0, 11");
 		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
 		add_line("syscall");
 	}
 	
-	public static void allocate(String byteSize){
-		
+	public static void allocate(String byteSize, String dest){
+
 		int rValue_type = getSingleOpType(byteSize);
 		add_line("li $v0, 1");
 		
@@ -701,7 +724,7 @@ public class asm
 		add_line("mul $a0, $a0, 4");
 		add_line("li $v0, 9");
 		add_line("syscall");
-		add_line("move $t0, $v0");
+		add_line("move " + dest + ", $v0");
 	}
 	
 	public static void LirToMips(IRLexer lexer) throws Exception
@@ -712,6 +735,7 @@ public class asm
 		Symbol nextToken;
 		List<String> resultList;
 		String[] operands = new String[2];
+		boolean is_code_start = true;
 		while (token.sym != sym.EOF)
 		{
 			String result="";
@@ -726,7 +750,16 @@ public class asm
 				case IRsym.LABEL:
 					if (DEBUG_TOKENS) 
 						System.out.println("#(label:)");
-					result += token.toString();
+					String lab = token.toString();
+					if (lab.equals("_ic_main:"))
+						lab = "main:";
+					if (is_code_start)
+					{
+						add_line(".text");
+						is_code_start = false;
+					}
+						
+					result += lab;
 					add_line(result);
 					break;
 				case IRsym.DVLABEL:
@@ -805,7 +838,7 @@ public class asm
 					break;
 				case IRsym.JUMPTRUE:
 					if (DEBUG_TOKENS) 
-						System.out.println("#(jumpFalse:)");
+						System.out.println("#(jumpTrue:)");
 					String labelt = lexer.next_token().toString();
 					JumpTrue(labelt);
 					break;
@@ -1030,8 +1063,8 @@ public class asm
 						String param = lexer.next_token().toString(); //num
 						lexer.next_token().toString(); //RP
 						lexer.next_token().toString(); //comma
-						lexer.next_token().toString(); //out_reg
-						allocate(param);
+						String out_reg = lexer.next_token().toString(); //out_reg
+						allocate(param, out_reg);
 					}
 					else
 					{
@@ -1043,7 +1076,6 @@ public class asm
 						lexer.next_token().toString(); //out_reg?
 						
 					}
-					//TODO: other libs
 					break;
 				default:
 					if (DEBUG) 

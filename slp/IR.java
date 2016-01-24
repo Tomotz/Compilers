@@ -215,6 +215,7 @@ public class IR {
 	}
 
 	public static void check_null_ref(String reg) {
+		add_line("#__checkNullRef(" +reg + ")");
 		add_line("Compare 0," + reg);
 		add_line("JumpFalse " + runtime_error_label);
 	}
@@ -287,16 +288,16 @@ public class IR {
 		/*
 		System.out.println("val " + ir_rep + " var " + objName);
 		*/
-		int varIndex = 0;
+		/*int varIndex = 0;
 		int valIndex = 0;
 		int tmpFlag = 0; 
 		String valName = null;
 		String varName = null;
 		String field = null;
 		String offset = null;
-		String temp = null;
 		String offsetIn = null;
-		String arrayIn = null;
+		String arrayIn = null;*/
+		String temp = null;
 		
 		// case of string
 		if (op_type == 2){
@@ -307,7 +308,7 @@ public class IR {
 		}
 		
 		// value is a field 
-		if ((valIndex= ir_rep.indexOf('.')) != -1){
+		/*if ((valIndex= ir_rep.indexOf('.')) != -1){
 			
 			field = ir_rep.substring(0,valIndex);
 			offset = ir_rep.substring(valIndex+1);
@@ -436,7 +437,7 @@ public class IR {
 				temp = new_temp();
 				add_line("Move " + ir_rep + "," + temp);
 				add_line("Move " + temp + "," + objName);
-			}
+			}*/
 		else{
 			add_line("Move " + ir_rep + "," + objName);
 		}
@@ -495,8 +496,12 @@ public class IR {
 
 		//check array access
 		String temp = IR.new_temp();
-		add_line("MoveArray " + arr + "[0]," + temp);
 
+		
+		add_line("#__checkArrayAccess(" + arr + "," + temp_index + ")");
+		add_line("MoveArray " + arr + "[0]," + temp);
+		add_line("Compare 0," + temp_index);
+		add_line("JumpLE " + IR.runtime_error_label);
 		add_line("Compare " + temp_index + "," + temp);
 		add_line("JumpLE " + runtime_error_label);
 		

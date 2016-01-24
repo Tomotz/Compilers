@@ -59,7 +59,7 @@ public class Main {
 			ICEvaluator evaluator = new ICEvaluator(root);
 			evaluator.evaluate();
 			
-			System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
+			//System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
 			
 			// LIR to MIPS
 			

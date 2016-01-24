@@ -941,13 +941,6 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 			if (IS_DEBUG)
 				System.out.println("returning exp1: " + out_type); // need
 			IR.check_null_ref(out_type.ir_val);
-			IR.add_line("#__checkArrayAccess(" + out_type.ir_val + "," + exp2.ir_val + ")");
-			String temp_reg = IR.new_temp();
-			IR.add_line("MoveArray " + out_type.ir_val + "[0]," + temp_reg);
-			IR.add_line("Compare 0," + exp2.ir_val);
-			IR.add_line("JumpLE " + IR.runtime_error_label);
-			IR.add_line("Compare " + temp_reg + "," + exp2.ir_val);
-			IR.add_line("JumpGE " + IR.runtime_error_label);
 			
 			
 			
