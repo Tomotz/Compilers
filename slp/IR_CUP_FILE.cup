@@ -108,6 +108,7 @@ terminal STRINGLABEL;
 terminal LABEL;
 terminal UNDER;
 terminal DVLABEL;
+terminal SPACE;
 
 terminal LPAREN;
 terminal RPAREN; 
@@ -141,7 +142,8 @@ label		::= STRINGLABEL:l QUOTE:q {: RESULT = System.out.println(l+" "+q); :} |
 expr_list ::=	expr_list expr_part |
 				expr_part;
 				
-expr_part ::=	expr:e {: System.out.println(" = " + e); :} SEMICOLON
+expr_part ::=	expr:e {: System.out.println(" = " + e); :} SEMICOLON |
+				SPACE NUMBER:n {: RESULT = new Integer(n.intValue()); :}
 				;
       
 expr      ::=	expr:e PLUS  factor:f {: RESULT = new Integer(e.intValue() + f.intValue()); :} |

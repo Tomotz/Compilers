@@ -145,8 +145,9 @@ DVLabel			= {Label} [ \t\f]* "["
 /**************************************************************/
    
 <YYINITIAL> {
+ 
 
-
+"SPACE"					{ return printToken("SPACE", IRsym.SPACE); }
 "Move"					{ return printToken("Move", IRsym.MOVE); }
 "MoveArray"				{ return printToken("MoveArray", IRsym.MOVEARRAY); }
 "MoveField"				{ return printToken("MoveField",IRsym.MOVEFIELD); }

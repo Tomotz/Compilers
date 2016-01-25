@@ -7,6 +7,7 @@ import java_cup.runtime.Symbol;
 public class asm 
 {
 	static String code = "";
+	static String cur_func_code = "";
 	private static int temp_counter;
 
 	static final String fp = "$fp";
@@ -21,13 +22,14 @@ public class asm
 	static final int MEM = 2;
 	static final int SRC = 0;
 	static final int DST = 1;
+	static String cur_ret_label;
 
 	static final boolean DEBUG = true;
 
 	static void add_line(String content) {
 		//if (DEBUG) 
 			//System.out.println(content);
-		code += content + "\n";
+		cur_func_code += content + "\n";
 	}
 	
 	static List<List<Integer>> next_lines = new ArrayList<List<Integer>>();
@@ -43,6 +45,7 @@ public class asm
 	//run register allocation algorithm
 	static void reg_algo()
 	{
+		code += cur_func_code;
 		get_label_lines();
 		prepare_usage();
 		get_dataflow();
@@ -384,18 +387,26 @@ public class asm
 		String[] var_parts = var.split("_var_");
 		if (var_parts.length > 1)
 		{
-			return Integer.toString(-4*Integer.parseInt(var_parts[1])); 
+			return Integer.toString(-4*(Integer.parseInt(var_parts[1])+1)); 
 		}
 		//try parsing as arg
 		String[] arg_parts = var.split("_arg_");
 		if (arg_parts.length > 1)
 		{
 			//leave place for 'this, ra, fp'
-			return Integer.toString(4*Integer.parseInt(arg_parts[1])+3*4); 
+			return Integer.toString(4*(Integer.parseInt(arg_parts[1])+3)); //3 places for ra, fp and this
+		}
+		if (var.equals("$ra"))
+		{
+			return "0";
+		}
+		if (var.equals("$fp"))
+		{
+			return "4";
 		}
 		if (var.equals("this"))
 		{
-			return "8";
+			return "8"; 
 		}
 		throw new RuntimeException("bad var name: " + var);
 		
@@ -572,7 +583,6 @@ public class asm
 		String temp = new_temp();
 		add_line("lw " + temp + ", 0(" + ops[CLASS] + ")"); //get the DV
 		add_line("lw " + temp + ", " + off + "(" + temp + ")"); //get the correct function
-		push(ret_addr); 
 		add_line("jalr " + temp); //save return address and call the virtual func
 		add_line("move " + ops[CALL_DST] + ", " + ret_val);
 	}
@@ -594,7 +604,6 @@ public class asm
 		
 		push(zero); //no 'this' in static call
 
-		push(ret_addr); 
 		add_line("jal " + LABEL); //save return address and call the virtual func
 		add_line("move " + ops[CALL_DST] + ", " + ret_val); 
 	}
@@ -633,7 +642,7 @@ public class asm
 		else
 			rValue_temp = rValue;
 		add_line("move " + ret_val + ", " + rValue_temp); //save return value in v1
-		add_line("jr " + ret_addr);
+		add_line("j " + cur_ret_label);
 	}
 	
 	public static void jump(String label){
@@ -710,7 +719,7 @@ public class asm
 		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
 		add_line("syscall");
 	}
-	
+
 	public static void allocate(String byteSize, String dest){
 
 		int rValue_type = getSingleOpType(byteSize);
@@ -725,6 +734,33 @@ public class asm
 		add_line("li $v0, 9");
 		add_line("syscall");
 		add_line("move " + dest + ", $v0");
+	}
+	
+
+	static void add_final_line(String content) {
+		//if (DEBUG) 
+			//System.out.println(content);
+		code += content + "\n";
+	}
+	public static void handle_space(String space_val)
+	{
+		int space = 4*(Integer.parseInt(space_val)); 
+
+		add_final_line("addi " + sp + ", " + sp + ", -8");
+		add_final_line("sw " + fp + ", 8("+sp+")"); //save caller fp
+		add_final_line("sw " + ret_addr + ", 4("+sp+")"); //save ret addr
+		add_final_line("move " + fp + "," + sp); //get my stack area
+		if (space != 0)
+			add_final_line("addi "+sp+","+sp+"," + Integer.toString(-space)); //get to area after my variables
+		code += cur_func_code;
+		add_final_line(cur_ret_label + ":");
+		add_final_line("addi "+sp+","+sp+"," + Integer.toString(space+12)); //back to before 'this'
+		add_final_line("lw " + ret_addr + "," + getVarOffset(ret_addr) + "(" + fp + ")"); //reconstruct ra
+		add_final_line("lw " + fp + "," + getVarOffset(fp) + "(" + fp + ")"); //reconstruct fp
+		add_final_line("jr " + ret_addr +"\n\n");
+		cur_func_code = "";
+		
+		cur_ret_label = IR.get_label("ret");
 	}
 	
 	public static void LirToMips(IRLexer lexer) throws Exception
@@ -757,6 +793,9 @@ public class asm
 					{
 						add_line(".text");
 						is_code_start = false;
+						code = cur_func_code;
+						cur_func_code = "";
+						cur_ret_label = IR.get_label("ret");
 					}
 						
 					result += lab;
@@ -994,8 +1033,8 @@ public class asm
 					else
 					{ //load
 						String index = lexer.next_token().toString(); 
-						String rp = lexer.next_token().toString(); //RP 
-						String comma = lexer.next_token().toString(); //COMMA
+						lexer.next_token().toString(); //RP 
+						lexer.next_token().toString(); //COMMA
 						String dest = lexer.next_token().toString();
 						load_arr(reg1, index, dest);
 					}
@@ -1018,6 +1057,11 @@ public class asm
 						String dest = lexer.next_token().toString();
 						load_arr(reg1, index, dest);
 					}
+					break;
+				case IRsym.SPACE:
+					
+					String space = lexer.next_token().toString();
+					handle_space(space);
 					break;
 				case IRsym.LIBRARY:
 					if (DEBUG_TOKENS) 
