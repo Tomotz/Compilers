@@ -17,6 +17,7 @@ public class asm
 	static final String ret_val = "$v0";
 	static String compLef = null;
 	static String compRig = null;
+
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
@@ -1139,4 +1140,17 @@ public class asm
 		reg_algo();
 	}
 	
+	public void scan(String filename) throws Exception{
+		RandomAccessFile fr = new RandomAccessFile(filename, "rw");
+		String line = fr.readLine();
+		while(line != null){
+			if(line.startsWith("Move ")) ;
+			String[] tokens = line.split(" ");
+			String instruction = tokens[0];
+			switch(instruction){
+			case ""
+			}
+		}
+		fr.close();		
+	}
 }
