@@ -175,7 +175,6 @@ public class IR {
 		return result;
 	}
 
-
 	static String unary_LNEG_op(String src){
 		if (ICEvaluator.run_num == 0)
 			return null;
@@ -191,7 +190,6 @@ public class IR {
 		add_line(end_label+":");
 		return result;
 	}
-
 
 	static String evaluate_int(int src)
 	{
@@ -443,7 +441,6 @@ public class IR {
 		else{
 			add_line("Move " + ir_rep + "," + objName);
 		}
-
 
 		return null;
 

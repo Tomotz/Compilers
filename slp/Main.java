@@ -1,10 +1,6 @@
 package slp;
 
-<<<<<<< Updated upstream
 //import sym;
-=======
-import sym;
->>>>>>> Stashed changes
 
 import java.io.*;
 
@@ -46,16 +42,7 @@ public class Main {
 			Lexer scanner = new Lexer(txtFile);
 			Parser parser = new Parser(scanner);
 			parser.printTokens = printtokens;
-			////////////////////////
-			Symbol token = scanner.next_token();
 			
-			while (token.sym != sym.EOF)
-			{
-				System.out.println(token.toString());
-				token = scanner.next_token();
-				
-			}
-			////////////////////////
 			Symbol parseSymbol = parser.parse();
 			System.out.println("Parsed " + args[0] + " successfully!");
 			ASTRoot root = (ASTRoot) parseSymbol.value;
@@ -70,7 +57,7 @@ public class Main {
 			// Interpret the program
 			
 			ICEvaluator evaluator = new ICEvaluator(root);
-			//evaluator.evaluate();
+			evaluator.evaluate();
 			
 			//System.out.print(IR.str_table+IR.dispatch_tables+IR.code);
 			

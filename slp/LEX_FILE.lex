@@ -26,7 +26,7 @@ import java_cup.runtime.*;
 /* Lexer is the name of the class JFlex will create. */
 /* The code will be written to the file Lexer.java.  */
 /*****************************************************/ 
-%class IR_Lexer
+%class Lexer
 
 /********************************************************************/
 /* The current line number can be accessed with the variable yyline */
@@ -104,7 +104,6 @@ current token */
 /***********************/
 /* MACRO DECALARATIONS */
 /***********************/
-/*
 LineTerminator	= \r|\n|\r\n
 InputCharacter	= [^\r\n]
 StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
@@ -115,17 +114,6 @@ illegalInt       = 0+[1-9]+
 CLASS_ID		= [A-Z][A-Za-z_0-9]* 
 COMMENT			= "/*" ~"*/" | "//" {InputCharacter}* {LineTerminator}?
 QUOTE			= \" {StringCharacter}* \"
-*/
-
-LineTerminator	= \r|\n|\r\n
-InputCharacter	= [^\r\n]
-WhiteSpace		= {LineTerminator} | [ \t\f]
-Word			= [^WhiteSpace]+
-COMMENT			= # {InputCharacter}* {LineTerminator}?
-StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
-QUOTE			= \" {StringCharacter}* \"
-Word 			= {StringCharacter}+
-/*	DV 				= "[" ({LABEL},)*(LABEL) "]"	*/
 /******************************/
 /* DOLAR DOLAR - DON'T TOUCH! */
 /******************************/
@@ -143,7 +131,7 @@ Word 			= {StringCharacter}+
 /**************************************************************/
    
 <YYINITIAL> {
-/*
+
 "="					{ return printToken("ASSIGN", sym.ASSIGN);}
 "boolean"			{ return printToken("BOOLEAN", sym.BOOLEAN);}
 "break"				{ return printToken("BREAK",sym.BREAK);}
@@ -189,47 +177,22 @@ Word 			= {StringCharacter}+
 "while"				{ return printToken("WHILE",sym.WHILE);}
 "/*" 				{ throw new RuntimeException("Error: unclosed comment at line "+Integer.toString(yyline+1)); }
 "*/"				{ throw new RuntimeException("Error: closed comment without an opening at line "+Integer.toString(yyline+1)); }
-*/
 
-"Move"				{ return printToken("Move",sym.MOVE); }
-"MoveArray"			{ return printToken("MoveArray",sym.MOVEARRAY); }
-"MoveField"			{ return printToken("MoveField", sym.MOVEFIELD); }
-"ArrayLength"		{ return printToken("ArrayLength" , sym.ARRAYLENGTH); }
-"Add"				{ return printToken("Add", sym.ADD); }
-"Sub"				{ return printToken("Sub", sym.SUB); }
-"Mul"				{ return printToken("Mul", sym.MUL); }
-"Div"				{ return printToken("Div", sym.DIV); }
-"Mod"				{ return printToken("Mod", sym.MOD); }
-"Inc"				{ return printToken("Inc", sym.INC); }
-"Dec"				{ return printToken("Dec" , sym.DEC); }
-"Neg"				{ return printToken("Neg", sym.NEG); }
-"Not"				{ return printToken("Not", sym.NOT); }
-"And"				{ return printToken("And", sym.AND); }
-"Or"				{ return printToken("Or", sym.OR); }
-"Xor"				{ return printToken("Xor", sym.XOR); }
-"Compare"			{ return printToken("Compare", sym.COMPARE); }
-"Jump"				{ return printToken("Jump", sym.JUMP); }
-"JumpTrue"			{ return printToken("JumpTrue", sym.JUMPTRUE); }
-"JumpFalse"			{ return printToken("JumpFalse", sym.JUMPFALSE); }
-"JumpG"				{ return printToken("JumpG", sym.JUMPG); }
-"JumpGE"			{ return printToken("JumpGE", sym.JUMPGE); }
-"JumpL"				{ return printToken("JumpL", sym.JUMPL); }
-"JumpLE"			{ return printToken("JumpLE", sym.JUMPLE); }
-"Library"			{ return printToken("Library", sym.LIBRARY); }
-"StaticCall"		{ return printToken("StaticCall", sym.STATICCALL); }
-"VirtualCall"		{ return printToken("VirtualCall", sym.VIRTUALCALL); }
-"Return"			{ return printToken("Return", sym.RETURN); }
-","					{ return printToken("COMMA",sym.COMMA);}
-"("					{ return printToken("LP",sym.LP);}
-")"					{ return printToken("RP",sym.RP);}
-"."					{ return printToken("DOT",sym.DOT);}
-"["					{ return printToken("LB",sym.LB);}
-"]"					{ return printToken("RB",sym.RB);}
-"="					{ return printToken("ASSIGN", sym.ASSIGN);}
-":"					{ return printToken("COLON", sym.COLON) }
-"_"					{ return printToken("UNDERSCORE", sym.UNDERSCORE ) }
-{Word}				{ return printToken(new String(yytext()),sym.WORD)}
 
+{INTEGER}			{
+						return printToken("INTEGER(" + new String(yytext()) + ")", 
+							sym.INTEGER, new Integer(yytext()));
+					}   
+{IDENTIFIER}		{
+						return printToken("ID(" + new String(yytext()) + ")", 
+							sym.ID, new String(yytext()));
+					}
+						
+{CLASS_ID}			{
+						return printToken("CLASS_ID(" + new String(yytext()) + ")", 
+							sym.CLASS_ID, new String(yytext()));
+					}	
+					
 {WhiteSpace}		{ /* just skip what was found, do nothing */ }  
 
 {QUOTE}				{
@@ -242,6 +205,7 @@ Word 			= {StringCharacter}+
 
 .|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1)); }
 
+{illegalInt}        { throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1));  }
 
 
 <<EOF>>             {

@@ -17,7 +17,6 @@ public class asm
 	static final String ret_val = "$v0";
 	static String compLef = null;
 	static String compRig = null;
-
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
@@ -28,8 +27,8 @@ public class asm
 	static final boolean DEBUG = true;
 
 	static void add_line(String content) {
-		if (DEBUG) 
-			System.out.println(content);
+		//if (DEBUG) 
+			//System.out.println(content);
 		cur_func_code += content + "\n";
 	}
 	
@@ -803,22 +802,16 @@ public class asm
 					add_line(result);
 					break;
 				case IRsym.DVLABEL:
-					boolean isEmpty = true;
-					String vector = "";
 					if (DEBUG_TOKENS) 
 						System.out.println("#(DVLabel:)");
 					result += token.toString();
-					result = result.substring(0, result.length()-1);// + ".word ";
+					result = result.substring(0, result.length()-1) + ".word ";
 					nextToken = lexer.next_token();
 					while(nextToken.sym != IRsym.RB){
-						if (nextToken.sym != IRsym.COMMA) {
-							vector += nextToken.toString()+", ";
-							isEmpty = false;
-						}
+						if (nextToken.sym != IRsym.COMMA) 
+							result += nextToken.toString();
 						nextToken = lexer.next_token();
 					}	
-					if (!isEmpty)
-						result += ".word " + vector.substring(0, vector.length()-2);
 					add_line(result);
 					break;
 				case IRsym.MOVE:
@@ -1140,17 +1133,4 @@ public class asm
 		reg_algo();
 	}
 	
-	public void scan(String filename) throws Exception{
-		RandomAccessFile fr = new RandomAccessFile(filename, "rw");
-		String line = fr.readLine();
-		while(line != null){
-			if(line.startsWith("Move ")) ;
-			String[] tokens = line.split(" ");
-			String instruction = tokens[0];
-			switch(instruction){
-			case ""
-			}
-		}
-		fr.close();		
-	}
 }

@@ -3,13 +3,8 @@
 /***************************/
 
 /***************************/
-<<<<<<< Updated upstream
 /* AUTHOR: OREN ISH SHALOM */
 /***************************/
-=======
-/* AUTHOR: OREN ISH SHALOM */ 
-/***************************/ 
->>>>>>> Stashed changes
 
 /*************/
 /* USER CODE */ 
@@ -59,17 +54,12 @@ public void printLineNumber(){
 	System.out.println();
 	System.out.print(yyline+1);
 	System.out.print(": "); 
-<<<<<<< Updated upstream
 }  
-=======
-}   
->>>>>>> Stashed changes
 
 public int getLineNumber(){
 	return yyline+1;
 } 
 
-<<<<<<< Updated upstream
 private Token printToken(String token_name, int token_sym) {
 	/*printLineNumber(); 
 	System.out.print(token_name); */
@@ -80,18 +70,6 @@ private Token printToken(String token_name, int token_sym, Object value) {
 	/*printLineNumber(); 
 	System.out.print(token_name); */
 	return symbol(token_sym, token_name, value);
-=======
-private Token printToken(String token_name, int token_IR_CUPSym) {
-	/*printLineNumber(); 
-	System.out.print(token_name); */
-	return symbol(token_IR_CUPSym, token_name);
-}
-
-private Token printToken(String token_name, int token_IR_CUPSym, Object value) {
-	/*printLineNumber(); 
-	System.out.print(token_name); */
-	return symbol(token_IR_CUPSym, token_name, value);
->>>>>>> Stashed changes
 }
 %}
 /* Here you declare member variables and functions that are used inside 
@@ -109,11 +87,7 @@ the  */
 /*************************************************************************
 
 ********/
-<<<<<<< Updated upstream
     /* Create a new java_cup.runtime.Symbol with information about the 
-=======
-    /* Create a new java_cup.runtime.IR_CUPSymbol with information about the 
->>>>>>> Stashed changes
 
 current token */
     
@@ -148,19 +122,12 @@ InputCharacter	= [^\r\n]
 StringCharacter	= (\\\")|(\\\\)|(\\t)|(\\n)|([ !#-Z]) | "[" | "]" | "^" | [_-~]
 WhiteSpace		= {LineTerminator} | [ \t\f]
 QUOTE			= \" {StringCharacter}* \"
-<<<<<<< Updated upstream
 COMMENT			= "#" {InputCharacter}* {LineTerminator}?
 WORD			= [A-Za-z_0-9]+
 QUOTE			= \" {StringCharacter}* \"
 StringLabel		= [A-Za-z0-9]{WORD}":" 
 Label			= "_"{WORD}":"
 DVLabel			= {Label} [ \t\f]* "["
-=======
-COMMENT			= "#" {InputCharacter}* {LineTerminator}
-WORD			= [A-Za-z_0-9]+
-QUOTE			= \" {StringCharacter}* \"
-StringLabel		= {WORD}":" 
->>>>>>> Stashed changes
 /******QUOTE************************/
 /* DOLAR DOLAR - DON'T TOUCH! */
 /******************************/
@@ -178,7 +145,6 @@ StringLabel		= {WORD}":"
 /**************************************************************/
    
 <YYINITIAL> {
-<<<<<<< Updated upstream
  
 
 "SPACE"					{ return printToken("SPACE", IRsym.SPACE); }
@@ -239,74 +205,13 @@ StringLabel		= {WORD}":"
 {WhiteSpace}		{ /* just skip what was found, do nothing */ }  
 					
 {COMMENT}			{ return printToken(new String(yytext()), IRsym.COMMENT); }
-=======
-
-
-"Move"					{ return printToken("Move", IR_CUPSym.MOVE); }
-"MoveArray"				{ return printToken("MoveArray", IR_CUPSym.MOVEARRAY); }
-"MoveField"				{ return printToken("MoveField",IR_CUPSym.MOVEFIELD); }
-"ArrayLength"			{ return printToken("ArrayLength",IR_CUPSym.ARRAYLENGTH); }
-"Add"					{ return printToken("Add",IR_CUPSym.ADD); }
-"Sub"					{ return printToken("Sub",IR_CUPSym.SUB); }
-"Mul"					{ return printToken("Mul",IR_CUPSym.MUL); }
-"Div"					{ return printToken("Div",IR_CUPSym.DIV); }
-"Mod"					{ return printToken("Mod",IR_CUPSym.MOD); }
-"Inc"					{ return printToken("Inc",IR_CUPSym.INC); }
-"Dec"					{ return printToken("Dec",IR_CUPSym.DEC); }
-"Neg"					{ return printToken("Neg",IR_CUPSym.NEG); }
-"Not"					{ return printToken("Not",IR_CUPSym.NOT); }
-"And"					{ return printToken("And",IR_CUPSym.AND); }
-"Or"					{ return printToken("Or",IR_CUPSym.OR); }
-"Xor"					{ return printToken("Xor",IR_CUPSym.XOR); }
-"Compare"				{ return printToken("Compare",IR_CUPSym.COMPARE); }
-"Jump"					{ return printToken("Jump",IR_CUPSym.JUMP); }
-"JumpTrue"				{ return printToken("JumpTrue",IR_CUPSym.JUMPTRUE); }
-"JumpFalse"				{ return printToken("JumpFalse",IR_CUPSym.JUMPFALSE); }
-"JumpG"					{ return printToken("JumpG",IR_CUPSym.JUMPG); }
-"JumpGE"				{ return printToken("JumpGE",IR_CUPSym.JUMPGE); }
-"JumpL"					{ return printToken("JumpL",IR_CUPSym.JUMPL); }
-"JumpLE"				{ return printToken("JumpLE",IR_CUPSym.JUMPLE); }
-"Library"				{ return printToken("Library",IR_CUPSym.LIBRARY); }
-"StaticCall"			{ return printToken("StaticCall",IR_CUPSym.STATICCALL); }
-"VirtualCall"			{ return printToken("VirtualCall",IR_CUPSym.VIRTUALCALL); }
-"Return"				{ return printToken("Return",IR_CUPSym.RETURN); }
-","						{ return printToken(",",IR_CUPSym.COMMA); }
-":"						{ return printToken(":",IR_CUPSym.COLON); }
-"_"						{ return printToken("_",IR_CUPSym.UNDER); }
-"["						{ return printToken("LB",IR_CUPSym.LB);}
-"("						{ return printToken("LP",IR_CUPSym.LP);}
-"]"						{ return printToken("RB",IR_CUPSym.RB);}
-")"						{ return printToken("RP",IR_CUPSym.RP);}
-"="						{ return printToken("ASSIGN", IR_CUPSym.ASSIGN);}
-"."						{ return printToken("DOT",IR_CUPSym.DOT);}
-
-
-{StringLabel}		{
-						return printToken("StringLabel(" + new String(yytext()) + ")", 
-							IR_CUPSym.STRINGLABEL);
-					}  
-
-{QUOTE}				{ return printToken("Quote("+new String(yytext()) + ")", IR_CUPSym.QUOTE); }
-					
-{WORD}				{ return printToken("WORD("+new String(yytext()) + ")", IR_CUPSym.WORD); }
-					
-{WhiteSpace}		{ /* just skip what was found, do nothing */ }  
-
-
-					
-{COMMENT}			{  }
->>>>>>> Stashed changes
 
 
 .|\n				{ throw new RuntimeException("Error: Invalid token: "+new String(yytext())+" at line " +Integer.toString(yyline+1)); }
 
 
 <<EOF>>             {
-<<<<<<< Updated upstream
 						return printToken("EOF", IRsym.EOF, new String(yytext()));
-=======
-						return printToken("EOF", IR_CUPSym.EOF, new String(yytext()));
->>>>>>> Stashed changes
 					}
 
 
