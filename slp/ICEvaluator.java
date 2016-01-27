@@ -1082,7 +1082,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		String args = "";
 		for (int i = 0; i < expr.exprList.lst.size(); i++) {
 			exp = expLst.get(i).accept(this, env);
-			funcArg = func.arg_types.get(func.arg_types.size()-i-1);
+			funcArg = func.arg_types.get(i);//func.arg_types.size()-i-1);
 			
 			if (irLbFlg ==0){
 			args += funcArg.ir_val + "=" + exp.ir_val;

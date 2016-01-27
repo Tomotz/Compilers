@@ -23,6 +23,8 @@ public class asm
 	static final int SRC = 0;
 	static final int DST = 1;
 	static String cur_ret_label;
+	static String last_label;
+	static boolean is_reset = true;
 
 	static final boolean DEBUG = true;
 
@@ -210,7 +212,7 @@ public class asm
 			{
 				lines_follow.add(label_lines.get(parts[1]));
 			}
-			else if (inst.equals("jalr"))
+			else if (inst.equals("jalr") || inst.equals("jal"))
 			{
 				lines_follow.add(next_line);
 			}
@@ -317,10 +319,10 @@ public class asm
 	{
 		if (!reg.startsWith("R"))
 			return; //not a temporary name
+		all_regs.add(reg);
 		if (usage_type == "def")
 		{ //only one def per line. no list problems like in use
 			reg_def.put(line_num, reg);
-			all_regs.add(reg);
 			return;
 		}
 		
@@ -332,7 +334,6 @@ public class asm
 			List<String> reg_list = new ArrayList<String>();
 			reg_list.add(reg);
 			reg_use.put(line_num, reg_list);
-			all_regs.add(reg);
 		}
 	}
 
@@ -590,12 +591,12 @@ public class asm
 	public static void push(String reg)
 	{
 		add_line("addi " + sp + ", " + sp + ", -4");
-		add_line("sw " + reg + ", 4("+sp+")");
+		add_line("sw " + reg + ", 0("+sp+")");
 	}
 	
 	public static void static_call(String[] ops)
 	{
-		final int LABEL = 0;
+		final String LABEL = ops[0];
 		final int CALL_DST = ops.length-1;
 		for (int i=ops.length-2; i>=1; --i)
 		{ //push arguments
@@ -745,10 +746,11 @@ public class asm
 	public static void handle_space(String space_val)
 	{
 		int space = 4*(Integer.parseInt(space_val)); 
-
+		
+		add_final_line(last_label);
 		add_final_line("addi " + sp + ", " + sp + ", -8");
-		add_final_line("sw " + fp + ", 8("+sp+")"); //save caller fp
-		add_final_line("sw " + ret_addr + ", 4("+sp+")"); //save ret addr
+		add_final_line("sw " + fp + ", 4("+sp+")"); //save caller fp
+		add_final_line("sw " + ret_addr + ", 0("+sp+")"); //save ret addr
 		add_final_line("move " + fp + "," + sp); //get my stack area
 		if (space != 0)
 			add_final_line("addi "+sp+","+sp+"," + Integer.toString(-space)); //get to area after my variables
@@ -759,6 +761,7 @@ public class asm
 		add_final_line("lw " + fp + "," + getVarOffset(fp) + "(" + fp + ")"); //reconstruct fp
 		add_final_line("jr " + ret_addr +"\n\n");
 		cur_func_code = "";
+		is_reset = true;
 		
 		cur_ret_label = IR.get_label("ret");
 	}
@@ -797,9 +800,16 @@ public class asm
 						cur_func_code = "";
 						cur_ret_label = IR.get_label("ret");
 					}
-						
-					result += lab;
-					add_line(result);
+					if (is_reset)
+					{
+						last_label = lab;
+						is_reset = false;
+					}
+					else
+					{
+						result += lab;
+						add_line(result);
+					}
 					break;
 				case IRsym.DVLABEL:
 					boolean isEmpty = true;
@@ -1098,7 +1108,7 @@ public class asm
 						lexer.next_token().toString(); //comma
 						lexer.next_token().toString(); //out_reg
 						
-						add_line("la $t0, " + str);
+						add_line("la $a0, " + str);
 						add_line("li $v0, 4");
 						add_line("syscall");
 						
