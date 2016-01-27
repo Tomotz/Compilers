@@ -26,7 +26,7 @@ public class asm
 	static String last_label;
 	static boolean is_reset = true;
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 
 	static void add_line(String content) {
 		if (DEBUG) 
@@ -53,6 +53,7 @@ public class asm
 		get_dataflow();
 		build_graph();
 		allocate_regs();
+		System.out.println(code);
 		fix_code();
 		remove_null_lines();
 		code = ".data\n" + code;
@@ -154,13 +155,17 @@ public class asm
 	//fills in and out lists
 	private static void get_dataflow() {
 		boolean is_changed;
-		for (int line=0; line < next_lines.size(); ++line) {
+		int run = 0;
+		for (int line=0; line < next_lines.size()+1; ++line) {
 			//init in and out
 			in.add(new ArrayList<String>());
 			out.add(new ArrayList<String>());
 		}
 		do
 		{
+			if (run %100 ==0)
+				System.out.println(run);
+			run +=1;
 			is_changed = false;
 			for (int line=0; line < next_lines.size(); ++line) { 
 				//for each n
@@ -174,7 +179,7 @@ public class asm
 					cur_in = new ArrayList<String>();
 				//in[n] += out[n] - def[n]
 				for (String reg : out.get(line)) {
-					if (reg_def.containsKey(line) && reg_def.get(line) == reg)
+					if (reg_def.containsKey(line) && reg_def.get(line).equals(reg))
 						continue;
 					cur_in.add(reg);
 				}
@@ -188,7 +193,7 @@ public class asm
 					cur_out.addAll(in.get(next));
 				}
 				out.set(line, cur_out);
-				is_changed = !(in_tag.equals(cur_in) && out_tag.equals(cur_out));
+				is_changed = is_changed || !(in_tag.equals(cur_in) && out_tag.equals(cur_out));
 				
 			}
 			
@@ -199,7 +204,7 @@ public class asm
 
 	//prepare all reg use and def lists
 	private static void prepare_usage() {
-		int next_line = 0;
+		int next_line = 1;
 		for (String line : code.split("\n")) {
 			String trimmed = line.trim();
 			if (trimmed.equals("") || trimmed.startsWith("#") || trimmed.contains(":"))
@@ -569,6 +574,7 @@ public class asm
 	
 	public static void virtual_call(String[] ops)
 	{
+		push_temps();
 		final int CLASS = 0;
 		final int OFFSET = 1;
 		final int CALL_DST = ops.length-1;
@@ -585,6 +591,9 @@ public class asm
 		add_line("lw " + temp + ", 0(" + ops[CLASS] + ")"); //get the DV
 		add_line("lw " + temp + ", " + off + "(" + temp + ")"); //get the correct function
 		add_line("jalr " + temp); //save return address and call the virtual func
+		if (ops.length - 3 > 0)
+			add_line("addi " + sp + ", " + sp + ", " + Integer.toString(4*(ops.length - 3)));
+		pop_temps();
 		add_line("move " + ops[CALL_DST] + ", " + ret_val);
 	}
 	
@@ -596,6 +605,7 @@ public class asm
 	
 	public static void static_call(String[] ops)
 	{
+		push_temps();
 		final String LABEL = ops[0];
 		final int CALL_DST = ops.length-1;
 		for (int i=ops.length-2; i>=1; --i)
@@ -606,7 +616,29 @@ public class asm
 		push(zero); //no 'this' in static call
 
 		add_line("jal " + LABEL); //save return address and call the virtual func
+		if (ops.length - 2 > 0)
+			add_line("addi " + sp + ", " + sp + ", " + Integer.toString(4*(ops.length - 2)));
+		pop_temps();
 		add_line("move " + ops[CALL_DST] + ", " + ret_val); 
+	}
+
+	public static void push_temps()
+	{
+		add_line("addi " + sp + ", " + sp + ", " + Integer.toString(-4*8));
+		for (int i=0; i<8; ++i)
+		{
+			add_line("sw $t" + Integer.toString(i) + ", "+Integer.toString(i*4) +"("+sp+")");
+			
+		}
+	}
+
+	public static void pop_temps()
+	{
+		for (int i=0; i<8; ++i)
+		{
+			add_line("lw $t" + Integer.toString(i) + ", "+Integer.toString(i*4) +"("+sp+")");
+		}
+		add_line("addi " + sp + ", " + sp + ", " + Integer.toString(4*8));
 	}
 	
 	public static void compare(String fReg, String sReg){
@@ -800,7 +832,7 @@ public class asm
 						cur_func_code = "";
 						cur_ret_label = IR.get_label("ret");
 					}
-					if (is_reset)
+					if (is_reset && !(IR.runtime_error_label+":").equals(lab))
 					{
 						last_label = lab;
 						is_reset = false;
