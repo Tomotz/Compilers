@@ -38,8 +38,8 @@ public class asm
 	static Map<String, Integer> label_lines = new HashMap<String, Integer>();
 	static Map<Integer, List<String>> reg_use = new HashMap<Integer, List<String>>();
 	static Map<Integer, String> reg_def = new HashMap<Integer, String>();
-	static List<List<String>> in = new ArrayList<List<String>>();
-	static List<List<String>> out = new ArrayList<List<String>>();
+	static List<Set<String>> in = new ArrayList<Set<String>>();
+	static List<Set<String>> out = new ArrayList<Set<String>>();
 	static Map<String, Set<String>> bump_graph = new HashMap<String, Set<String>>();
 	static Map<String, String> reg_aloc = new HashMap<String, String>();
 	static Set<String> all_regs = new HashSet<String>();
@@ -120,15 +120,13 @@ public class asm
 	//build the interference graph
 	private static void build_graph() 
 	{
-		for (List<String> line : in)
+		for (Set<String> line : in)
 		{
-			for (int i=0; i<line.size();++i)
+			for (String temp0:line)
 			{
-				for (int j=i+1; j<line.size();++j)
+				for (String temp1 :line)
 				{
-					String temp0 = line.get(i);
-					String temp1 = line.get(j);
-					if (temp0 == temp1)
+					if (temp0.equals(temp1))
 						continue;
 					if (bump_graph.containsKey(temp0))
 						bump_graph.get(temp0).add(temp1);
@@ -155,28 +153,23 @@ public class asm
 	//fills in and out lists
 	private static void get_dataflow() {
 		boolean is_changed;
-		int run = 0;
 		for (int line=0; line < next_lines.size()+1; ++line) {
 			//init in and out
-			in.add(new ArrayList<String>());
-			out.add(new ArrayList<String>());
+			in.add(new HashSet<String>());
+			out.add(new HashSet<String>());
 		}
 		do
 		{
-			if (run %100 ==0)
-				System.out.println(run);
-			run +=1;
 			is_changed = false;
 			for (int line=0; line < next_lines.size(); ++line) { 
 				//for each n
-				List<String> in_tag = new ArrayList<String>(in.get(line));
-				List<String> out_tag = new ArrayList<String>(out.get(line));
-				List<String> cur_in;
+				Set<String> in_tag = new HashSet<String>(in.get(line));
+				Set<String> out_tag = new HashSet<String>(out.get(line));
+				Set<String> cur_in = new HashSet<String>();
+				Set<String> cur_out= new HashSet<String>();
 				//in[n] = use[n]
 				if (reg_use.containsKey(line))
-					cur_in = new ArrayList<String>(reg_use.get(line));
-				else
-					cur_in = new ArrayList<String>();
+					cur_in.addAll(reg_use.get(line));
 				//in[n] += out[n] - def[n]
 				for (String reg : out.get(line)) {
 					if (reg_def.containsKey(line) && reg_def.get(line).equals(reg))
@@ -186,7 +179,6 @@ public class asm
 				in.set(line, cur_in);
 				
 				//out[n] = U(in[s])
-				List<String> cur_out= new ArrayList<String>();
 				List<Integer> next_line = next_lines.get(line);
 				for (Integer next : next_line)
 				{
