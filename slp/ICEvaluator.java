@@ -38,6 +38,7 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		++env.run_num;
 		if (IS_DEBUG)
 			System.out.println("starting second itteration");
+		IR.init_str_table();
 		root.accept(this, env);
 		IR.runtime_error();
 		write_ir();

@@ -14,7 +14,19 @@ public class IR {
 	static String whLblStrt;   // labels for the use of break and continue in a while loop
 	static String whLblEnd;
 	static String runtime_error_label;
+	static String str_error_nullref;
+	static String str_error_div0;
+	static String str_error_array_bound;
+	static String str_error_checksize;
 
+	static void init_str_table()
+	{
+		str_error_nullref = add_str("\"null ref error\"");
+		str_error_div0 = add_str("\"divide by zero error\"");
+		str_error_array_bound = add_str("\"array index out of cound\"");
+		str_error_checksize = add_str("\"negetive array size\"");
+	}
+	
 	static void add_file_comment(int line_num)
 	{
 		if (ICEvaluator.run_num != 1)
@@ -138,8 +150,13 @@ public class IR {
 		add_line("Move " + src1 + "," + reg);
 		if (op == "Div")
 		{
+			String div0_label = get_label("div0");
 			add_line("Compare 0," + reg);
-			add_line("JumpFalse " + runtime_error_label);
+			add_line("JumpTrue " + div0_label);
+			add_line("Library __println(" + str_error_div0 + "),Rdummy" );
+			add_line("Jump " + runtime_error_label);
+			add_line(div0_label + ":");
+			
 		}
 		add_line(op +" " + src2 + "," + reg);
 		return reg;
@@ -215,9 +232,12 @@ public class IR {
 	}
 
 	public static void check_null_ref(String reg) {
-		add_line("#__checkNullRef(" +reg + ")");
+		String nullref_label = get_label("nullref");
 		add_line("Compare 0," + reg);
-		add_line("JumpFalse " + runtime_error_label);
+		add_line("JumpTrue " + nullref_label);
+		add_line("Library __println(" + str_error_nullref + "),Rdummy" );
+		add_line("Jump " + runtime_error_label);
+		add_line(nullref_label + ":");
 	}
 
 	public static void put_label_comment(String cls, String func) {
@@ -238,8 +258,13 @@ public class IR {
 		add_line("Add 1," + reg1);
 		add_line("Mul 4," + reg1);
 		//check size(reg1)
+		
+		String checksize_label = get_label("checksize");
 		add_line("Compare 0," + reg1);
-		add_line("JumpLE " + runtime_error_label);
+		add_line("JumpG " + checksize_label);
+		add_line("Library __println(" + str_error_checksize + "),Rdummy" );
+		add_line("Jump " + runtime_error_label);
+		add_line(checksize_label + ":");
 
 		String reg = new_temp();
 		add_line("Library __allocateArray(" + reg1 + ")," + reg);
@@ -285,18 +310,7 @@ public class IR {
 		else{
 			add_comment("load object " + ir_rep);
 		}
-		/*
-		System.out.println("val " + ir_rep + " var " + objName);
-		*/
-		/*int varIndex = 0;
-		int valIndex = 0;
-		int tmpFlag = 0; 
-		String valName = null;
-		String varName = null;
-		String field = null;
-		String offset = null;
-		String offsetIn = null;
-		String arrayIn = null;*/
+		
 		String temp = null;
 		
 		// case of string
@@ -306,138 +320,6 @@ public class IR {
 			add_line("Move " + temp + "," + objName);
 			return null;
 		}
-		
-		// value is a field 
-		/*if ((valIndex= ir_rep.indexOf('.')) != -1){
-			
-			field = ir_rep.substring(0,valIndex);
-			offset = ir_rep.substring(valIndex+1);
-			if ((valIndex = offset.indexOf('[')) != -1){
-				
-				offsetIn = offset.substring(0,valIndex);
-				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
-				
-				 if ((valIndex= arrayIn.indexOf('.')) != -1){
-					
-					 field = ir_rep.substring(0,valIndex);
-					offset = ir_rep.substring(valIndex+1);
-					temp = new_temp();
-					add_line("Move " + field + "," + temp);
-					ir_rep = new_temp();
-					add_line("MoveField " + temp + "." + offset + "," + ir_rep);
-				}
-				else{
-					temp = new_temp();
-					add_line("Move " + field + "," + temp);
-					String temp2 = new_temp();
-					add_line("MoveField " + temp + "." + offsetIn + "," + temp2);
-					temp = new_temp();
-					add_line("Move " + arrayIn + "," + temp);
-					ir_rep = new_temp();
-					add_line("MoveArray " + temp2 + "[" + temp + "]" + "," + ir_rep);
-				}
-			}
-			else{
-				temp = new_temp();
-				add_line("Move " + field + "," + temp);
-				ir_rep = new_temp();
-				add_line("MoveField " + temp + "." + offset + "," + ir_rep);
-				tmpFlag = 1;
-			}
-		}
-		
-		else if ((valIndex = ir_rep.indexOf('[')) != -1){
-			
-			field = ir_rep.substring(0,valIndex);
-			offset = ir_rep.substring(valIndex+1,ir_rep.length()-1);
-			
-			temp = new_temp();
-			add_line("Move " + field + "," + temp);
-			
-			ir_rep = new_temp();
-			add_line("MoveArray " + temp + "[" + offset + "]" + "," + ir_rep);
-			tmpFlag = 1;
-		}
-		else if ((valIndex = ir_rep.indexOf('_')) != -1){
-			if (op_type == 0){
-				temp = new_temp();
-				add_line("Move " + ir_rep + "," + temp);
-				ir_rep = temp;
-			}
-			else{
-				valName = ir_rep.substring(0,valIndex);
-			}
-		}
-		
-		if (op_type ==0){
-			return ir_rep;
-		}
-		
-		if ((varIndex = objName.indexOf('.')) != -1){
-			field = objName.substring(0,varIndex);
-			offset = objName.substring(varIndex+1);
-			temp = new_temp();
-			add_line("Move " + field + "," + temp);
-			field = temp;
-			
-			if (tmpFlag != 1){
-				temp = new_temp();
-				add_line("Move " + ir_rep + "," + temp);
-				ir_rep = temp;
-			}
-			
-			if ((valIndex = offset.indexOf('[')) != -1){
-				 offsetIn = offset.substring(0,valIndex);
-				 arrayIn = offset.substring(valIndex+1,offset.length()-1);
-				  
-					String newField = new_temp();
-					add_line("MoveField " + field + "." + offsetIn + "," + newField);
-					offset = new_temp();
-					add_line("Move " + arrayIn + "," + offset);
-					add_line("MoveArray " + ir_rep + "," + newField + "[" + offset + "]");
-				 
-			}
-			
-			else{
-				add_line("MoveField " + ir_rep + "," + field + "." + offset);
-			}
-			return null;
-		}
-		else if((varIndex = objName.indexOf('['))!=-1){
-			field = objName.substring(0,varIndex);
-			offset = objName.substring(varIndex+1,objName.length()-1);
-			
-			temp = new_temp();
-			add_line("Move " + field + "," + temp);
-			field = temp;
-			
-			if (tmpFlag != 1){
-				temp = new_temp();
-				add_line("Move " + ir_rep + "," + temp);
-				ir_rep = temp;
-			}
-			
-			while((varIndex = offset.indexOf('['))!=-1){
-				
-				arrayIn = offset.substring(0,varIndex-1);
-				offset = offset.substring(varIndex+1,offset.length());
-				temp = new_temp();
-				add_line("MoveArray " + field + "[" + arrayIn + "]" + "," + temp);
-				field = temp;
-			}
-			
-			add_line("MoveArray " + ir_rep + "," + field + "[" + offset + "]");
-			return null;
-		}
-		else if ((varIndex = objName.indexOf('_')) != -1){
-			varName = objName.substring(0,varIndex);
-			}
-		
-		if ((env.getObjByName(varName) != null) && (env.getObjByName(valName) != null)){
-				temp = new_temp();
-				add_line("Move " + ir_rep + "," + temp);
-				add_line("Move " + temp + "," + objName);
-			}*/
 		else{
 			add_line("Move " + ir_rep + "," + objName);
 		}
@@ -500,10 +382,17 @@ public class IR {
 		
 		add_line("#__checkArrayAccess(" + arr + "," + temp_index + ")");
 		add_line("MoveArray " + arr + "[0]," + temp);
+
+		String arr_index_err_label = get_label("arr_err_index");
+		String arr_index_success_label = get_label("arr__success_index");
 		add_line("Compare 0," + temp_index);
-		add_line("JumpLE " + IR.runtime_error_label);
+		add_line("JumpLE " + arr_index_err_label);
 		add_line("Compare " + temp_index + "," + temp);
-		add_line("JumpLE " + runtime_error_label);
+		add_line("JumpG " + arr_index_success_label);
+		add_line(arr_index_err_label + ":");
+		add_line("Library __println(" + str_error_array_bound + "),Rdummy" );
+		add_line("Jump " + runtime_error_label);
+		add_line(arr_index_success_label + ":");
 		
 		
 		if (src==null)

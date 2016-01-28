@@ -20,6 +20,7 @@ public class asm
 	static final int IMM = 0;
 	static final int REG = 1;
 	static final int MEM = 2;
+	static final int STR = 3;
 	static final int SRC = 0;
 	static final int DST = 1;
 	static String cur_ret_label;
@@ -359,6 +360,10 @@ public class asm
 		{
 			return IMM;
 		}
+		if (value.startsWith("str"))
+		{
+			return STR;
+		}
 		return MEM;
 	}
 	
@@ -426,6 +431,12 @@ public class asm
 			opTypes[SRC] = REG;
 			ops[SRC] = temp_src;
 		}
+		else if (opTypes[SRC] == STR)
+		{ //src is mem - load it
+			add_line("la " + temp_src + ", " + ops[SRC]);
+			opTypes[SRC] = REG;
+			ops[SRC] = temp_src;
+		}
 		String temp_dst = ops[DST];
 		if (opTypes[DST] == MEM)
 		{
@@ -460,8 +471,8 @@ public class asm
 
 	public static void store_arr(String arr, String index, String src)
 	{
-		if (src.startsWith("_"))
-		{//label
+		if (src.startsWith("_") || src.startsWith("str"))
+		{//label or string
 			String temp = new_temp();
 			add_line("la "+temp + ", " + src);
 			src = temp;
@@ -748,7 +759,6 @@ public class asm
 	public static void allocate(String byteSize, String dest){
 
 		int rValue_type = getSingleOpType(byteSize);
-		add_line("li $v0, 1");
 		
 		if (rValue_type == IMM)
 			add_line("li $a0, " + byteSize);
