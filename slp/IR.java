@@ -386,7 +386,7 @@ public class IR {
 		String arr_index_err_label = get_label("arr_err_index");
 		String arr_index_success_label = get_label("arr__success_index");
 		add_line("Compare 0," + temp_index);
-		add_line("JumpLE " + arr_index_err_label);
+		add_line("JumpL " + arr_index_err_label);
 		add_line("Compare " + temp_index + "," + temp);
 		add_line("JumpG " + arr_index_success_label);
 		add_line(arr_index_err_label + ":");

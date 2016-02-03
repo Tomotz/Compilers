@@ -502,7 +502,7 @@ public class asm
 			index_temp = index;
 		if (is_arr)
 			add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
-		add_line("sll " + index_temp + "," + index_temp + ",4"); //*4
+		add_line("sll " + index_temp + "," + index_temp + ",2"); //*4
 		add_line("add " + index_temp + "," + index_temp + "," + arr); //find wished place in arr
 		return index_temp;
 	}
