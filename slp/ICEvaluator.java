@@ -700,6 +700,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 
 		whlStrt = IR.get_label("startWhile");
 		whlEnd = IR.get_label("endWhile");
+		String lastWhileEnd = IR.whLblEnd;
+		String lastWhileStart = IR.whLblStrt;
+		
 		IR.whLblEnd = whlEnd;
 		IR.whLblStrt = whlStrt;
 		
@@ -731,6 +734,9 @@ public class ICEvaluator implements PropagatingVisitor<Environment, VarType> {
 		IR.add_line(whlEnd+":");
 		env.destroyScope(ASTNode.scope);
 
+		IR.whLblEnd = lastWhileEnd;
+		IR.whLblStrt = lastWhileStart;
+		
 		--ASTNode.scope;
 		return null;
 
