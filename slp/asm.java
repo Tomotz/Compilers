@@ -595,8 +595,12 @@ public class asm
 		final int CLASS = 0;
 		final int OFFSET = 1;
 		final int CALL_DST = ops.length-1;
-		
-		for (int i=ops.length-2; i>=2; --i)
+
+		/*for (int i=ops.length-2; i>=2; --i)
+		{ //push arguments
+			push(ops[i]);
+		}*/
+		for (int i=2; i<=ops.length-2; ++i)
 		{ //push arguments
 			push(ops[i]);
 		}
@@ -1183,12 +1187,14 @@ public class asm
 					}
 					else
 					{
-						if (DEBUG) 
+						throw new Exception("unknown Lib: " + libname.toString() +"\n");
+						/*if (DEBUG) 
 							System.out.println("unknown Lib: " + libname.toString());
 						lexer.next_token().toString(); //LP
 						lexer.next_token().toString(); //RP?
 						lexer.next_token().toString(); //comma?
 						lexer.next_token().toString(); //out_reg?
+						*/
 						
 					}
 					break;
