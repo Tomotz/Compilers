@@ -500,8 +500,8 @@ public class asm
 		}
 		else
 			index_temp = index;
-		if (is_arr)
-			add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
+		//if (is_arr)
+		//	add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
 		add_line("sll " + index_temp + "," + index_temp + ",2"); //*4
 		add_line("add " + index_temp + "," + index_temp + "," + arr); //find wished place in arr
 		return index_temp;
@@ -566,6 +566,19 @@ public class asm
 		String asm_inst = mul_insts.get(Instruction);
 		add_line(asm_inst + " " + ops[DST] + ", " + ops[DST] + ", " + ops[SRC]);	
 			
+	}
+
+	private static void arr_len(String arr, String dest)
+	{
+
+		int arrType = getSingleOpType(arr);
+		if (arrType == MEM)
+		{
+			String temp_src = new_temp();
+			add_line("lw " + temp_src + ", " + getVarOffset(arr) + "(" + fp + ")");
+			arr = temp_src;
+		}
+		add_line("lw " + dest + ", 0(" + arr + ")");		
 	}
 	
 	public static String get_this()
@@ -872,6 +885,13 @@ public class asm
 					operands[1] = lexer.next_token().toString();
 					move(operands);
 					break;
+				case IRsym.ARRAYLENGTH:
+					
+					String arr = lexer.next_token().toString();
+					lexer.next_token(); //COMMA
+					String dest = lexer.next_token().toString();
+					arr_len(arr, dest);
+					break;
 					
 				case IRsym.VIRTUALCALL:
 					if (DEBUG_TOKENS) 
@@ -1075,7 +1095,7 @@ public class asm
 					String reg1 = lexer.next_token().toString();
 					if (lexer.next_token().sym == IRsym.COMMA)
 					{ //store
-						String arr = lexer.next_token().toString();
+						arr = lexer.next_token().toString();
 						lexer.next_token().toString(); //LP
 						String index = lexer.next_token().toString();
 						lexer.next_token().toString(); //RP
@@ -1086,7 +1106,7 @@ public class asm
 						String index = lexer.next_token().toString(); 
 						lexer.next_token().toString(); //RP 
 						lexer.next_token().toString(); //COMMA
-						String dest = lexer.next_token().toString();
+						dest = lexer.next_token().toString();
 						load_arr(reg1, index, dest, true);
 					}
 					break;
@@ -1105,7 +1125,7 @@ public class asm
 					{ //load
 						String index = lexer.next_token().toString(); 
 						lexer.next_token().toString(); //DOT
-						String dest = lexer.next_token().toString();
+						dest = lexer.next_token().toString();
 						load_arr(reg1, index, dest, false);
 					}
 					break;
@@ -1183,5 +1203,6 @@ public class asm
 		}
 		reg_algo();
 	}
+
 	
 }
