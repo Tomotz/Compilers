@@ -377,24 +377,25 @@ public class IR {
 		IR.add_line("Move " + index + "," + temp_index);
 
 		//check array access
-		String temp = IR.new_temp();
+		String max_array = IR.new_temp();
 
 		
 		add_line("#__checkArrayAccess(" + arr + "," + temp_index + ")");
-		add_line("MoveArray " + arr + "[0]," + temp);
+		add_line("MoveArray " + arr + "[0]," + max_array);
 
 		String arr_index_err_label = get_label("arr_err_index");
-		String arr_index_success_label = get_label("arr__success_index");
+		String arr_index_success_label = get_label("arr_success_index");
 		add_line("Compare 0," + temp_index);
 		add_line("JumpL " + arr_index_err_label);
-		add_line("Compare " + temp_index + "," + temp);
+		add_line("Compare " + temp_index + "," + max_array);
 		add_line("JumpG " + arr_index_success_label);
 		add_line(arr_index_err_label + ":");
 		add_line("Library __println(" + str_error_array_bound + "),Rdummy" );
 		add_line("Jump " + runtime_error_label);
 		add_line(arr_index_success_label + ":");
 		
-		
+
+		IR.add_line("Add 1," + temp_index);
 		if (src==null)
 		{//non assign
 			String out_reg = IR.new_temp();
