@@ -588,7 +588,7 @@ public class asm
 			push(ops[i]);
 		}
 		
-		push(get_this());
+		push(ops[CLASS]);
 		
 		String off = Integer.toString(4*Integer.parseInt(ops[OFFSET]));
 		String temp = new_temp();

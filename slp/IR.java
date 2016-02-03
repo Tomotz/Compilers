@@ -23,7 +23,7 @@ public class IR {
 	{
 		str_error_nullref = add_str("\"null ref error\"");
 		str_error_div0 = add_str("\"divide by zero error\"");
-		str_error_array_bound = add_str("\"array index out of cound\"");
+		str_error_array_bound = add_str("\"array index out of bounds\"");
 		str_error_checksize = add_str("\"negetive array size\"");
 	}
 	
