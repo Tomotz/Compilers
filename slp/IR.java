@@ -234,7 +234,7 @@ public class IR {
 	public static void check_null_ref(String reg) {
 		String nullref_label = get_label("nullref");
 		add_line("Compare 0," + reg);
-		add_line("JumpTrue " + nullref_label);
+		add_line("JumpFalse " + nullref_label);
 		add_line("Library __println(" + str_error_nullref + "),Rdummy" );
 		add_line("Jump " + runtime_error_label);
 		add_line(nullref_label + ":");
@@ -430,7 +430,6 @@ public class IR {
 	public static void runtime_error() {
 		add_line(runtime_error_label + ":");
 		add_line("Library __exit(0),Rdummy");
-				
 	}
 
 }

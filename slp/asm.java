@@ -457,7 +457,7 @@ public class asm
 		}
 	}
 
-	public static void load_arr(String arr, String index, String dest)
+	public static void load_arr(String arr, String index, String dest, boolean is_arr)
 	{
 		if (dest.startsWith("_"))
 		{//label
@@ -465,11 +465,11 @@ public class asm
 			add_line("la "+temp + ", " + dest);
 			dest = temp;
 		}
-		String index_temp = get_arr_offset(arr, index);
+		String index_temp = get_arr_offset(arr, index, is_arr);
 		add_line("lw " + dest + ",0(" + index_temp + ")"); //find wished place in arr	
 	}
 
-	public static void store_arr(String arr, String index, String src)
+	public static void store_arr(String arr, String index, String src, boolean is_arr)
 	{
 		if (src.startsWith("_") || src.startsWith("str"))
 		{//label or string
@@ -477,7 +477,7 @@ public class asm
 			add_line("la "+temp + ", " + src);
 			src = temp;
 		}
-		String index_temp = get_arr_offset(arr, index);
+		String index_temp = get_arr_offset(arr, index, is_arr);
 		int src_type = getSingleOpType(src);
 		String src_temp;
 		if (src_type == IMM)
@@ -490,7 +490,7 @@ public class asm
 		add_line("sw " + src_temp + ",0(" + index_temp + ")"); //find wished place in arr	
 	}
 
-	private static String get_arr_offset(String arr, String index) {
+	private static String get_arr_offset(String arr, String index, boolean is_arr) {
 		int index_type = getSingleOpType(index);
 		String index_temp; 
 		if (index_type == IMM)
@@ -500,7 +500,8 @@ public class asm
 		}
 		else
 			index_temp = index;
-		add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
+		if (is_arr)
+			add_line("addi " + index_temp + "," + index_temp + ",1"); //add length place
 		add_line("sll " + index_temp + "," + index_temp + ",4"); //*4
 		add_line("add " + index_temp + "," + index_temp + "," + arr); //find wished place in arr
 		return index_temp;
@@ -1078,7 +1079,7 @@ public class asm
 						lexer.next_token().toString(); //LP
 						String index = lexer.next_token().toString();
 						lexer.next_token().toString(); //RP
-						store_arr(arr, index, reg1);
+						store_arr(arr, index, reg1, true);
 					}
 					else
 					{ //load
@@ -1086,7 +1087,7 @@ public class asm
 						lexer.next_token().toString(); //RP 
 						lexer.next_token().toString(); //COMMA
 						String dest = lexer.next_token().toString();
-						load_arr(reg1, index, dest);
+						load_arr(reg1, index, dest, true);
 					}
 					break;
 				case IRsym.MOVEFIELD:
@@ -1098,14 +1099,14 @@ public class asm
 						String obj = lexer.next_token().toString();
 						lexer.next_token().toString(); //DOT
 						String index = lexer.next_token().toString();
-						store_arr(obj, index, reg1);
+						store_arr(obj, index, reg1, false);
 					}
 					else
 					{ //load
 						String index = lexer.next_token().toString(); 
 						lexer.next_token().toString(); //DOT
 						String dest = lexer.next_token().toString();
-						load_arr(reg1, index, dest);
+						load_arr(reg1, index, dest, false);
 					}
 					break;
 				case IRsym.SPACE:
