@@ -293,8 +293,9 @@ public class IR {
 
 	static String new_obj(String len, String type, String class_dv) {
 		add_comment("new " + type + "()");
+		int more_len = 2*Integer.parseInt(len);
 		String reg = new_temp();
-		add_line("Library __allocateObject(" + len + ")," + reg);
+		add_line("Library __allocateObject(" + more_len + ")," + reg);
 		add_line("MoveField " + class_dv + "," + reg + ".0");
 		init_allocated(len, reg);
 		return reg;
