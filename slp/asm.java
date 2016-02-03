@@ -751,7 +751,7 @@ public class asm
 		add_line("syscall");
 	}
 
-	public static void printCharI(int c){
+	public static void printChar(int c){
 		add_line("li $v0, 11");
 		add_line("li $a0, " + c);   // i'm not sure if to use lb instead
 		add_line("syscall");
@@ -1148,7 +1148,7 @@ public class asm
 						add_line("syscall");
 						
 						if (libname.equals("__println")){
-							printCharI(13);
+							printChar(10);
 						}
 						
 					}
